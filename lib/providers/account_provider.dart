@@ -11,6 +11,7 @@ import '../services/database_service.dart';
 import '../services/encryption_service.dart';
 import '../services/migration_service.dart';
 import '../services/otp_service.dart';
+import '../utils/app_logger.dart';
 
 class AccountsProvider extends ChangeNotifier {
   List<Account> _accounts = [];
@@ -103,7 +104,7 @@ class AccountsProvider extends ChangeNotifier {
 
       _isPreDecrypting = false;
     } catch (e) {
-      debugPrint('Error loading accounts: $e');
+      AppLogger.error('Failed to load accounts', e);
       _accounts = [];
       _isPreDecrypting = false;
     } finally {
@@ -139,7 +140,7 @@ class AccountsProvider extends ChangeNotifier {
       await _db.createAccount(encryptedAccount);
       await loadAccounts();
     } catch (e) {
-      debugPrint('Error adding account: $e');
+      AppLogger.error('Failed to add account', e);
       rethrow;
     }
   }
@@ -165,7 +166,7 @@ class AccountsProvider extends ChangeNotifier {
       await _db.updateAccount(accountWithType);
       await loadAccounts();
     } catch (e) {
-      debugPrint('Error updating account: $e');
+      AppLogger.error('Failed to update account', e);
       rethrow;
     }
   }
@@ -176,7 +177,7 @@ class AccountsProvider extends ChangeNotifier {
       _accounts.removeWhere((account) => account.id == id);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting account: $e');
+      AppLogger.error('Failed to delete account', e);
       rethrow;
     }
   }
@@ -190,7 +191,7 @@ class AccountsProvider extends ChangeNotifier {
       await _db.updateAccount(account);
       await loadAccounts();
     } catch (e) {
-      debugPrint('Error updating account: $e');
+      AppLogger.error('Failed to update account directly', e);
       rethrow;
     }
   }
@@ -240,7 +241,7 @@ class AccountsProvider extends ChangeNotifier {
       _accounts.removeWhere((account) => ids.contains(account.id));
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting multiple accounts: $e');
+      AppLogger.error('Failed to delete multiple accounts', e);
       rethrow;
     }
   }
@@ -268,7 +269,7 @@ class AccountsProvider extends ChangeNotifier {
       }
       await loadAccounts();
     } catch (e) {
-      debugPrint('Error moving accounts to group: $e');
+      AppLogger.error('Failed to move accounts to a group', e);
       rethrow;
     }
   }
@@ -293,7 +294,7 @@ class AccountsProvider extends ChangeNotifier {
         'groups': groups.map((g) => g.toMap()).toList(),
       };
     } catch (e) {
-      debugPrint('Error exporting data: $e');
+      AppLogger.error('Failed to export account data', e);
       rethrow;
     }
   }
@@ -315,7 +316,9 @@ class AccountsProvider extends ChangeNotifier {
         };
         final groups = data['groups'] as List;
         for (final item in groups) {
-          final group = item is Group ? item : Group.fromMap(item as Map<String, dynamic>);
+          final group = item is Group
+              ? item
+              : Group.fromMap(item as Map<String, dynamic>);
           final oldId = group.id;
           final existing = existingGroupsByName[group.name.toLowerCase()];
           if (existing != null) {
@@ -323,7 +326,7 @@ class AccountsProvider extends ChangeNotifier {
             if (oldId != null && existing.id != null) {
               groupIdMap[oldId] = existing.id!;
             }
-            debugPrint('Skipping duplicate group: ${group.name}');
+            AppLogger.verbose('Skipped a duplicate group during import');
           } else {
             // Insert without the old ID so the DB auto-generates a new one
             final groupWithoutId = group.copyWith(id: null);
@@ -331,23 +334,28 @@ class AccountsProvider extends ChangeNotifier {
             if (oldId != null) {
               groupIdMap[oldId] = newId;
             }
-            existingGroupsByName[group.name.toLowerCase()] =
-                group.copyWith(id: newId);
+            existingGroupsByName[group.name.toLowerCase()] = group.copyWith(
+              id: newId,
+            );
           }
         }
       }
 
       // Import accounts, skipping duplicates matched on name + issuer + type.
-      final bool hasGroupsInBackup = data['groups'] != null &&
-          (data['groups'] as List).isNotEmpty;
+      final bool hasGroupsInBackup =
+          data['groups'] != null && (data['groups'] as List).isNotEmpty;
       if (data['accounts'] != null) {
         final existingKeys = _accounts
-            .map((a) =>
-                '${a.name.toLowerCase()}|${(a.issuer ?? '').toLowerCase()}|${a.type.toLowerCase()}')
+            .map(
+              (a) =>
+                  '${a.name.toLowerCase()}|${(a.issuer ?? '').toLowerCase()}|${a.type.toLowerCase()}',
+            )
             .toSet();
         final accounts = data['accounts'] as List;
         for (final item in accounts) {
-          final account = item is Account ? item : Account.fromMap(item as Map<String, dynamic>);
+          final account = item is Account
+              ? item
+              : Account.fromMap(item as Map<String, dynamic>);
           final key =
               '${account.name.toLowerCase()}|${(account.issuer ?? '').toLowerCase()}|${account.type.toLowerCase()}';
           if (!existingKeys.contains(key)) {
@@ -377,7 +385,7 @@ class AccountsProvider extends ChangeNotifier {
             await _db.createAccount(encryptedAccount);
             existingKeys.add(key);
           } else {
-            debugPrint('Skipping duplicate account: ${account.name}');
+            AppLogger.verbose('Skipped a duplicate account during import');
           }
         }
       }
@@ -385,7 +393,7 @@ class AccountsProvider extends ChangeNotifier {
       onGroupsChanged?.call();
       await loadAccounts();
     } catch (e) {
-      debugPrint('Error importing data: $e');
+      AppLogger.error('Failed to import account data', e);
       rethrow;
     }
   }

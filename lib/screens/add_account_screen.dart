@@ -14,6 +14,7 @@ import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
 import 'qr_scanner_screen.dart';
 import '../services/auth_service.dart';
+import '../utils/app_logger.dart';
 import '../widgets/pin_verification_dialog.dart';
 import '../widgets/add_account/account_info_card.dart';
 import '../widgets/add_account/advanced_settings_card.dart';
@@ -104,7 +105,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         _originalSecret = account.secret;
       }
     } catch (e) {
-      debugPrint('Error decrypting secret: $e');
+      AppLogger.error('Failed to decrypt account secret for editing', e);
       _secretController.text = widget.accountToEdit!.secret;
       _originalSecret = widget.accountToEdit!.secret;
     } finally {
@@ -499,8 +500,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const QrScannerScreen(),
+                          builder: (_) => const QrScannerScreen(),
                         ),
                       );
 

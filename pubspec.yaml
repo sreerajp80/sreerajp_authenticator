@@ -1,7 +1,7 @@
 name: sreerajp_authenticator
 description: "A modern TOTP/HOTP authenticator app"
 publish_to: 'none'
-version: 2.3.1+1
+version: 2.5.2+1
 
 environment:
   sdk: ^3.11.1
@@ -24,18 +24,17 @@ dependencies:
   path: ^1.9.0
 
   # Security
-  local_auth: ^3.0.0  # For biometric/PIN authentication
-  screen_protector: ^1.4.2  # Prevent screenshots and screen recording
+  local_auth: 3.0.0  # For biometric/PIN authentication
+  screen_protector: 1.4.2  # Prevent screenshots and screen recording
 
   # UI/UX
   provider: ^6.1.2  # State management
   flutter_slidable: ^4.0.3  # Swipe actions on tiles
   animations: ^2.0.11  # Smooth animations
-  google_fonts: ^8.0.1  # Modern typography
   flutter_svg: ^2.0.10+1  # SVG icons support
 
   # Utilities
-  flutter_secure_storage: ^10.0.0  # Secure storage for sensitive data
+  flutter_secure_storage: 10.0.0  # Secure storage for sensitive data
   share_plus: ^12.0.0  # For export functionality
   file_picker: ^10.3.3  # For import functionality
   permission_handler: ^12.0.1  # Handle permissions
@@ -49,11 +48,11 @@ dependencies:
   package_info_plus: ^9.0.0
 
   path_provider: ^2.1.5
-  encrypt: ^5.0.3
-  pointycastle: ^3.9.1
+  encrypt: 5.0.3
+  pointycastle: 3.9.1
   percent_indicator: ^4.2.3
 
-  crypto: ^3.0.3
+  crypto: 3.0.3
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +74,7 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter:
+  default-flavor: dev
   uses-material-design: true
 
   assets:

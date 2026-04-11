@@ -72,6 +72,8 @@ android {
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
+                // Keep dev release builds usable without a release keystore.
+                // Prod release tasks are blocked below unless signing is configured.
                 signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
@@ -99,8 +101,24 @@ android {
     }
 }
 
+afterEvaluate {
+    listOf("assembleProdRelease", "bundleProdRelease").forEach { taskName ->
+        tasks.matching { it.name == taskName }.configureEach {
+            doFirst {
+                if (!keystorePropertiesFile.exists()) {
+                    throw GradleException(
+                        """
+                        SIGNING REQUIRED: prod release build blocked.
+                        android/key.properties was not found.
+                        Configure release signing as documented in docs/flutter_build_flavors_guide.md.
+                        """.trimIndent(),
+                    )
+                }
+            }
+        }
+    }
+}
+
 flutter {
     source = "../.."
 }
-
-

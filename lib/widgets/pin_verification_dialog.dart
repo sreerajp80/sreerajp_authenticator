@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../providers/settings_provider.dart';
 import '../services/auth_service.dart';
 
@@ -25,136 +26,70 @@ Future<bool> showPinVerificationDialog({
     return false;
   }
 
-  if (settingsProvider.lockType == 'device_lock') {
-    try {
-      final authenticated = await authService.authenticateWithDeviceLock();
+  if (!settingsProvider.hasPinSet) {
+    if (!context.mounted) return false;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('App PIN is not set. Please re-enable app lock.'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return false;
+  }
 
-      if (!context.mounted) return false;
+  final TextEditingController pinController = TextEditingController();
+  bool isVerifying = false;
 
-      if (!authenticated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Authentication failed'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-
-      return authenticated;
-    } catch (e) {
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return false;
-    }
-  } else {
-    if (!settingsProvider.hasPinSet) {
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('App PIN is not set. Please re-enable app lock.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return false;
-    }
-
-    final TextEditingController pinController = TextEditingController();
-    bool isVerifying = false;
-
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (statefulContext, setDialogState) => AlertDialog(
-          title: Text('Enter PIN to $purpose'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: pinController,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                autofocus: true,
-                enabled: !isVerifying,
-                decoration: const InputDecoration(
-                  labelText: 'PIN',
-                  border: OutlineInputBorder(),
-                  counterText: '',
-                ),
-                onSubmitted: isVerifying
-                    ? null
-                    : (value) async {
-                        setDialogState(() => isVerifying = true);
-                        await Future.delayed(
-                          const Duration(milliseconds: 100),
-                        );
-
-                        if (!statefulContext.mounted) return;
-
-                        if (await settingsProvider.verifyPin(value)) {
-                          Navigator.pop(statefulContext, true);
-                        } else {
-                          setDialogState(() => isVerifying = false);
-                          pinController.clear();
-
-                          if (!statefulContext.mounted) return;
-
-                          ScaffoldMessenger.of(statefulContext).showSnackBar(
-                            SnackBar(
-                              content: const Text('Incorrect PIN'),
-                              backgroundColor: Theme.of(
-                                statefulContext,
-                              ).colorScheme.error,
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(8),
-                            ),
-                          );
-                          HapticFeedback.heavyImpact();
-                        }
-                      },
-              ),
-              if (isVerifying) ...[
-                const SizedBox(height: 16),
-                const LinearProgressIndicator(),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isVerifying
-                  ? null
-                  : () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (statefulContext, setDialogState) => AlertDialog(
+        title: Text('Enter App PIN to $purpose'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'App PIN is required for sensitive actions and secret access.',
             ),
-            ElevatedButton(
-              onPressed: isVerifying
+            const SizedBox(height: 16),
+            TextField(
+              controller: pinController,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              autofocus: true,
+              enabled: !isVerifying,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'App PIN',
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+              onSubmitted: isVerifying
                   ? null
-                  : () async {
+                  : (value) async {
                       setDialogState(() => isVerifying = true);
                       await Future.delayed(const Duration(milliseconds: 100));
 
-                      if (!dialogContext.mounted) return;
+                      if (!statefulContext.mounted) return;
 
-                      if (await settingsProvider.verifyPin(pinController.text)) {
-                        Navigator.pop(dialogContext, true);
+                      if (await settingsProvider.verifyPin(value)) {
+                        await settingsProvider.handleSuccessfulAppPinUnlock();
+                        if (statefulContext.mounted) {
+                          Navigator.pop(statefulContext, true);
+                        }
                       } else {
                         setDialogState(() => isVerifying = false);
                         pinController.clear();
 
-                        if (!dialogContext.mounted) return;
+                        if (!statefulContext.mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(statefulContext).showSnackBar(
                           SnackBar(
-                            content: const Text('Incorrect PIN'),
-                            backgroundColor: Theme.of(
-                              dialogContext,
-                            ).colorScheme.error,
+                            content: const Text('Incorrect App PIN'),
+                            backgroundColor:
+                                Theme.of(statefulContext).colorScheme.error,
                             behavior: SnackBarBehavior.floating,
                             margin: const EdgeInsets.all(8),
                           ),
@@ -162,13 +97,58 @@ Future<bool> showPinVerificationDialog({
                         HapticFeedback.heavyImpact();
                       }
                     },
-              child: const Text('Verify'),
             ),
+            if (isVerifying) ...[
+              const SizedBox(height: 16),
+              const LinearProgressIndicator(),
+            ],
           ],
         ),
-      ),
-    );
+        actions: [
+          TextButton(
+            onPressed: isVerifying
+                ? null
+                : () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: isVerifying
+                ? null
+                : () async {
+                    setDialogState(() => isVerifying = true);
+                    await Future.delayed(const Duration(milliseconds: 100));
 
-    return result ?? false;
-  }
+                    if (!dialogContext.mounted) return;
+
+                    if (await settingsProvider.verifyPin(pinController.text)) {
+                      await settingsProvider.handleSuccessfulAppPinUnlock();
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext, true);
+                      }
+                    } else {
+                      setDialogState(() => isVerifying = false);
+                      pinController.clear();
+
+                      if (!dialogContext.mounted) return;
+
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        SnackBar(
+                          content: const Text('Incorrect App PIN'),
+                          backgroundColor:
+                              Theme.of(dialogContext).colorScheme.error,
+                          behavior: SnackBarBehavior.floating,
+                          margin: const EdgeInsets.all(8),
+                        ),
+                      );
+                      HapticFeedback.heavyImpact();
+                    }
+                  },
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  return result ?? false;
 }

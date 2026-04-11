@@ -17,6 +17,7 @@ import 'package:pointycastle/export.dart';
 
 import '../models/account.dart';
 import '../models/group.dart';
+import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'encryption_service.dart';
 
@@ -64,10 +65,12 @@ class ExportImportService {
 
       return result.status == ShareResultStatus.success;
     } catch (e) {
-      debugPrint('Error exporting encrypted accounts: $e');
+      AppLogger.error('Failed to export encrypted backup', e);
       return false;
     } finally {
-      try { await file?.delete(); } catch (_) {}
+      try {
+        await file?.delete();
+      } catch (_) {}
     }
   }
 
@@ -98,14 +101,17 @@ class ExportImportService {
       // Step 2: Parse accounts and groups
       return _parseBackupJson(jsonData);
     } catch (e) {
-      debugPrint('Error importing encrypted accounts: $e');
+      AppLogger.error('Failed to import encrypted backup', e);
       return null;
     }
   }
 
   // Export accounts as plain JSON (NOT RECOMMENDED - for backward compatibility only)
   // Consider removing this after migration
-  Future<bool> exportAccounts(List<Account> accounts, List<Group> groups) async {
+  Future<bool> exportAccounts(
+    List<Account> accounts,
+    List<Group> groups,
+  ) async {
     File? file;
     try {
       // Decrypt secrets before exporting
@@ -136,10 +142,12 @@ class ExportImportService {
 
       return result.status == ShareResultStatus.success;
     } catch (e) {
-      debugPrint('Error exporting accounts: $e');
+      AppLogger.error('Failed to export plaintext JSON backup', e);
       return false;
     } finally {
-      try { await file?.delete(); } catch (_) {}
+      try {
+        await file?.delete();
+      } catch (_) {}
     }
   }
 
@@ -160,13 +168,16 @@ class ExportImportService {
 
       return _parseBackupJson(jsonData);
     } catch (e) {
-      debugPrint('Error importing accounts: $e');
+      AppLogger.error('Failed to import plaintext JSON backup', e);
       return null;
     }
   }
 
   // Export accounts as CSV (NOT RECOMMENDED - secrets exposed)
-  Future<bool> exportAccountsAsCSV(List<Account> accounts, List<Group> groups) async {
+  Future<bool> exportAccountsAsCSV(
+    List<Account> accounts,
+    List<Group> groups,
+  ) async {
     File? file;
     try {
       // Decrypt secrets before CSV export
@@ -197,10 +208,12 @@ class ExportImportService {
 
       return result.status == ShareResultStatus.success;
     } catch (e) {
-      debugPrint('Error exporting accounts as CSV: $e');
+      AppLogger.error('Failed to export CSV backup', e);
       return false;
     } finally {
-      try { await file?.delete(); } catch (_) {}
+      try {
+        await file?.delete();
+      } catch (_) {}
     }
   }
 
@@ -232,7 +245,7 @@ class ExportImportService {
             .toList(),
       };
     } catch (e) {
-      debugPrint('Error parsing backup JSON: $e');
+      AppLogger.error('Failed to parse backup JSON', e);
       return null;
     }
   }
@@ -261,9 +274,14 @@ class ExportImportService {
   }
 
   // Derive a 32-byte AES-256 key from password + salt using PBKDF2-HMAC-SHA256.
-  Uint8List _deriveKey(String password, Uint8List salt, {int iterations = AppConstants.pbkdf2Iterations}) {
-    final pbkdf2 = PBKDF2KeyDerivator(HMac(SHA256Digest(), AppConstants.hmacBlockSize))
-      ..init(Pbkdf2Parameters(salt, iterations, AppConstants.pbkdf2HashSize));
+  Uint8List _deriveKey(
+    String password,
+    Uint8List salt, {
+    int iterations = AppConstants.pbkdf2Iterations,
+  }) {
+    final pbkdf2 = PBKDF2KeyDerivator(
+      HMac(SHA256Digest(), AppConstants.hmacBlockSize),
+    )..init(Pbkdf2Parameters(salt, iterations, AppConstants.pbkdf2HashSize));
     return pbkdf2.process(Uint8List.fromList(utf8.encode(password)));
   }
 
@@ -331,7 +349,7 @@ class ExportImportService {
         return encrypter.decrypt(encrypted, iv: iv);
       }
     } catch (e) {
-      debugPrint('Error decrypting data: $e');
+      AppLogger.error('Failed to decrypt backup payload', e);
       return null;
     }
   }

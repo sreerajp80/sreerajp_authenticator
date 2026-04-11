@@ -40,6 +40,8 @@ Thumbs.db
 coverage/
 
 # Symbolication related
+*.symbols
+*.symbols/
 app.*.symbols
 
 # Obfuscation related
@@ -78,6 +80,9 @@ app.*.map.json
 **/web/dart.js
 **/web/main.dart.js*
 
-# APK build artifacts
+# Release artifacts
 *.apk
+*.aab
+*.ipa
+*.msix
 

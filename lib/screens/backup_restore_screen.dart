@@ -116,6 +116,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     }
 
     setState(() => _isProcessing = true);
+    await Future.delayed(Duration.zero);
 
     try {
       if (!mounted) return;
@@ -212,6 +213,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     }
 
     setState(() => _isProcessing = true);
+    await Future.delayed(Duration.zero);
 
     try {
       final backupData = await _exportImportService.importAccountsEncrypted(

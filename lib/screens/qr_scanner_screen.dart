@@ -9,6 +9,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../models/account.dart';
 import '../providers/account_provider.dart';
+import '../utils/app_logger.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -99,7 +100,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         );
       }
     } catch (e) {
-      debugPrint('❌ Error processing QR code: $e');
+      AppLogger.error('Failed to process QR code', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

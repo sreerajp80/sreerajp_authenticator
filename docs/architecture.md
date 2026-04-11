@@ -1,53 +1,68 @@
 # Architecture
 
-Use this document to describe the current system design of the Flutter app.
+This document describes the current implementation of the Sreeraj P Authenticator Flutter app.
 
 ## 1. Scope
 
-- Product: `<app name>`
-- Repository type: `application` or `package/plugin`
+- Product: `Sreeraj P Authenticator`
+- Repository type: `application`
 - Engineering standard profiles in force:
   - `Core Baseline`
-  - `Production App Extension` if applicable
-  - `Sensitive Data Extension` if applicable
-- Platforms: `Android`, `iOS`, `Web`, `Desktop` as applicable
+  - `Production App Extension`
+  - `Sensitive Data Extension`
+- Platforms in repository:
+  - `Android` (primary target)
+  - `iOS` (runner present)
+  - `Windows` (runner present)
+
+---
 
 ## 2. Goals And Non-Goals
 
 ### Goals
 
-- `<goal 1>`
-- `<goal 2>`
-- `<goal 3>`
+- Generate TOTP and HOTP codes fully offline.
+- Protect locally stored secrets with device-side encryption and app-lock controls.
+- Support QR onboarding, grouped account management, and encrypted backup/restore.
 
 ### Non-Goals
 
-- `<non-goal 1>`
-- `<non-goal 2>`
+- Cloud sync, server-side account storage, or remote account recovery.
+- Protection against a fully compromised, rooted, or otherwise hostile device.
+
+---
 
 ## 3. Architecture Summary
 
-Describe the current architecture in one short paragraph.
+The app uses a Tier 1 Flutter structure with `Provider` for app state, `sqflite` for local
+persistence, `flutter_secure_storage` for secret and key material, and service classes for OTP,
+encryption, authentication, migration, and import/export logic. The app is intentionally offline:
+accounts, groups, lock settings, and encrypted backups are handled locally on-device without any
+application network API.
 
-Example:
-
-> The app uses a Tier 1 layer-first Flutter structure with Provider for state management. Screens delegate business logic to services, local persistence is isolated behind storage services, and app-wide configuration is injected at startup through the root widget tree.
+---
 
 ## 4. Repository Structure
 
 ### Current Structure Tier
 
-- `Tier 1` or `Tier 2`
+- `Tier 1`
 - Why this tier is appropriate now:
-  - `<reason 1>`
-  - `<reason 2>`
+  - The app is a single product with a modest number of route-level screens.
+  - The current separation by `providers`, `services`, `models`, `screens`, and `widgets`
+    remains understandable without a feature-first split.
 
 ### Top-Level Source Layout
 
 ```text
 lib/
-|-- <folder>
-|-- <folder>
+|-- config/
+|-- models/
+|-- providers/
+|-- screens/
+|-- services/
+|-- utils/
+|-- widgets/
 `-- main.dart
 ```
 
@@ -55,151 +70,324 @@ lib/
 
 | Path | Responsibility |
 |------|----------------|
-| `lib/...` | `<responsibility>` |
-| `lib/...` | `<responsibility>` |
+| `lib/config/` | Flavor parsing and app-environment metadata |
+| `lib/models/` | Account and group data models and mapping |
+| `lib/providers/` | App state, lock policy, filtering, and theme state |
+| `lib/screens/` | Route-level UI and user flows |
+| `lib/services/` | OTP, crypto, auth, migration, backup/import, and database logic |
+| `lib/widgets/` | Reusable UI pieces shared by screens |
+| `lib/utils/` | Constants, theme definitions, and shared helper content |
 
-## 5. State Management
+---
 
-- Primary pattern: `Provider`, `Riverpod`, `Bloc`, etc.
+## 5. App Initialization Sequence
+
+Documented from [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart).
+
+| Step | Code / Call | Notes |
+|------|-------------|-------|
+| 1 | `WidgetsFlutterBinding.ensureInitialized()` | Always first |
+| 2 | `SystemChrome.setPreferredOrientations(...)` | Restricts app to portrait orientations |
+| 3 | `SystemChrome.setSystemUIOverlayStyle(...)` | Transparent status and navigation bars |
+| 4 | `ScreenProtector.protectDataLeakageOn()` | Enables platform screenshot/data-leak protection hooks |
+| 5 | `ScreenProtector.preventScreenshotOn()` | Applies screenshot blocking; on Android this sets `FLAG_SECURE` |
+| 6 | `runApp(const MyApp())` | Starts the widget tree |
+
+Deferred initialization:
+
+- `SettingsProvider` loads persisted settings lazily after `runApp`.
+- Database opening is lazy in [`lib/services/database_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/database_service.dart).
+- Encryption-key bootstrap is lazy in [`lib/services/encryption_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/encryption_service.dart).
+- Accounts and groups load only after settings initialization and only when the app is not locked.
+
+---
+
+## 6. App Lifecycle Behavior
+
+Primary lifecycle handling is implemented in [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart) and supported by `SettingsProvider`.
+
+| Lifecycle State | App Behavior |
+|----------------|--------------|
+| `resumed` | Re-evaluates lock policy through `SettingsProvider.onAppResumed()` |
+| `inactive` | Does not lock; intentionally ignores transient overlays like dialogs and calls |
+| `paused` | Locks the app if app lock is enabled and clears decrypted OTP cache |
+| `detached` | No custom handler today |
+| Memory pressure | No explicit custom handler today |
+
+---
+
+## 7. Offline Behavior
+
+- **Connectivity requirement**: `fully offline`
+- **Network permission**: Android main manifest does not request `INTERNET`; debug/profile manifests add it for tooling only
+- **Offline data sources**:
+  - `sqflite` for accounts and groups
+  - `SharedPreferences` for non-secret settings
+  - `flutter_secure_storage` for keys, PIN hashes, and recovery material
+  - Temporary files for export/share flows
+
+Implications:
+
+- Production Android builds should keep `INTERNET` absent from the merged release manifest.
+- There is no app-owned backend and no intentional network client in the Dart code.
+- The current automated coverage is unit and widget testing; there is not yet a dedicated
+  airplane-mode integration test committed in this repo.
+
+---
+
+## 8. State Management
+
+- Primary pattern: `Provider`
 - Why this pattern was chosen:
-  - `<reason 1>`
-  - `<reason 2>`
+  - The app has a small number of app-wide state domains: settings, accounts, groups, and theme.
+  - `ChangeNotifier`-based providers are sufficient and keep the app wiring simple.
 - State boundaries:
-  - Widgets own: `<ui-only concerns>`
-  - State layer owns: `<screen/app state concerns>`
-  - Services own: `<business logic concerns>`
+  - Widgets own: form inputs, visual expansion state, loading indicators, and local interaction state
+  - Providers own: lock state, theme mode, account/group collections, filtering, sort, and import state
+  - Services own: OTP generation, encryption, persistence, migrations, authentication, and backup logic
 
-## 6. Data Flow
+---
 
-Describe the expected request and update path.
+## 9. Data Flow
+
+Current request/update path:
 
 ```text
-Widget -> State Layer -> Service or Use Case -> Repository -> Datasource
+Widget -> Provider -> Service -> sqflite / secure storage / platform plugin
 ```
 
-If the app intentionally omits a layer, document that here.
+This app intentionally omits a repository layer.
 
 ### Rules
 
-- Widgets must not know: `<sql/http/crypto/etc.>`
-- Services must not know: `<navigation/copy/etc.>`
-- Repositories abstract: `<api/db/cache/etc.>`
+- Widgets must not know: SQL schema details, encryption format details, secure-storage key names
+- Services must not know: navigation policy, widget layout, or screen copy
+- Providers coordinate: screen/app state with service calls and `notifyListeners()`
 
-## 7. Domain Model
+---
+
+## 10. Error Handling Architecture
+
+Current state:
+
+- No centralized `FlutterError.onError` or `PlatformDispatcher.instance.onError` handler is set in
+  [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart).
+- There is no custom domain exception hierarchy yet.
+- Services primarily communicate failure through `bool`, `null`, `debugPrint`, or generic
+  `Exception` values.
+
+| Exception Class | Thrown By | Meaning |
+|----------------|-----------|---------|
+| `Exception` | `EncryptionService` | Encryption or decryption failure |
+| `PlatformException` | `AuthService` / device plugins | Local-auth or platform-plugin failure |
+| `DatabaseException` | `sqflite` operations | Local DB read/write or schema issue |
+
+- **Error escalation policy**: UI flows generally keep existing local state and show an error
+  message instead of crashing the app.
+- **Fatal error screen**: none implemented today
+
+---
+
+## 11. Domain Model
+
+### Current Schema Version
+
+SQLite schema version: `2`
+
+Migration history:
+
+| Version | Change Summary |
+|---------|---------------|
+| 1 | Initial schema with `accounts` and `groups` tables |
+| 2 | Added `groups.icon` and `groups.createdAt` |
 
 ### Core Models Or Entities
 
 | Type | Purpose | Mutable? | Notes |
 |------|---------|----------|-------|
-| `<ModelName>` | `<purpose>` | `No` | `<notes>` |
-| `<ModelName>` | `<purpose>` | `No` | `<notes>` |
+| `Account` | Stores OTP account metadata and the encrypted secret | `Yes` | Supports TOTP and HOTP, issuer, algorithm, digits, period, grouping, and ordering |
+| `Group` | Stores UI grouping metadata for accounts | `Yes` | Includes name, description, color, icon, sort order, and optional timestamp |
 
 ### Serialization Strategy
 
-- JSON models: `<yes/no>`
-- Database models: `<yes/no>`
-- Separate domain entities from transport models: `<yes/no and why>`
+- JSON models: `yes`
+- Database models: `yes`
+- Separate domain entities from transport models: `no`; the same `Account` and `Group` models are
+  used for DB mapping and backup/import JSON
 
-## 8. Dependency Management And Injection
+### Database Indexes
 
-- DI approach: `<provider tree / get_it / riverpod / manual wiring>`
+| Table | Indexed Columns | Reason |
+|-------|----------------|--------|
+| `accounts` | none explicit | Current queries are simple and use sort order plus created timestamp |
+| `groups` | none explicit | Current queries are simple and use sort order plus name |
+
+---
+
+## 12. Dependency Management And Injection
+
+- DI approach: provider tree plus manual service construction inside providers and services
 - App-root dependencies:
-  - `<dependency>`
-  - `<dependency>`
+  - `ThemeProvider`
+  - `SettingsProvider`
+  - `GroupsProvider`
+  - `AccountsProvider`
 - Test replacement strategy:
-  - `<mock/fake/override approach>`
+  - Platform-channel mocks for `flutter_secure_storage`
+  - In-memory or test-path `sqflite` databases
+  - Unit tests around services and providers instead of runtime DI overrides
 
-## 9. Navigation
+---
 
-- Navigation approach: `<Navigator 1.0 / go_router / auto_route / custom>`
-- Route definition location: `<path>`
-- Protected-route strategy: `<auth/app-lock gating pattern>`
-- Deep-link support: `<yes/no>`
+## 13. Navigation
 
-## 10. Persistence And External Systems
+- Navigation approach: `Navigator 1.0`
+- Route definition location: route-level screens are pushed directly from widgets; app root is in
+  [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart)
+- Protected-route strategy: `_AppRoot` switches between `LockScreen` and `HomeScreen` based on
+  `SettingsProvider`
+- Deep-link support: `no`
+
+---
+
+## 14. Persistence And External Systems
 
 ### Local Storage
 
-- Database: `<sqflite/isars/hive/etc.>`
-- Key-value storage: `<shared_preferences/etc.>`
-- Secure storage: `<flutter_secure_storage/etc.>`
+- Database: `sqflite`
+- WAL mode: platform default from `sqflite`; not explicitly overridden
+- Key-value storage: `SharedPreferences`
+- Secure storage: `flutter_secure_storage`
 
 ### Network
 
-- Network client: `<dio/http/none>`
-- Offline behavior: `<online-only/offline-first/cache-assisted>`
+- Network client: `none`
+- Offline behavior: `fully offline`
 
 ### Platform Channels Or Native Integrations
 
-- `<integration>`: `<purpose>`
-- `<integration>`: `<purpose>`
+- `screen_protector`: screenshot and screen-recording protection
+- `local_auth`: device lock and biometric authentication
+- `mobile_scanner`: QR scanning
+- `flutter_secure_storage`: key and secret-material storage
+- `device_state_service` method channel: boot-count checks for adaptive unlock policy
 
-## 11. Environment And Build Model
+---
 
-- Flavors used: `<dev/prod/staging/none>`
-- Runtime config mechanism: `<dart-define/config file/native flavor>`
-- Build outputs supported:
-  - `<debug apk>`
-  - `<release apk>`
-  - `<app bundle>`
+## 15. Environment And Build Model
 
-## 12. UI System
+- Flavors used: `dev`, `prod` on Android
+- Runtime config mechanism: `--dart-define=FLUTTER_APP_FLAVOR=<value>`
+- Build outputs currently documented and used:
+  - `debug APK`
+  - `release APK`
+  - `release app bundle`
+- Additional runners: iOS and Windows runners are present, but Android is the primary documented
+  release target today
+- Obfuscation: should be enabled explicitly for production release builds with
+  `--obfuscate --split-debug-info=build/symbols/android-prod-2.4.0+1/` for the current Android prod release
 
-- Theme source of truth: `<path>`
-- Design tokens location: `<path>`
-- Shared widget strategy: `<where shared UI lives>`
-- Accessibility expectations: `<baseline requirements>`
+---
 
-## 13. Testing Strategy
+## 16. UI System
+
+- Theme source of truth:
+  [`lib/utils/theme.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/utils/theme.dart)
+- Design tokens location: colors, spacing, and themed component styles currently live in
+  [`lib/utils/theme.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/utils/theme.dart)
+- Shared widget strategy: reusable components live under `lib/widgets/`
+- Accessibility expectations:
+  - Minimum touch target: 48 x 48 dp on mobile
+  - Color contrast: target WCAG AA minimum
+  - Screen reader: should be checked before release on Android primary flows
+  - Text scale: layouts should continue working at larger text scales
+
+---
+
+## 17. Logging
+
+- Logger implementation: `debugPrint` only; no dedicated logging package
+- Log file location: none
+- Log rotation policy: none
+- Verbose logging gate:
+  [`lib/config/app_flavor_config.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/config/app_flavor_config.dart)
+  via `AppFlavorConfig.enableVerboseLogging`
+- Sensitive data policy: secrets, keys, recovery data, and decrypted payloads must never be logged
+
+---
+
+## 18. Testing Strategy
 
 | Test Type | Scope | Notes |
 |-----------|-------|-------|
-| Unit | `<scope>` | `<notes>` |
-| Widget | `<scope>` | `<notes>` |
-| Integration | `<scope>` | `<notes>` |
+| Unit | Services, models, providers, and flavor config | Includes OTP vectors, encryption round-trips, migration, auth, DB, and import/export |
+| Widget | Home and security flows | Covers selected UI behavior and provider interactions |
+| Integration | Not committed currently | Manual device validation still required for release flows |
+| Performance | Manual | Release-build smoke testing required before distribution |
 
 ### Test Layout
 
 ```text
 test/
-|-- <mirrored folders>
+|-- config/
+|-- models/
+|-- providers/
+|-- services/
+`-- widgets/
 ```
 
 ### Critical Test Areas
 
-- `<critical logic area>`
-- `<critical flow>`
-- `<migration or parsing path>`
+- RFC-based HOTP/TOTP generation and parsing
+- Encryption round-trips and legacy format decryption
+- SQLite schema migration from version 1 to 2
+- App lock, recovery-key, and lockout behavior
+- Encrypted backup/import flows and duplicate-handling logic
+- Root routing behavior when the app is locked vs unlocked
 
-## 14. Operational Constraints
+---
 
-Document constraints that shape implementation choices.
+## 19. Operational Constraints
 
-- Minimum supported OS versions: `<versions>`
-- Performance constraints: `<startup/memory/offline/etc.>`
-- Regulatory or store constraints: `<if any>`
-- Team constraints: `<single developer / multi-developer / release cadence>`
+- Minimum supported OS versions:
+  - Android: `21+`
+  - iOS and Windows runners: present, but not the primary release target documented here
+- Performance constraints:
+  - Cold startup target: under 2 seconds to first meaningful frame in release builds
+  - Frame budget: 16 ms at 60 Hz
+  - APK size budget: monitor with `--analyze-size` before release; no separate hard budget is
+    committed in this repo yet
+- Regulatory or store constraints: standard mobile-store security and privacy requirements apply
+- Team constraints: single-developer maintenance at present
+- Offline constraints: no app network backend and no Android release `INTERNET` permission
 
-## 15. Decisions And Tradeoffs
+---
 
-Record the decisions that are likely to be questioned later.
+## 20. Decisions And Tradeoffs
 
 | Decision | Chosen Option | Why | Tradeoff |
 |----------|---------------|-----|----------|
-| `<topic>` | `<choice>` | `<reason>` | `<tradeoff>` |
-| `<topic>` | `<choice>` | `<reason>` | `<tradeoff>` |
+| State management | `Provider` with `ChangeNotifier` | Simple app-wide state model and low wiring overhead | Less explicit than a stricter architecture like Bloc or Riverpod |
+| Persistence | `sqflite` + `flutter_secure_storage` | Good fit for local structured data plus device-backed secret storage | Manual schema/version management and plugin behavior differences by platform |
+| Secret protection | AES-256-GCM with device-generated key | Strong local protection with authenticated encryption | Secret recovery depends on backups; rooted-device protection remains out of scope |
+| Navigation gate | Root-widget lock/home switching | Keeps lock policy centralized and simple | No declarative route guard system or deep-link story |
 
-## 16. Known Risks And Follow-Ups
+---
 
-- Risk: `<risk>`
-  Mitigation: `<mitigation>`
-- Risk: `<risk>`
-  Mitigation: `<mitigation>`
+## 21. Known Risks And Follow-Ups
 
-## 17. Related Documents
+- Risk: There is no centralized global error-handling layer yet.
+  Mitigation: Keep failures local, show safe UI errors, and add global error capture if crash
+  reporting or fatal-state handling is introduced.
+- Risk: Release-only hardening and offline verification still depend on manual checklist discipline.
+  Mitigation: Follow [`docs/release_process.md`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/docs/release_process.md)
+  for production builds and add automation over time.
+
+---
+
+## 22. Related Documents
 
 - `README.md`
-- `docs/flutter_project_engineering_standard.md`
-- `docs/project_structure.md`
-- `docs/release_process.md` if applicable
-- `docs/security.md` if applicable
+- `docs/release_process.md`
+- `docs/security.md`
+

@@ -1,25 +1,29 @@
 # Project Structure
 
-This document describes the current repository layout for `sreerajp_authenticator` and the responsibility of each major folder.
+This document describes the current tracked repository layout for `sreerajp_authenticator` and the responsibility of each major area. Generated build outputs may exist locally, but they are not part of the maintained source structure described here.
 
 ## Repository Root
 
 ```text
 sreerajp_authenticator/
-|-- android/        Android app module, product flavors, signing, Gradle config
-|-- assets/         App images and icons bundled with Flutter
-|-- docs/           Project documentation and build guides
-|-- fonts/          Custom font assets declared in pubspec.yaml
-|-- ios/            iOS runner project
-|-- lib/            Flutter application source
-|-- linux/          Linux desktop runner
-|-- macos/          macOS runner
-|-- test/           Unit and widget tests mirroring lib/
-|-- web/            Web runner assets
-|-- windows/        Windows runner
-|-- pubspec.yaml    Package manifest, dependencies, assets, fonts
-|-- README.md       Main project overview and usage instructions
-`-- AGENTS.md       Repository-specific automation rules
+|-- android/               Android app module, flavors, Gradle config, launcher resources
+|-- assets/                Bundled application assets
+|-- docs/                  Project documentation, architecture, security, and release guides
+|-- fonts/                 Inter font files declared in pubspec.yaml
+|-- ios/                   iOS runner project and test target
+|-- lib/                   Flutter application source
+|-- linux/                 Linux desktop runner
+|-- macos/                 macOS runner and test target
+|-- test/                  Unit and widget tests mirroring app layers
+|-- web/                   Web runner shell and icons
+|-- windows/               Windows desktop runner
+|-- analysis_options.yaml  Lint and analyzer configuration
+|-- pubspec.yaml           Package manifest, dependencies, assets, and fonts
+|-- pubspec.lock           Resolved package versions
+|-- README.md              Main project overview and usage instructions
+|-- LICENSE                Project license
+|-- AGENTS.md              Repository-specific automation rules
+`-- CLAUDE.md              Additional local agent guidance
 ```
 
 ## Flutter App Layout
@@ -51,6 +55,7 @@ lib/
 |-- services/
 |   |-- auth_service.dart
 |   |-- database_service.dart
+|   |-- device_state_service.dart
 |   |-- encryption_service.dart
 |   |-- export_import_service.dart
 |   |-- migration_service.dart
@@ -81,12 +86,12 @@ lib/
 
 | Path | Responsibility |
 |------|----------------|
-| `lib/main.dart` | App entry point, provider wiring, app bootstrap |
+| `lib/main.dart` | App entry point, provider wiring, routing bootstrap, flavor initialization |
 | `lib/config/` | Flavor-specific runtime configuration |
 | `lib/models/` | Core data models such as accounts and groups |
 | `lib/providers/` | Provider-based state management for accounts, groups, settings, and theme |
-| `lib/screens/` | Route-level UI screens and workflows |
-| `lib/services/` | Business logic for auth, OTP, encryption, storage, migration, and import/export |
+| `lib/screens/` | Route-level UI screens and primary user workflows |
+| `lib/services/` | Business logic for authentication, device state, OTP, encryption, storage, migration, and import/export |
 | `lib/utils/` | Shared constants, theme definitions, and static content |
 | `lib/widgets/` | Reusable UI building blocks split by feature area |
 
@@ -115,6 +120,7 @@ test/
 |   |-- migration_service_test.dart
 |   `-- otp_service_test.dart
 `-- widgets/
+    |-- security_auth_widgets_test.dart
     `-- home/
         `-- home_widgets_test.dart
 ```
@@ -123,10 +129,14 @@ test/
 
 | Path | Purpose |
 |------|---------|
-| `android/app/build.gradle.kts` | Android build types, product flavors, signing, APK naming |
-| `assets/images/` | Bundled image assets used in the UI |
-| `assets/icons/` | App icons and related packaged assets |
-| `docs/flutter_build_flavors_guide.md` | Reusable guide for Flutter build flavors and release commands |
+| `android/app/build.gradle.kts` | Android build types, product flavors, signing, and APK naming |
+| `android/app/src/main/` | Android manifest, Kotlin entry point, launcher icons, and theme resources |
+| `assets/icons/` | Bundled app icons and foreground artwork |
+| `docs/architecture.md` | High-level architecture reference |
+| `docs/security.md` | Security model and implementation notes |
+| `docs/release_process.md` | Release workflow documentation |
+| `docs/flutter_build_flavors_guide.md` | Build flavor and release command guide |
+| `docs/flutter_project_engineering_standard.md` | Local engineering standards for the Flutter project |
 | `analysis_options.yaml` | Lint and analyzer configuration |
 
 ## Working Conventions

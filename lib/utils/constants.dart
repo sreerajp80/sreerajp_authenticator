@@ -60,9 +60,14 @@ class AppConstants {
   // ─── PIN / Auth ────────────────────────────────────────────────────────────
 
   static const int maxPinAttempts = 5;
+  static const int maxQuickUnlockAttempts = 3;
   static const int currentPinVersion = 2;
   static const int recoveryKeyLength = 16;
   static const String recoveryKeyCharset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  static const Duration strongAuthTimeout = Duration(hours: 1);
+
+  static const String deviceStateChannel = 'sreerajp_authenticator/device_state';
+  static const String getBootCountMethod = 'getBootCount';
 
   static const int lockoutSeconds5Attempts = 30;
   static const int lockoutSeconds6Attempts = 60;
@@ -75,3 +80,4 @@ class AppConstants {
   static const String encryptedBackupExtension = 'aes';
   static const String jsonBackupExtension = 'json';
 }
+

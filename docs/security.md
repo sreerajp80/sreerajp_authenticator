@@ -1,199 +1,357 @@
 # Security
 
-Use this document when the repository handles secrets, protected personal data, health data, financial data, private files, or any local encrypted store.
+This app is security-sensitive. It stores OTP secrets locally, protects them with authenticated
+encryption, and gates access with app-lock controls.
 
-If the app is not security-sensitive, keep this file short and document that decision explicitly.
+---
 
 ## 1. Security Scope
 
-- App: `<app name>`
-- Data sensitivity level: `low`, `moderate`, or `high`
+- App: `Sreeraj P Authenticator`
+- Data sensitivity level: `high`
 - Engineering standard profiles in force:
   - `Core Baseline`
-  - `Sensitive Data Extension` if applicable
+  - `Sensitive Data Extension`
 - Platforms in scope:
-  - `Android`
-  - `iOS`
-  - `<other>`
+  - `Android` (primary target)
+  - `iOS` (runner present)
+  - `Windows` (runner present)
+
+---
 
 ## 2. Security Objectives
 
-- `<objective 1>`
-- `<objective 2>`
-- `<objective 3>`
+- Protect locally stored OTP secrets and recovery material against casual extraction on a normal
+  consumer device.
+- Prevent accidental disclosure through logs, screenshots, backups, or weak storage locations.
+- Preserve migration and recovery compatibility without weakening current encryption.
 
-Example objectives:
-
-- Protect locally stored secrets from casual extraction.
-- Prevent accidental disclosure through logs, backups, screenshots, or exports.
-- Preserve recoverability and migration without weakening encryption.
+---
 
 ## 3. Threat Model Summary
 
-Document the threats the product is designed to address and the ones it explicitly does not address.
-
 ### In Scope Threats
 
-- `<lost or stolen device>`
-- `<casual local access>`
-- `<accidental plaintext export>`
-- `<log leakage>`
+- Lost or stolen device
+- Casual local access by another user of the same device
+- Plaintext disclosure through logs or backups
+- Reverse engineering of the release binary
+- Accidental disclosure through screenshots or screen recording
 
 ### Out Of Scope Threats
 
-- `<fully compromised/rooted device>`
-- `<physical hardware attacks>`
-- `<attacks requiring OS compromise>`
+- Fully compromised or rooted devices
+- OS-level compromise
+- Physical hardware attacks
+- Nation-state or advanced forensic adversaries
+
+---
 
 ## 4. Sensitive Data Inventory
 
 | Data Type | Example | Where It Exists | Protection Required |
 |-----------|---------|-----------------|---------------------|
-| `<secret>` | `<example>` | `<memory/db/export>` | `<control>` |
-| `<token>` | `<example>` | `<memory/storage>` | `<control>` |
-| `<user data>` | `<example>` | `<storage/logs?>` | `<control>` |
+| OTP secret | Base32 seed / decrypted OTP secret | Encrypted in SQLite, briefly decrypted in memory | AES-256-GCM at rest, clear cache on lock/background |
+| Device encryption key | `authenticator_key` | `flutter_secure_storage` only | Never log, never store in SQLite or prefs |
+| App PIN verifier | PBKDF2 hash + salt | `flutter_secure_storage` | Strong KDF, no plaintext PIN persistence |
+| Recovery key verifier | PBKDF2 hash + salt | `flutter_secure_storage` | One-way storage only |
+| Account metadata | Account name, issuer, group, settings | SQLite / `SharedPreferences` | Keep out of logs and backups unless encrypted or intentionally exported |
+
+---
 
 ## 5. Storage Model
 
 ### At Rest
 
-- Primary local storage: `<sqflite/files/etc.>`
-- Secure key storage: `<flutter_secure_storage/keychain/keystore/etc.>`
-- Backup behavior: `<disabled/restricted/encrypted/plaintext not allowed>`
+- Primary local storage: `sqflite` database `authenticator.db`
+- Secure key storage: `flutter_secure_storage`
+- Settings storage: `SharedPreferences` for non-secret preferences and lock policy metadata
+- Android backup behavior:
+  - `android:allowBackup="false"`
+  - `android:fullBackupContent="false"`
 
 ### In Memory
 
-- Sensitive values are kept in memory: `<briefly / cached / long-lived>`
-- Memory clearing strategy: `<lock/background/manual clear>`
+- Sensitive values are kept in memory: `briefly`
+- Memory clearing strategy:
+  - OTP cache TTL is 5 minutes
+  - OTP cache is cleared when the app is paused or locked
+  - Export flows use temporary files that are deleted after the share attempt
 
 ### In Transit
 
-- Network use: `<none / https api / internal network>`
-- Transport protections: `<tls/pinning/none>`
+- Network use: `none`
+- Transport protections: `not applicable`
+
+---
 
 ## 6. Cryptography Design
 
-Document only the design, not the secrets.
-
-- Encryption algorithm: `<AES-256-GCM/etc.>`
-- Key derivation: `<PBKDF2/Argon2/etc.>`
-- Nonce or IV strategy: `<random per record>`
-- Format versioning: `<how versioning works>`
-- Legacy format support: `<yes/no and why>`
+- Encryption algorithm for stored account secrets: `AES-256-GCM`
+- Device-key strategy: random 32-byte key generated on-device and stored under
+  `authenticator_key` in secure storage
+- PIN and recovery-key derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a 16-byte salt
+- Nonce or IV strategy:
+  - Account secret encryption: random 12-byte GCM nonce
+  - Backup encryption: random 12-byte GCM nonce plus random 16-byte salt
+- Format versioning:
+  - Account secrets: current `nonce:ciphertext` GCM format, with legacy XOR and AES-CBC decrypt support
+  - Backups: current `v3:<salt>:<nonce>:<ciphertext>` format with legacy `v2` and CTR/SIC decrypt support
+- Legacy format support: `yes`, for migration and backward-compatible imports
 
 ### Rules
 
-- Keys, IVs, salts, and passwords must never be hardcoded.
-- Randomness must use cryptographically secure generation.
-- Encrypted formats should be versioned.
+- Keys, IVs, salts, and passwords are not hardcoded.
+- Randomness uses secure random generation.
+- Encrypted formats are versioned or format-distinguished for migration compatibility.
+
+---
 
 ## 7. Authentication And Access Control
 
-- App-lock strategy: `<none / biometric / pin / password / device credential>`
-- Fallback behavior: `<behavior>`
-- Session-expiry rule: `<rule>`
-- Background lock rule: `<rule>`
-- Protected-route strategy: `<where enforced>`
+- App-lock strategy:
+  - `App PIN`
+  - `Phone Screen Lock`
+  - optional biometric unlock through `local_auth` on supported devices
+- Fallback behavior:
+  - If quick unlock is unavailable or disallowed, the app requires the app PIN
+- Session-expiry rule:
+  - Strong auth is required again after 1 hour
+  - Strong auth is required after device reboot
+  - Strong auth is required after 3 failed quick-unlock attempts
+  - Lockdown mode forces app PIN entry
+- Background lock rule: triggered on `AppLifecycleState.paused`
+- Protected-route strategy: app root switches between lock and home based on `SettingsProvider`
+- Lock screen implementation:
+  [`lib/screens/lock_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/lock_screen.dart)
 
-## 8. Logging And Telemetry Policy
+---
+
+## 8. Binary Protections
+
+### 8.1 Obfuscation
+
+Production Android builds should be compiled with:
+
+```powershell
+--obfuscate --split-debug-info=build/symbols/android-prod-2.4.0+1/
+```
+
+This is part of the release process and should be applied to any distributable prod build.
+
+### 8.2 R8 / ProGuard
+
+Android release builds enable minification and resource shrinking in
+[`android/app/build.gradle.kts`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/build.gradle.kts).
+
+Current caution:
+
+- [`android/app/proguard-rules.pro`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/proguard-rules.pro)
+  is minimal and currently disables Java/Kotlin obfuscation with `-dontobfuscate`.
+- Review this file whenever new dependencies are added.
+
+### 8.3 Debuggable Flag
+
+`android:debuggable` must remain `false` in release builds. Verify the merged release manifest
+before distribution.
+
+---
+
+## 9. Logging And Telemetry Policy
 
 ### Never Log
 
-- Secrets
-- Tokens
-- Recovery codes
+- OTP secrets
+- Encryption keys
+- Recovery keys
 - Decrypted payloads
-- Sensitive personal data unless explicitly approved
+- Full backup contents
+- Raw secure-storage values
 
 ### Allowed Diagnostic Context
 
-- Operation name
-- Screen or flow name
-- Error category
-- Non-sensitive identifiers where justified
+- Operation or screen name
+- High-level error category
+- Non-sensitive identifiers when justified
 
 ### Logging Controls
 
-- Logger implementation: `<logger>`
-- Verbose logging gate: `<flavor/config flag>`
-- Redaction strategy: `<strategy>`
+- Logger implementation: `debugPrint`
+- Verbose logging gate:
+  [`lib/config/app_flavor_config.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/config/app_flavor_config.dart)
+  via `AppFlavorConfig.enableVerboseLogging`
+- Log level in production: keep logs minimal
+- Redaction strategy: do not log secret-bearing values in the first place
 
-## 9. Platform Security Controls
+The app currently has no analytics or telemetry backend.
+
+---
+
+## 10. Platform Security Controls
 
 ### Android
 
-- `android:allowBackup`: `<true/false and why>`
-- `android:fullBackupContent`: `<value>`
-- Screenshot protection: `<enabled/disabled and why>`
-- Root or tamper detection: `<if any>`
+- `android:allowBackup`: `false`
+- `android:fullBackupContent`: `false`
+- Screenshot protection:
+  - Enabled at app startup through `screen_protector`
+  - Intended to prevent screenshots and screen recording on sensitive views
+- `android:debuggable`: must be `false` in release builds
+- Root detection: none implemented
 
 ### iOS
 
-- Sensitive-screen capture policy: `<policy>`
-- Keychain usage: `<usage>`
-- Required privacy descriptions: `<permissions used>`
+- Keychain usage: `flutter_secure_storage` uses the platform secure store
+- Privacy descriptions in `Info.plist`:
+  - `NSCameraUsageDescription`
+  - `NSFaceIDUsageDescription`
+  - `NSPhotoLibraryUsageDescription`
+- ATS: no custom `NSAllowsArbitraryLoads` setting is declared
+- Sensitive-screen app-switcher overlay: not implemented in the current iOS runner
 
-## 10. Permissions
+### Windows
+
+- Secret storage is provided through the `flutter_secure_storage` Windows plugin
+- Sensitive files should remain in app-private support or temp directories
+- No Windows Event Log integration is implemented
+
+---
+
+## 11. Permissions
 
 | Permission | Why It Is Needed | Requested When | Denial Handling |
 |------------|------------------|----------------|-----------------|
-| `<permission>` | `<reason>` | `<point of use>` | `<behavior>` |
-| `<permission>` | `<reason>` | `<point of use>` | `<behavior>` |
+| `CAMERA` | Scan OTP QR codes | When entering the QR scan flow | User can still add accounts manually |
+| `USE_BIOMETRIC` / `USE_FINGERPRINT` | Unlock via local-auth capabilities | When enabling or using quick unlock | App falls back to app PIN or device lock support checks |
+| `VIBRATE` | Minor haptic feedback | During supported UI interactions | App remains functional without it |
+| `NSPhotoLibraryUsageDescription` | Import encrypted backup files on iOS flows | At point of file selection | Backup import remains unavailable until granted |
 
-## 11. Backup, Import, Export, And Recovery
+Permission review rules:
 
-- Backup supported: `<yes/no>`
-- Backup format: `<encrypted/plaintext/both>`
-- Import supported: `<yes/no>`
-- Recovery flow: `<description>`
-- Plaintext export policy: `<disallowed / allowed with confirmation>`
+- Android prod builds should not include `INTERNET`.
+- Request permissions only at the point of use.
+- The app should remain usable in a safe degraded mode when non-critical permissions are denied.
+
+---
+
+## 12. OWASP Mobile Top 10 Alignment
+
+| ID | Risk | Current Control | Status |
+|----|------|-----------------|--------|
+| M1 | Improper Credential Usage | No hardcoded secrets; secure storage for key material | `implemented` |
+| M2 | Inadequate Supply Chain Security | `pubspec.lock` committed; dependency review still manual | `manual review` |
+| M3 | Insecure Authentication | App lock, PIN hashing, quick unlock policy, lockouts | `implemented` |
+| M4 | Insufficient Input/Output Validation | OTP parsing, import parsing, and DB writes are handled in code | `implemented` |
+| M5 | Insecure Communication | No app network traffic | `implemented` |
+| M6 | Inadequate Privacy Controls | Screenshot blocking, no secrets in logs, backups encrypted in UI flow | `implemented` |
+| M7 | Insufficient Binary Protections | Release hardening is documented but still checklist-driven | `manual review` |
+| M8 | Security Misconfiguration | Minimal permissions, backup disabled on Android | `implemented` |
+| M9 | Insecure Data Storage | Secrets encrypted in SQLite and key material isolated in secure storage | `implemented` |
+| M10 | Insufficient Cryptography | AES-256-GCM, PBKDF2-HMAC-SHA256, migration-aware formats | `implemented` |
+
+---
+
+## 13. Data Retention And Purge Policy
+
+### Retention Schedule
+
+| Data Type | Retention Period | Deletion Trigger |
+|-----------|------------------|-----------------|
+| Accounts and groups | Until user deletes them or uninstalls the app | User delete flow or uninstall |
+| PIN / recovery verifiers | Until user disables app lock or resets it | App-lock reset or uninstall |
+| Temporary backup export files | Session only | Deleted after share attempt |
+| Cached OTP values | Up to 5 minutes, or less on lock/background | Cache expiry, lock, or app pause |
+
+### Purge Implementation
+
+- The repo does not currently implement a single in-app "Delete all data" action.
+- Data is primarily removed through individual delete flows, app-lock reset flows, or uninstall.
+- Temporary export files are created in the temporary directory and deleted in the same session.
+
+### Data Purge On Uninstall
+
+- Android: app data is removed on uninstall and cloud backup is disabled in the manifest
+- iOS: Keychain persistence across reinstall should be considered if iOS becomes a primary release target
+- Windows: credential persistence across reinstall should be considered if Windows becomes a primary release target
+
+---
+
+## 14. Backup, Import, Export, And Recovery
+
+- Backup supported: `yes`
+- Backup format: encrypted `.aes` file in the primary UI flow
+- Import supported: `yes`
+- Recovery flows:
+  - Encrypted backup restore using the backup password
+  - App-lock recovery key for PIN reset
+- Plaintext export policy:
+  - Primary UI is encrypted backup only
+  - Legacy JSON and CSV export helpers still exist in the service layer and should not be treated as the recommended path
 
 ### Validation Requirements
 
-- Import parsing must reject malformed data safely.
-- Recovery flows must be tested like authentication flows.
-- Export UX must clearly communicate sensitivity.
+- Import parsing must reject malformed or incompatible backup data safely.
+- Backup files must remain encrypted in normal user-facing flows.
+- Recovery and migration flows must be tested when changed.
 
-## 12. Security Testing Strategy
+---
+
+## 15. Security Testing Strategy
 
 | Area | Test Type | Notes |
 |------|-----------|-------|
-| Crypto format | Unit | `<notes>` |
-| Secret storage | Unit or integration | `<notes>` |
-| Lock or auth flow | Widget or integration | `<notes>` |
-| Backup and recovery | Integration or focused unit tests | `<notes>` |
+| OTP and crypto logic | Unit | Includes deterministic OTP vectors and encryption/decryption coverage |
+| Secret storage | Unit | Secure-storage channel mocks are used in tests |
+| Lock / auth flow | Unit and widget | Covers PIN validation, recovery, lockouts, and settings policy |
+| Backup and recovery | Unit | Export/import parsing and legacy format support are tested |
+| Data migration | Unit | Legacy XOR, AES-CBC, and old PIN storage migration paths are covered |
+| Release hardening | Manual release verification | Obfuscation, permissions, and debuggable checks are checklist-driven |
 
-### Required Test Vectors Or Regression Areas
+### Required Regression Areas
 
-- `<deterministic vector set>`
-- `<migration path>`
-- `<failure mode>`
+- RFC 4226 HOTP vectors
+- OTP URI parsing and generation
+- AES-GCM secret encryption and legacy decrypt compatibility
+- Backup format compatibility across current and legacy versions
+- SQLite schema migration from v1 to v2
+- Lockout and strong-auth policy transitions
 
-## 13. Incident Response Notes
+---
 
-Document how the team should respond if a security issue is found.
+## 16. Incident Response Notes
 
-- Triage owner: `<owner>`
-- Severity model: `<brief model>`
+- Triage owner: `Sreeraj P`
+- Severity model: `critical`, `high`, `medium`, `low`
 - Immediate containment actions:
-  - `<action 1>`
-  - `<action 2>`
-- User communication trigger: `<when users must be notified>`
-- Patch release process reference: `docs/release_process.md`
+  - Stop distributing the affected build
+  - Patch and rebuild the prod artifact
+  - Re-check lock, migration, and backup paths
+- User communication trigger: notify users if a shipped build can expose secrets, break lock
+  guarantees, or corrupt imported/exported data
+- Patch release process reference:
+  [`docs/release_process.md`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/docs/release_process.md)
 
-## 14. Open Risks And Future Hardening
+---
 
-- Risk: `<risk>`
-  Hardening option: `<option>`
-- Risk: `<risk>`
-  Hardening option: `<option>`
+## 17. Open Risks And Future Hardening
 
-## 15. Security Review Checklist
+- Risk: Release binary hardening is documented but not fully automated in tooling.
+  Hardening option: add automated release-build verification and symbol-archive steps.
+- Risk: iOS and Windows uninstall/reinstall secret persistence behavior is not yet fully managed for
+  a primary release target.
+  Hardening option: add first-run reinstall detection and secure-store cleanup rules if those
+  platforms move into active distribution.
 
-- [ ] Threat model reviewed.
-- [ ] Sensitive data inventory updated.
-- [ ] Logging policy reviewed.
-- [ ] Storage and backup behavior reviewed.
-- [ ] Permission usage reviewed.
-- [ ] Recovery, import, export, and migration paths reviewed.
-- [ ] Tests cover the highest-risk failure modes.
+---
+
+## 18. Security Review Checklist
+
+- [ ] Threat model reviewed after security-sensitive changes
+- [ ] Sensitive data inventory still matches the implementation
+- [ ] No new logs expose secret or decrypted data
+- [ ] Android permissions reviewed in the merged prod manifest
+- [ ] `--obfuscate` used for the prod release build
+- [ ] Debug symbols archived securely
+- [ ] `android:debuggable=false` verified in the release manifest
+- [ ] Backup, lock, migration, and recovery paths tested if changed
+- [ ] Release checklist in `docs/release_process.md` completed

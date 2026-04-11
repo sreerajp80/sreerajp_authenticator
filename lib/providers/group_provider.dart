@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../models/group.dart';
 import '../models/account.dart';
 import '../services/database_service.dart';
+import '../utils/app_logger.dart';
 
 class GroupsProvider extends ChangeNotifier {
   List<Group> _groups = [];
@@ -22,7 +23,7 @@ class GroupsProvider extends ChangeNotifier {
       _groups.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading groups: $e');
+      AppLogger.error('Failed to load groups', e);
     }
   }
 
@@ -39,7 +40,7 @@ class GroupsProvider extends ChangeNotifier {
       await _db.createGroup(newGroup);
       await loadGroups();
     } catch (e) {
-      debugPrint('Error adding group: $e');
+      AppLogger.error('Failed to add group', e);
       rethrow;
     }
   }
@@ -49,7 +50,7 @@ class GroupsProvider extends ChangeNotifier {
       await _db.updateGroup(group);
       await loadGroups();
     } catch (e) {
-      debugPrint('Error updating group: $e');
+      AppLogger.error('Failed to update group', e);
       rethrow;
     }
   }
@@ -82,7 +83,7 @@ class GroupsProvider extends ChangeNotifier {
 
       onAccountsUnassigned?.call();
     } catch (e) {
-      debugPrint('Error deleting group: $e');
+      AppLogger.error('Failed to delete group', e);
       rethrow;
     }
   }

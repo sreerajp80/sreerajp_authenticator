@@ -12,6 +12,7 @@ import '../models/account.dart';
 import '../models/group.dart';
 import '../services/otp_service.dart';
 import '../utils/constants.dart';
+import '../utils/app_logger.dart';
 import '../providers/group_provider.dart';
 import 'account_tile/pattern_painter.dart';
 import 'account_tile/account_avatar.dart';
@@ -83,9 +84,7 @@ class _AccountTileState extends State<AccountTile>
         });
       }
     } catch (e) {
-      debugPrint(
-        'Failed to generate initial OTP for ${widget.account.name}: $e',
-      );
+      AppLogger.error('Failed to generate initial OTP', e);
       if (mounted) {
         setState(() {
           _otpCode = AppConstants.otpUnavailablePlaceholder;
@@ -107,7 +106,7 @@ class _AccountTileState extends State<AccountTile>
         final result = OTPService.generateTOTP(widget.account);
         _applyOTPResult(result);
       } catch (e) {
-        debugPrint('Failed to generate OTP for ${widget.account.name}: $e');
+        AppLogger.error('Failed to refresh OTP', e);
         _otpCode = AppConstants.otpUnavailablePlaceholder;
         _otpError = OTPUnexpectedException(
           'Failed to generate OTP for account "${widget.account.name}"',

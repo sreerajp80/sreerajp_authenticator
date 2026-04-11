@@ -1,163 +1,258 @@
 # Release Process
 
-Use this document for repositories that ship builds to QA, external testers, enterprise distribution, or public app stores.
+This repository is Android-first. The app includes iOS and Windows runners, but the current
+tracked release process is centered on Android builds and Android validation.
 
-If the repository is not release-tracked yet, keep this file short and mark the current release scope clearly.
+---
 
 ## 1. Release Scope
 
-- App: `<app name>`
-- Release profile: `internal`, `beta`, `public`, or `not yet shipping`
-- Supported release platforms:
+- App: `Sreeraj P Authenticator`
+- Current release profile: `internal`
+- Supported tracked release platform:
   - `Android`
-  - `iOS`
-  - `<other>`
-- Engineering standard profiles in force:
-  - `Core Baseline`
-  - `Production App Extension`
-  - `Sensitive Data Extension` if applicable
+- Repository version source of truth:
+  - [`pubspec.yaml`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/pubspec.yaml)
+- Current app version:
+  - `2.4.0+1`
+
+---
 
 ## 2. Roles And Responsibilities
 
 | Role | Responsibility | Owner |
 |------|----------------|-------|
-| Release owner | Coordinates release readiness and final sign-off | `<name/team>` |
-| Engineering | Code freeze, fixes, validation | `<name/team>` |
-| QA | Test execution and regression sign-off | `<name/team>` |
-| Store or distribution owner | Uploads artifacts and manages release metadata | `<name/team>` |
+| Release owner | Coordinates readiness, builds artifacts, and signs off | `Sreeraj P` |
+| Engineering | Code changes, regression fixes, and release validation | `Sreeraj P` |
+| QA | Manual smoke and regression verification | `Sreeraj P` |
+| Distribution owner | Handles signed APK/AAB distribution | `Sreeraj P` |
+
+---
 
 ## 3. Versioning Policy
 
 - Version format: `MAJOR.MINOR.PATCH+BUILD`
 - Source of truth: `pubspec.yaml`
-- Build-number increment rule: `<rule>`
+- Build-number increment rule: increment `+BUILD` for every distributable Android release build
 - Git tag format: `vX.Y.Z`
+
+---
 
 ## 4. Branch And Merge Policy
 
-- Release branch strategy: `<main only / release branches / trunk-based>`
-- Hotfix strategy: `<strategy>`
+- Release branch strategy: `main only`
+- Hotfix strategy: patch `main`, rebuild the prod artifact, and tag a new version
 - Required checks before merge:
-  - `<ci checks>`
-  - `<review requirements>`
+  - `flutter analyze`
+  - `flutter test`
+  - Manual Android smoke validation for changed flows
+  - Review of permissions and security-sensitive changes when applicable
+
+---
 
 ## 5. Environment And Flavor Matrix
 
 | Flavor | Mode | Purpose | Example Command |
 |--------|------|---------|-----------------|
 | `dev` | `debug` | Local development | `flutter run --flavor dev --dart-define=FLUTTER_APP_FLAVOR=dev` |
-| `dev` | `release` | Release-like QA | `flutter build apk --flavor dev --release --dart-define=FLUTTER_APP_FLAVOR=dev` |
-| `prod` | `release` | Final release artifact | `flutter build appbundle --flavor prod --release --dart-define=FLUTTER_APP_FLAVOR=prod` |
+| `dev` | `release` | Release-like manual QA | `flutter build apk --flavor dev --release --dart-define=FLUTTER_APP_FLAVOR=dev` |
+| `prod` | `release` | Signed release artifact | See section 9 |
 
-Adjust the matrix if the project uses `staging`, `qa`, or no flavors.
+Notes:
 
-## 6. Signing And Secret Handling
+- Android flavors are defined in [`android/app/build.gradle.kts`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/build.gradle.kts).
+- `prod` has the release app name and base application ID.
+- `dev` adds `.dev` to the application ID and appends `-dev` to the version name.
 
-- Signing config location: `<environment variables / secrets manager / CI secret store>`
-- Keystore or certificate ownership: `<owner>`
-- Secret rotation process: `<brief process>`
+---
+
+## 6. Release Build Hardening
+
+All production builds should be treated as security-sensitive artifacts.
+
+### 6.1 Dart Obfuscation And Symbols
+
+Production builds should include:
+
+```powershell
+--obfuscate
+--split-debug-info=build/symbols/android-prod-2.4.0+1/
+```
+
+When the version changes, update the symbol directory to match the current `pubspec.yaml` version.
+
+### 6.2 Android Shrinking And ProGuard / R8
+
+Current Android release configuration in
+[`android/app/build.gradle.kts`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/build.gradle.kts):
+
+- `isMinifyEnabled = true`
+- `isShrinkResources = true`
+- Uses `proguard-android-optimize.txt`
+- Includes [`android/app/proguard-rules.pro`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/proguard-rules.pro)
+
+Current caution:
+
+- The checked-in ProGuard rules file is intentionally minimal and currently includes
+  `-dontobfuscate`.
+- Revalidate `proguard-rules.pro` whenever adding plugins that rely on reflection or release-only
+  code paths.
+
+### 6.3 Debuggable Verification
+
+Before distributing a prod artifact, verify the merged release manifest does not mark the app
+debuggable.
+
+---
+
+## 7. Signing And Secret Handling
+
+- Signing config location: local `android/key.properties` file outside source control, based on
+  [`android/key.properties.example`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/key.properties.example)
+- Keystore ownership: `Sreeraj P`
+- Secret rotation process:
+  - Replace keystore material in the secure owner-controlled location
+  - Update local signing configuration
+  - Rebuild and validate a signed prod artifact
 - Rules:
-  - Signing material must not live in source control.
-  - Local signing helpers must not expose secrets in committed files.
-  - CI logs must not print signing secrets.
+  - Never commit keystore files or passwords
+  - Never print signing secrets in logs
+  - Keep at least two secure backups of release signing material
 
-## 7. Release Checklist
+---
+
+## 8. Release Checklist
 
 Complete these items before every release.
 
 ### Code And Quality
 
-- [ ] Required CI checks passed.
-- [ ] `dart format --output=none --set-exit-if-changed .` passed.
-- [ ] `flutter analyze` passed.
-- [ ] `flutter test` passed.
-- [ ] Integration tests passed if applicable.
-- [ ] No critical or release-blocking bugs remain open.
+- [ ] `dart format --output=none --set-exit-if-changed .` passed
+- [ ] `flutter analyze` passed
+- [ ] `flutter test` passed
+- [ ] Manual smoke test completed on the changed flows
+- [ ] No known release-blocking defects remain
+
+### Security
+
+- [ ] Production build uses `--obfuscate`
+- [ ] Production build uses `--split-debug-info`
+- [ ] Debug-symbol archive stored securely
+- [ ] Android merged release manifest reviewed for permissions
+- [ ] `android:debuggable=false` verified in the release manifest
+- [ ] Backup, lock, and secret-storage flows rechecked for changed code
 
 ### Product And Documentation
 
-- [ ] Version in `pubspec.yaml` was updated.
-- [ ] Changelog or release notes were updated.
-- [ ] User-visible behavior changes were documented.
-- [ ] Required store metadata is ready.
-
-### Security And Compliance
-
-- [ ] Manifest and permission review completed.
-- [ ] Secrets, keys, and backup settings reviewed if applicable.
-- [ ] Sensitive-data flows revalidated if applicable.
+- [ ] Version in `pubspec.yaml` is correct
+- [ ] Release notes or changelog updated
+- [ ] Any user-visible behavior change is documented
 
 ### Artifact Validation
 
-- [ ] Intended release artifact built successfully.
-- [ ] Artifact installs and launches correctly.
-- [ ] Flavor and environment are correct in the built artifact.
-- [ ] Version name and build number are correct.
+- [ ] Intended prod artifact built successfully
+- [ ] Artifact installs on a clean device or emulator
+- [ ] App launches with the correct prod name and no dev banner
+- [ ] Version name and build number are correct
+- [ ] QR scan, account creation, unlock, and backup/restore smoke tests completed
 
-## 8. Android Release Steps
+---
 
-Adjust these steps to match the repository.
+## 9. Android Release Steps
 
-1. Pull the intended release commit.
-2. Verify the version in `pubspec.yaml`.
-3. Fetch dependencies.
-4. Run format, analyze, and test checks.
-5. Build the required Android artifacts.
-6. Verify artifact naming, installability, and environment.
-7. Upload to the intended distribution channel.
-8. Tag the release in git if applicable.
+1. Verify the working tree is clean enough for release work.
+2. Confirm the version in `pubspec.yaml`.
+3. Fetch dependencies with `flutter pub get`.
+4. Run formatting, analysis, and tests.
+5. Build the prod artifact with release hardening flags.
+6. Install the artifact on a clean device or emulator and run the smoke checklist.
+7. Archive the symbol directory.
+8. Distribute the APK or AAB through the intended internal channel.
+9. Tag the release commit if the build is accepted.
 
-### Common Commands
+### Android Build Commands
 
-```bash
+```powershell
 flutter pub get
 dart format --output=none --set-exit-if-changed .
 flutter analyze
 flutter test
-flutter build apk --flavor prod --release --dart-define=FLUTTER_APP_FLAVOR=prod --split-per-abi
-flutter build appbundle --flavor prod --release --dart-define=FLUTTER_APP_FLAVOR=prod
+
+# Split APKs for direct internal distribution
+flutter build apk `
+  --flavor prod `
+  --release `
+  --dart-define=FLUTTER_APP_FLAVOR=prod `
+  --obfuscate `
+  --split-debug-info=build/symbols/android-prod-2.4.0+1/ `
+  --split-per-abi
+
+# App Bundle if Play-style distribution is needed
+flutter build appbundle `
+  --flavor prod `
+  --release `
+  --dart-define=FLUTTER_APP_FLAVOR=prod `
+  --obfuscate `
+  --split-debug-info=build/symbols/android-prod-2.4.0+1/
+
+# Optional size analysis
+flutter build apk `
+  --flavor prod `
+  --release `
+  --dart-define=FLUTTER_APP_FLAVOR=prod `
+  --analyze-size
 ```
 
-## 9. iOS Release Steps
-
-Document the real process if iOS is supported.
-
-1. Confirm signing and provisioning are valid.
-2. Build the iOS release artifact.
-3. Validate permissions, metadata, and environment config.
-4. Upload through the approved pipeline.
-5. Confirm TestFlight or App Store processing.
+---
 
 ## 10. Distribution Channels
 
 | Channel | Artifact | Audience | Notes |
 |---------|----------|----------|-------|
-| `<channel>` | `<apk/aab/ipa/etc.>` | `<audience>` | `<notes>` |
-| `<channel>` | `<artifact>` | `<audience>` | `<notes>` |
+| Internal Android QA | `APK` | Developer / internal testers | Usually `prod` split APKs installed directly |
+| Android store-style packaging | `AAB` | Future external or store distribution | Build on demand; validate signing and symbols first |
+
+---
 
 ## 11. Rollback And Hotfix Process
 
-- Rollback trigger: `<what forces rollback>`
-- Rollback method: `<store halt / phased rollout pause / hotfix release>`
-- Hotfix branch naming: `<pattern>`
+- Rollback trigger: release-blocking crash, broken lock flow, bad migration, or incorrect signing/build config
+- Rollback method: stop distribution of the bad artifact and ship a new prod build from a fixed commit
+- Hotfix branch naming: use `main` unless a temporary release branch is created for coordination
 - Verification after rollback or hotfix:
-  - `<check 1>`
-  - `<check 2>`
+  - Run the full Android release checklist again
+  - Archive symbols for the replacement build
+
+---
 
 ## 12. Release Evidence
 
-Store links or references to release evidence here.
+Store or record the following for each accepted release:
 
-- CI run: `<url or identifier>`
-- Test report: `<url or identifier>`
-- Built artifact: `<location>`
-- Release notes: `<location>`
-- Store submission or rollout record: `<location>`
+- Git commit SHA
+- `pubspec.yaml` version
+- Test run result
+- Analyzer result
+- Artifact filename
+- Symbol archive location
+- Release notes location
+- Distribution record or recipient list
+
+---
 
 ## 13. Post-Release Checks
 
-- [ ] Production crash and error monitoring reviewed.
-- [ ] Analytics or telemetry sanity checked if applicable.
-- [ ] User-reported issues triaged.
-- [ ] Release tag created.
-- [ ] Follow-up tasks recorded.
+- [ ] Install and launch verified from the final distributed artifact
+- [ ] No immediate crashes or lock-screen regressions observed
+- [ ] Symbol archive confirmed present
+- [ ] Release tag created if applicable
+- [ ] Follow-up bugs or hardening tasks recorded
+
+---
+
+## 14. Platforms Not Yet Tracked Here
+
+- `iOS`: runner exists, but a full signing, archive, and distribution process is not yet documented
+  in this repository
+- `Windows`: runner exists, but a Windows packaging and release process is not yet documented in
+  this repository

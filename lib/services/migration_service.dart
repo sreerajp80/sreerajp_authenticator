@@ -1,9 +1,9 @@
 // File Path: sreerajp_authenticator/lib/services/migration_service.dart
 // Description: Service for migrating account secrets between encryption schemes
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
+import '../utils/app_logger.dart';
 import 'database_service.dart';
 import 'encryption_service.dart';
 
@@ -14,19 +14,21 @@ class MigrationService {
   static const String _migrationKey = AppConstants.aesMigrationKey;
   static const String _gcmMigrationKey = AppConstants.gcmMigrationKey;
 
-  MigrationService({
-    DatabaseService? db,
-    EncryptionService? encryption,
-  })  : _db = db ?? DatabaseService.instance,
-        _encryption = encryption ?? EncryptionService();
+  MigrationService({DatabaseService? db, EncryptionService? encryption})
+    : _db = db ?? DatabaseService.instance,
+      _encryption = encryption ?? EncryptionService();
 
   /// Run all pending migrations in order.
   /// Returns true if any migration was performed.
   Future<bool> runPendingMigrations({
     required void Function(bool isMigrating) onStatusChanged,
   }) async {
-    final didXorToAes = await _performMigrationIfNeeded(onStatusChanged: onStatusChanged);
-    final didCbcToGcm = await _performGCMMigrationIfNeeded(onStatusChanged: onStatusChanged);
+    final didXorToAes = await _performMigrationIfNeeded(
+      onStatusChanged: onStatusChanged,
+    );
+    final didCbcToGcm = await _performGCMMigrationIfNeeded(
+      onStatusChanged: onStatusChanged,
+    );
     return didXorToAes || didCbcToGcm;
   }
 
@@ -39,17 +41,17 @@ class MigrationService {
       final isMigrated = prefs.getBool(_migrationKey) ?? false;
 
       if (isMigrated) {
-        debugPrint('✓ AES migration already complete');
+        AppLogger.verbose('AES migration already complete');
         return false;
       }
 
-      debugPrint('Starting AES migration...');
+      AppLogger.verbose('Starting AES migration');
       onStatusChanged(true);
 
       final accountsToMigrate = await _db.getAllAccounts();
 
       if (accountsToMigrate.isEmpty) {
-        debugPrint('No accounts to migrate');
+        AppLogger.verbose('No accounts required AES migration');
         await prefs.setBool(_migrationKey, true);
         onStatusChanged(false);
         return false;
@@ -61,9 +63,7 @@ class MigrationService {
       for (final account in accountsToMigrate) {
         try {
           if (account.secret.contains(':')) {
-            debugPrint(
-              'Account ${account.name} already AES encrypted, skipping',
-            );
+            AppLogger.verbose('Skipped an account already using AES');
             successCount++;
             continue;
           }
@@ -73,23 +73,23 @@ class MigrationService {
           await _db.updateAccount(updatedAccount);
 
           successCount++;
-          debugPrint('✓ Migrated account: ${account.name}');
+          AppLogger.verbose('Migrated one account to AES');
         } catch (e) {
           failCount++;
-          debugPrint('✗ Migration failed for account ${account.name}: $e');
+          AppLogger.error('Failed to migrate one account to AES', e);
         }
       }
 
       await prefs.setBool(_migrationKey, true);
 
-      debugPrint(
-        'AES Migration complete: $successCount succeeded, $failCount failed',
+      AppLogger.verbose(
+        'AES migration complete: $successCount succeeded, $failCount failed',
       );
 
       onStatusChanged(false);
       return true;
     } catch (e) {
-      debugPrint('Error during migration: $e');
+      AppLogger.error('AES migration failed', e);
       onStatusChanged(false);
       rethrow;
     }
@@ -103,7 +103,7 @@ class MigrationService {
       final prefs = await SharedPreferences.getInstance();
       if (prefs.getBool(_gcmMigrationKey) ?? false) return false;
 
-      debugPrint('Starting GCM migration...');
+      AppLogger.verbose('Starting GCM migration');
       onStatusChanged(true);
 
       final accountsToMigrate = await _db.getAllAccounts();
@@ -113,30 +113,31 @@ class MigrationService {
       for (final account in accountsToMigrate) {
         try {
           if (account.secret.contains(':') &&
-              account.secret.split(':')[0].length == AppConstants.cbcIvBase64Length) {
+              account.secret.split(':')[0].length ==
+                  AppConstants.cbcIvBase64Length) {
             final plainSecret = await _encryption.decrypt(account.secret);
             final gcmSecret = await _encryption.encrypt(plainSecret);
             await _db.updateAccount(account.copyWith(secret: gcmSecret));
             successCount++;
-            debugPrint('✓ GCM migrated: ${account.name}');
+            AppLogger.verbose('Migrated one account to AES-GCM');
           } else {
             successCount++;
           }
         } catch (e) {
           failCount++;
-          debugPrint('✗ GCM migration failed for ${account.name}: $e');
+          AppLogger.error('Failed to migrate one account to AES-GCM', e);
         }
       }
 
       await prefs.setBool(_gcmMigrationKey, true);
-      debugPrint(
-        'GCM Migration complete: $successCount succeeded, $failCount failed',
+      AppLogger.verbose(
+        'GCM migration complete: $successCount succeeded, $failCount failed',
       );
 
       onStatusChanged(false);
       return true;
     } catch (e) {
-      debugPrint('Error during GCM migration: $e');
+      AppLogger.error('GCM migration failed', e);
       onStatusChanged(false);
       return false;
     }

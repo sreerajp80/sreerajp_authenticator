@@ -6,13 +6,15 @@
 
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:base32/base32.dart';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 
+import '../config/app_flavor_config.dart';
 import '../models/account.dart';
 import '../services/encryption_service.dart';
+import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 
 abstract class OTPException implements Exception {
@@ -65,6 +67,8 @@ class OTPService {
 
   /// How long decrypted secrets stay in memory before requiring re-decryption.
   static const Duration cacheTtl = AppConstants.cacheTtl;
+  static bool get _debugToolsEnabled =>
+      AppFlavorConfig.instance.enableVerboseLogging;
 
   // === SHARED CRYPTO HELPERS ===
 
@@ -118,9 +122,9 @@ class OTPService {
   // === ENHANCED DEBUGGING METHODS ===
 
   /// Generate detailed debug information for an account.
-  /// Only available in debug builds — returns an empty map in release.
+  /// Only available in the dev flavor — returns an empty map otherwise.
   static Future<Map<String, dynamic>> getDebugInfo(Account account) async {
-    if (!kDebugMode) return const {};
+    if (!_debugToolsEnabled) return const {};
     try {
       final actualSecret = await _getDecryptedSecret(account);
       final cleanSecret = _cleanSecret(actualSecret);
@@ -130,15 +134,8 @@ class OTPService {
       final timeStep = timestamp ~/ account.period;
 
       return {
-        'account_name': account.name,
-        'issuer': account.issuer ?? 'N/A',
         'secret_length': cleanSecret.length,
-        'secret_first_4': cleanSecret.substring(0, min(4, cleanSecret.length)),
-        'secret_last_4': cleanSecret.substring(max(0, cleanSecret.length - 4)),
         'secret_bytes_length': secretBytes.length,
-        'secret_bytes_hex': secretBytes
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join(' '),
         'digits': account.digits,
         'period': account.period,
         'algorithm': account.algorithm,
@@ -149,7 +146,7 @@ class OTPService {
         'is_base32_valid': _isValidBase32(cleanSecret),
       };
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': e.runtimeType.toString()};
     }
   }
 
@@ -159,6 +156,8 @@ class OTPService {
     int windowsBefore = 1,
     int windowsAfter = 1,
   }) async {
+    if (!_debugToolsEnabled) return const {};
+
     final codes = <int, String>{};
 
     try {
@@ -179,19 +178,19 @@ class OTPService {
         );
       }
     } catch (e) {
-      debugPrint('Error generating TOTP window codes: $e');
+      AppLogger.error('Failed to generate TOTP window codes', e);
     }
 
     return codes;
   }
 
   /// Compare two secrets byte by byte.
-  /// Only available in debug builds — returns an empty map in release.
+  /// Only available in the dev flavor — returns an empty map otherwise.
   static Future<Map<String, dynamic>> compareSecrets(
     String secret1,
     String secret2,
   ) async {
-    if (!kDebugMode) return const {};
+    if (!_debugToolsEnabled) return const {};
     try {
       final clean1 = _cleanSecret(secret1);
       final clean2 = _cleanSecret(secret2);
@@ -205,17 +204,25 @@ class OTPService {
         'secret2_length': clean2.length,
         'secret1_bytes': bytes1.length,
         'secret2_bytes': bytes2.length,
-        'bytes_match': bytes1.toString() == bytes2.toString(),
-        'secret1_hex': bytes1
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join(' '),
-        'secret2_hex': bytes2
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join(' '),
+        'bytes_match': _bytesEqual(bytes1, bytes2),
       };
     } catch (e) {
-      return {'error': e.toString()};
+      return {'error': e.runtimeType.toString()};
     }
+  }
+
+  static bool _bytesEqual(Uint8List left, Uint8List right) {
+    if (left.length != right.length) {
+      return false;
+    }
+
+    for (int i = 0; i < left.length; i++) {
+      if (left[i] != right[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /// Generate OTP Auth URI for the account
@@ -261,14 +268,14 @@ class OTPService {
         ),
       );
     } on OTPException catch (e) {
-      debugPrint('Error generating TOTP for ${account.name}: $e');
+      AppLogger.error('Failed to generate TOTP', e);
       return OTPGenerationResult.failure(e);
     } catch (e) {
       final error = OTPUnexpectedException(
         'Failed to generate TOTP for account "${account.name}"',
         e,
       );
-      debugPrint('Error generating TOTP for ${account.name}: $error');
+      AppLogger.error('Failed to generate TOTP', error);
       return OTPGenerationResult.failure(error);
     }
   }
@@ -293,14 +300,14 @@ class OTPService {
         ),
       );
     } on OTPException catch (e) {
-      debugPrint('Error generating sync TOTP for ${account.name}: $e');
+      AppLogger.error('Failed to generate cached TOTP', e);
       return OTPGenerationResult.failure(e);
     } catch (e) {
       final error = OTPUnexpectedException(
         'Failed to generate TOTP for account "${account.name}"',
         e,
       );
-      debugPrint('Error generating sync TOTP for ${account.name}: $error');
+      AppLogger.error('Failed to generate cached TOTP', error);
       return OTPGenerationResult.failure(error);
     }
   }
@@ -320,14 +327,14 @@ class OTPService {
         ),
       );
     } on OTPException catch (e) {
-      debugPrint('Error generating HOTP for ${account.name}: $e');
+      AppLogger.error('Failed to generate HOTP', e);
       return OTPGenerationResult.failure(e);
     } catch (e) {
       final error = OTPUnexpectedException(
         'Failed to generate HOTP for account "${account.name}"',
         e,
       );
-      debugPrint('Error generating HOTP for ${account.name}: $error');
+      AppLogger.error('Failed to generate HOTP', error);
       return OTPGenerationResult.failure(error);
     }
   }
@@ -417,7 +424,7 @@ class OTPService {
     if (_inFlight.containsKey(cacheKey)) return;
     final future = _decryptAndCache(account)
         .catchError((e) {
-          debugPrint('Async decryption failed for ${account.name}: $e');
+          AppLogger.error('Background OTP secret decryption failed', e);
         })
         .whenComplete(() {
           _inFlight.remove(cacheKey);
@@ -431,7 +438,7 @@ class OTPService {
       final cacheKey = '${account.id}_${account.secret}';
       _putCache(cacheKey, decrypted);
     } catch (e) {
-      debugPrint('Decryption failed for ${account.name}: $e');
+      AppLogger.error('OTP secret decryption failed', e);
       throw OTPDecryptionException(
         'Failed to decrypt secret for account "${account.name}"',
         e,
@@ -474,7 +481,7 @@ class OTPService {
         try {
           await _decryptAndCache(account);
         } catch (e) {
-          debugPrint('Pre-decryption failed for ${account.name}: $e');
+          AppLogger.error('Failed to pre-decrypt an OTP secret', e);
           // Continue with other accounts — individual OTP generation
           // will surface the error for this account.
         }

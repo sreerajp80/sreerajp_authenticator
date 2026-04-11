@@ -6,6 +6,7 @@ import 'package:sreerajp_authenticator/models/account.dart';
 import 'package:sreerajp_authenticator/models/group.dart';
 import 'package:sreerajp_authenticator/services/database_service.dart';
 import 'package:sreerajp_authenticator/services/otp_service.dart';
+import 'package:sreerajp_authenticator/utils/constants.dart';
 
 final Map<String, String> fakeSecureStorage = {};
 
@@ -69,6 +70,19 @@ Future<void> setUpProviderTestEnvironment({
           }
         },
       );
+
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(
+        const MethodChannel(AppConstants.deviceStateChannel),
+        (MethodCall methodCall) async {
+          switch (methodCall.method) {
+            case AppConstants.getBootCountMethod:
+              return 42;
+            default:
+              return null;
+          }
+        },
+      );
 }
 
 Future<void> tearDownProviderTestEnvironment() async {
@@ -80,6 +94,11 @@ Future<void> tearDownProviderTestEnvironment() async {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/local_auth'),
+        null,
+      );
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(
+        const MethodChannel(AppConstants.deviceStateChannel),
         null,
       );
 
