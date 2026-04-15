@@ -28,6 +28,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   String _errorMessage = '';
   String _pinFieldError = '';
   bool _isAuthenticating = false;
+  bool _isVerifyingPin = false;
   bool _isPinSetupFlowActive = false;
   bool _unlockOptionsReady = false;
   bool _fallbackToPinUi = false;
@@ -165,7 +166,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _verifyPin() async {
-    if (_lockoutSeconds > 0) return;
+    if (_lockoutSeconds > 0 || _isVerifyingPin) return;
 
     final settingsProvider = context.read<SettingsProvider>();
 
@@ -174,9 +175,12 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       return;
     }
 
+    setState(() => _isVerifyingPin = true);
+
     final existingLockout = await settingsProvider.getLockoutRemainingSeconds();
     if (existingLockout > 0) {
       setState(() {
+        _isVerifyingPin = false;
         _pinFieldError =
             'Too many failed attempts. Try again in $existingLockout seconds.';
       });
@@ -200,6 +204,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
       if (lockout > 0) {
         setState(() {
+          _isVerifyingPin = false;
           _pinFieldError =
               'Too many failed attempts. Try again in $lockout seconds.';
         });
@@ -207,6 +212,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       } else {
         final remaining = AuthService.maxAttempts - attempts;
         setState(() {
+          _isVerifyingPin = false;
           _pinFieldError = remaining > 0
               ? 'Incorrect App PIN. $remaining attempt${remaining == 1 ? '' : 's'} remaining'
               : 'Incorrect App PIN';
@@ -758,7 +764,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                       child: TextField(
                         controller: _pinController,
                         obscureText: true,
-                        enabled: _lockoutSeconds == 0,
+                        enabled: _lockoutSeconds == 0 && !_isVerifyingPin,
                         keyboardType: const TextInputType.numberWithOptions(
                           signed: false,
                           decimal: false,
@@ -832,7 +838,9 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _lockoutSeconds > 0 ? null : _verifyPin,
+                        onPressed: (_lockoutSeconds > 0 || _isVerifyingPin)
+                            ? null
+                            : _verifyPin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: theme.colorScheme.onPrimary,
@@ -841,13 +849,22 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                           ),
                           elevation: 2,
                         ),
-                        child: const Text(
-                          'Unlock with App PIN',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isVerifyingPin
+                            ? SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: theme.colorScheme.onPrimary,
+                                ),
+                              )
+                            : const Text(
+                                'Unlock with App PIN',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 12),
