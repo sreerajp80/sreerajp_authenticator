@@ -17,13 +17,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 
-Uint8List _derivePbkdf2Hash(String value, Uint8List salt) {
+Uint8List _derivePbkdf2Hash(String value, Uint8List salt, int iterations) {
   final pbkdf2 =
       PBKDF2KeyDerivator(HMac(SHA256Digest(), AppConstants.hmacBlockSize))
         ..init(
           Pbkdf2Parameters(
             salt,
-            AppConstants.pbkdf2Iterations,
+            iterations,
             AppConstants.pbkdf2HashSize,
           ),
         );
@@ -64,9 +64,15 @@ class AuthService {
 
   static const int maxAttempts = AppConstants.maxPinAttempts;
 
+  bool _legacyMigrationDone = false;
+
   Future<void> _migrateLegacyPinIfNeeded() async {
+    if (_legacyMigrationDone) return;
     final already = await _secureStorage.read(key: _migrationDoneKey);
-    if (already != null) return;
+    if (already != null) {
+      _legacyMigrationDone = true;
+      return;
+    }
 
     final prefs = await SharedPreferences.getInstance();
     final oldHash = prefs.getString(_pinKey);
@@ -110,6 +116,7 @@ class AuthService {
     }
 
     await _secureStorage.write(key: _migrationDoneKey, value: '1');
+    _legacyMigrationDone = true;
   }
 
   Future<bool> isBiometricAvailable() async {
@@ -249,23 +256,41 @@ class AuthService {
     try {
       await _migrateLegacyPinIfNeeded();
 
-      final storedHash = await _secureStorage.read(key: _pinKey);
-      final salt = await _secureStorage.read(key: _pinSaltKey);
+      final results = await Future.wait([
+        _secureStorage.read(key: _pinKey),
+        _secureStorage.read(key: _pinSaltKey),
+        _secureStorage.read(key: _pinVersionKey),
+      ]);
+      final storedHash = results[0];
+      final salt = results[1];
+      final versionStr = results[2];
 
       if (storedHash == null || salt == null) return false;
-
-      final versionStr = await _secureStorage.read(key: _pinVersionKey);
       final version = int.tryParse(versionStr ?? '1') ?? 1;
 
-      if (version >= 2) {
+      if (version == 2) {
+        final saltBytes = base64Decode(salt);
+        final hash = await _pbkdf2Hash(
+          pin,
+          Uint8List.fromList(saltBytes),
+          AppConstants.pbkdf2Iterations,
+        );
+        final valid = base64Encode(hash) == storedHash;
+        if (valid) {
+          await setPin(pin);
+        }
+        return valid;
+      }
+
+      if (version >= 3) {
         final saltBytes = base64Decode(salt);
         final hash = await _pbkdf2Hash(pin, Uint8List.fromList(saltBytes));
         return base64Encode(hash) == storedHash;
       }
 
       final bytes = utf8.encode(pin + salt);
-      final hash = sha256.convert(bytes);
-      final valid = hash.toString() == storedHash;
+      final sha = sha256.convert(bytes);
+      final valid = sha.toString() == storedHash;
 
       if (valid) {
         await setPin(pin);
@@ -277,8 +302,12 @@ class AuthService {
     }
   }
 
-  Future<Uint8List> _pbkdf2Hash(String value, Uint8List salt) {
-    return Isolate.run(() => _derivePbkdf2Hash(value, salt));
+  Future<Uint8List> _pbkdf2Hash(
+    String value,
+    Uint8List salt, [
+    int iterations = AppConstants.pbkdf2IterationsPin,
+  ]) {
+    return Isolate.run(() => _derivePbkdf2Hash(value, salt, iterations));
   }
 
   Future<bool> hasPin() async {
@@ -307,7 +336,7 @@ class AuthService {
     final salt = Uint8List.fromList(
       List.generate(AppConstants.saltSize, (_) => rng.nextInt(256)),
     );
-    final hash = await _pbkdf2Hash(raw, salt);
+    final hash = await _pbkdf2Hash(raw, salt, AppConstants.pbkdf2Iterations);
 
     await _secureStorage.write(
       key: _recoveryKeyHashKey,
@@ -331,7 +360,11 @@ class AuthService {
       if (normalized.length != AppConstants.recoveryKeyLength) return false;
 
       final saltBytes = base64Decode(storedSalt);
-      final hash = await _pbkdf2Hash(normalized, Uint8List.fromList(saltBytes));
+      final hash = await _pbkdf2Hash(
+        normalized,
+        Uint8List.fromList(saltBytes),
+        AppConstants.pbkdf2Iterations,
+      );
       return base64Encode(hash) == storedHash;
     } catch (e) {
       AppLogger.error('Failed to validate recovery key', e);

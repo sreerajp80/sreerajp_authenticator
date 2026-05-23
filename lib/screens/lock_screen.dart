@@ -620,8 +620,10 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
     final groupsProvider = context.read<GroupsProvider>();
 
     await settingsProvider.setLocked(false);
-    await accountsProvider.loadAccounts();
-    await groupsProvider.loadGroups();
+    await Future.wait([
+      accountsProvider.loadAccounts(),
+      groupsProvider.loadGroups(),
+    ]);
   }
 
   @override

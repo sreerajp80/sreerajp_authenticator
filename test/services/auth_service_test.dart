@@ -4,8 +4,10 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:pointycastle/export.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sreerajp_authenticator/services/auth_service.dart';
+import 'package:sreerajp_authenticator/utils/constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -138,7 +140,7 @@ void main() {
 
       expect(fakeSecureStorage.containsKey('app_pin_hash'), isTrue);
       expect(fakeSecureStorage.containsKey('app_pin_salt'), isTrue);
-      expect(fakeSecureStorage['app_pin_version'], '2');
+      expect(fakeSecureStorage['app_pin_version'], '3');
     });
 
     test('validatePin returns true for correct PIN', () async {
@@ -173,6 +175,27 @@ void main() {
   });
 
   group('legacy PIN migration', () {
+    test('validates v2 PBKDF2 PIN (300k iterations) and auto-migrates to v3', () async {
+      const pin = '4321';
+      final salt = Uint8List.fromList(List.filled(AppConstants.saltSize, 0xAB));
+      final pbkdf2 = PBKDF2KeyDerivator(
+        HMac(SHA256Digest(), AppConstants.hmacBlockSize),
+      )..init(
+          Pbkdf2Parameters(salt, AppConstants.pbkdf2Iterations, AppConstants.pbkdf2HashSize),
+        );
+      final hash = pbkdf2.process(Uint8List.fromList(utf8.encode(pin)));
+
+      fakeSecureStorage['app_pin_hash'] = base64Encode(hash);
+      fakeSecureStorage['app_pin_salt'] = base64Encode(salt);
+      fakeSecureStorage['app_pin_version'] = '2';
+      fakeSecureStorage['pin_migrated_to_keystore'] = '1';
+
+      expect(await authService.validatePin(pin), isTrue);
+      expect(fakeSecureStorage['app_pin_version'], '3');
+      expect(await authService.validatePin(pin), isTrue);
+      expect(await authService.validatePin('9999'), isFalse);
+    });
+
     test('validates legacy SHA-256 PIN and auto-migrates to PBKDF2', () async {
       const pin = '9999';
       const legacySalt = '1609459200000';
@@ -186,7 +209,7 @@ void main() {
       fakeSecureStorage['pin_migrated_to_keystore'] = '1';
 
       expect(await authService.validatePin(pin), isTrue);
-      expect(fakeSecureStorage['app_pin_version'], '2');
+      expect(fakeSecureStorage['app_pin_version'], '3');
       expect(await authService.validatePin(pin), isTrue);
     });
 

@@ -90,7 +90,9 @@ encryption, and gates access with app-lock controls.
 - Encryption algorithm for stored account secrets: `AES-256-GCM`
 - Device-key strategy: random 32-byte key generated on-device and stored under
   `authenticator_key` in secure storage
-- PIN and recovery-key derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a 16-byte salt
+- PIN derivation: `PBKDF2-HMAC-SHA256` with `100000` iterations and a 16-byte salt (PIN version 3+; version 2 used 300000 and is transparently migrated on first successful unlock)
+- Recovery-key derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a 16-byte salt
+- Backup password derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a 16-byte salt (iteration count is not stored in the backup file — must not change)
 - Nonce or IV strategy:
   - Account secret encryption: random 12-byte GCM nonce
   - Backup encryption: random 12-byte GCM nonce plus random 16-byte salt

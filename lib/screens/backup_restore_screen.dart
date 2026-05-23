@@ -29,6 +29,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     final TextEditingController passwordController = TextEditingController();
     final TextEditingController confirmPasswordController =
         TextEditingController();
+    bool obscurePassword = true;
+    bool obscureConfirm = true;
 
     final password = await showDialog<String>(
       context: context,
@@ -47,22 +49,36 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: obscurePassword,
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
                     helperText: 'Minimum 8 characters',
+                    suffixIcon: IconButton(
+                      icon: Icon(obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () =>
+                          setState(() => obscurePassword = !obscurePassword),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: obscureConfirm,
+                  decoration: InputDecoration(
                     labelText: 'Confirm Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureConfirm
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () =>
+                          setState(() => obscureConfirm = !obscureConfirm),
+                    ),
                   ),
                 ),
               ],
@@ -170,29 +186,41 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     if (!mounted) return;
 
     final TextEditingController passwordController = TextEditingController();
+    bool obscurePassword = true;
     final password = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Enter Backup Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Enter the password you used when creating this backup:',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-              ),
-              onSubmitted: (value) => Navigator.pop(context, value),
-            ),
-          ],
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Enter the password you used when creating this backup:',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: obscurePassword,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () =>
+                          setState(() => obscurePassword = !obscurePassword),
+                    ),
+                  ),
+                  onSubmitted: (value) => Navigator.pop(context, value),
+                ),
+              ],
+            );
+          },
         ),
         actions: [
           TextButton(

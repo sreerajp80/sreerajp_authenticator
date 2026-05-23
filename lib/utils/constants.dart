@@ -12,6 +12,7 @@ class AppConstants {
   static const int cbcIvBase64Length = 24;
   static const int saltSize = 16;
   static const int pbkdf2Iterations = 300000;
+  static const int pbkdf2IterationsPin = 100000;
   static const int pbkdf2HashSize = 32;
   static const int hmacBlockSize = 64;
 
@@ -61,7 +62,7 @@ class AppConstants {
 
   static const int maxPinAttempts = 5;
   static const int maxQuickUnlockAttempts = 3;
-  static const int currentPinVersion = 2;
+  static const int currentPinVersion = 3;
   static const int recoveryKeyLength = 16;
   static const String recoveryKeyCharset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   static const Duration strongAuthTimeout = Duration(hours: 1);
