@@ -146,7 +146,7 @@ void main() {
     },
   );
 
-  testWidgets('mandatory pin setup does not re-trigger phone lock on resume', (
+  testWidgets('phone-lock-only legacy users unlock via Phone Screen Lock', (
     tester,
   ) async {
     var authenticateCalls = 0;
@@ -158,7 +158,7 @@ void main() {
               return true;
             case 'authenticate':
               authenticateCalls += 1;
-              return true;
+              return false;
             default:
               return null;
           }
@@ -178,15 +178,10 @@ void main() {
     await pumpWithProviders(tester, settingsProvider, const LockScreen());
     await tester.pumpAndSettle();
 
-    expect(find.text('Set Up App PIN'), findsOneWidget);
-    expect(authenticateCalls, 1);
-
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(find.text('Set Up App PIN'), findsOneWidget);
-    expect(authenticateCalls, 1);
+    expect(settingsProvider.hasPinSet, isFalse);
+    expect(settingsProvider.needsMandatoryPinMigrationSync, isFalse);
+    expect(find.text('Use Phone Screen Lock'), findsOneWidget);
+    expect(authenticateCalls, greaterThanOrEqualTo(1));
   });
 
   testWidgets('security screen shows App PIN and Phone Screen Lock guidance', (
@@ -206,10 +201,7 @@ void main() {
 
     await pumpWithProviders(tester, settingsProvider, const SecurityScreen());
 
-    expect(
-      find.text('Required for app protection and all secret access'),
-      findsOneWidget,
-    );
+    expect(find.text('App PIN is set'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Optional quick unlock for opening the app'),
       300,

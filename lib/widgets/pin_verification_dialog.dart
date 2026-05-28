@@ -27,14 +27,21 @@ Future<bool> showPinVerificationDialog({
   }
 
   if (!settingsProvider.hasPinSet) {
-    if (!context.mounted) return false;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('App PIN is not set. Please re-enable app lock.'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    return false;
+    if (!settingsProvider.phoneLockQuickUnlockEnabled) {
+      if (!context.mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('App lock has no unlock method. Please re-enable it.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+
+    final result = await authService.authenticateWithPhoneLock();
+    if (!result.isSuccess) return false;
+    await settingsProvider.handleSuccessfulAppPinUnlock();
+    return true;
   }
 
   final TextEditingController pinController = TextEditingController();

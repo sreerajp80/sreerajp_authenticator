@@ -1,7 +1,7 @@
 // File Path: sreerajp_authenticator/lib/providers/settings_provider.dart
 // Author: Sreeraj P
 // Created: 2025 September 30
-// Last Modified: 2026 April 05
+// Last Modified: 2026 May 27
 // Description: Provider for app settings, app lock state, and adaptive authentication policy
 
 import 'dart:async';
@@ -82,10 +82,12 @@ class SettingsProvider extends ChangeNotifier {
   bool get adaptiveAuthAvailable => _isAppLockEnabled && _hasPinSet;
   bool get hasQuickUnlockAvailable => _isPhoneLockQuickUnlockEnabled;
   bool get needsMandatoryPinMigrationSync => _needsMandatoryPinMigration;
-  bool get requiresAppPinForUnlock => !canUsePhoneLockQuickUnlock;
+  bool get hasAnyUnlockMethod =>
+      _hasPinSet || _isPhoneLockQuickUnlockEnabled;
+  bool get requiresAppPinForUnlock =>
+      _hasPinSet && !canUsePhoneLockQuickUnlock;
   bool get canUsePhoneLockQuickUnlock =>
       _isAppLockEnabled &&
-      _hasPinSet &&
       !_needsMandatoryPinMigration &&
       _isPhoneLockQuickUnlockEnabled &&
       _pinRequiredReason == PinRequiredReason.none;
@@ -95,6 +97,9 @@ class SettingsProvider extends ChangeNotifier {
       return 'Use your Phone Screen Lock to set up your App PIN';
     }
     if (canUsePhoneLockQuickUnlock) {
+      if (!_hasPinSet) {
+        return 'Use your Phone Screen Lock';
+      }
       return 'Use your Phone Screen Lock or enter your App PIN';
     }
     return 'Enter your App PIN';
@@ -176,10 +181,13 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    _needsMandatoryPinMigration =
-        _isAppLockEnabled && !_hasPinSet && legacyLockType == 'device_lock';
-    if (!_hasPinSet && !_needsMandatoryPinMigration) {
-      _isPhoneLockQuickUnlockEnabled = false;
+    _needsMandatoryPinMigration = false;
+
+    if (_isAppLockEnabled && !hasAnyUnlockMethod) {
+      _isAppLockEnabled = false;
+      _requireAuthentication = false;
+      await prefs.setBool(_keyAppLockEnabled, false);
+      await prefs.setBool(_keyRequireAuth, false);
     }
 
     final themeModeIndex = prefs.getInt(_keyThemeMode) ?? 0;
@@ -188,7 +196,7 @@ class SettingsProvider extends ChangeNotifier {
 
     _currentBootCount = await _deviceStateService.getBootCount();
 
-    if (_isAppLockEnabled && (_hasPinSet || _needsMandatoryPinMigration)) {
+    if (_isAppLockEnabled && hasAnyUnlockMethod) {
       _isLocked = true;
     } else {
       _isLocked = false;
@@ -258,7 +266,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setAppLockEnabled(bool enabled) async {
-    if (enabled && !_hasPinSet) {
+    if (enabled && !_hasPinSet && !_isPhoneLockQuickUnlockEnabled) {
       return;
     }
 
@@ -497,7 +505,8 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> onAppPaused() async {
     if (_isBackupInProgress) return;
 
-    if (_isAppLockEnabled && (_hasPinSet || _needsMandatoryPinMigration)) {
+    if (_isAppLockEnabled &&
+        (hasAnyUnlockMethod || _needsMandatoryPinMigration)) {
       await _updateLastActiveTime();
       _stopAutoLockTimer();
 
@@ -510,7 +519,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> _checkAutoLock() async {
     if (_isBackupInProgress) return;
     if (!_isAppLockEnabled) return;
-    if (!_hasPinSet && !_needsMandatoryPinMigration) return;
+    if (!hasAnyUnlockMethod && !_needsMandatoryPinMigration) return;
 
     final currentTime = DateTime.now().millisecondsSinceEpoch;
     final timeDiff = (currentTime - _lastActiveTime) ~/ 1000;
@@ -529,7 +538,7 @@ class SettingsProvider extends ChangeNotifier {
       return;
     }
 
-    if (!_hasPinSet && !_needsMandatoryPinMigration) {
+    if (!hasAnyUnlockMethod && !_needsMandatoryPinMigration) {
       return;
     }
 
@@ -569,7 +578,8 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   void checkAndLockApp() {
-    if (_isAppLockEnabled && (_hasPinSet || _needsMandatoryPinMigration)) {
+    if (_isAppLockEnabled &&
+        (hasAnyUnlockMethod || _needsMandatoryPinMigration)) {
       _checkAutoLock();
     }
   }

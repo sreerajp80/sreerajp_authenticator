@@ -19,7 +19,7 @@ void main() {
   });
 
   group('SettingsProvider', () {
-    test('requires migration for legacy phone-lock-only users', () async {
+    test('legacy phone-lock-only users keep phone-lock-only mode', () async {
       SharedPreferences.setMockInitialValues({
         'app_lock_enabled': true,
         'require_authentication': true,
@@ -32,19 +32,32 @@ void main() {
       expect(provider.isAppLockEnabled, isTrue);
       expect(provider.hasPinSet, isFalse);
       expect(provider.phoneLockQuickUnlockEnabled, isTrue);
-      expect(provider.needsMandatoryPinMigrationSync, isTrue);
+      expect(provider.needsMandatoryPinMigrationSync, isFalse);
       expect(provider.isLocked, isTrue);
-      expect(provider.unlockInstructionText,
-          'Use your Phone Screen Lock to set up your App PIN');
+      expect(provider.unlockInstructionText, 'Use your Phone Screen Lock');
     });
 
-    test('does not enable app lock without an app pin', () async {
+    test('does not enable app lock with no unlock method', () async {
       final provider = SettingsProvider();
       await provider.initialized;
 
       await provider.setAppLockEnabled(true);
 
       expect(provider.isAppLockEnabled, isFalse);
+    });
+
+    test('enables app lock with phone lock only (no app pin)', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      await provider.setPhoneLockQuickUnlockEnabled(true);
+      await provider.setAppLockEnabled(true);
+
+      expect(provider.isAppLockEnabled, isTrue);
+      expect(provider.hasPinSet, isFalse);
+      expect(provider.phoneLockQuickUnlockEnabled, isTrue);
+      expect(provider.requiresAppPinForUnlock, isFalse);
+      expect(provider.canUsePhoneLockQuickUnlock, isTrue);
     });
 
     test('setAppLockEnabled(true) keeps session unlocked until pause or timeout',

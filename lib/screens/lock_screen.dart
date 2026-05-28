@@ -1,8 +1,8 @@
 // File Path: sreerajp_authenticator/lib/screens/lock_screen.dart
 // Author: Sreeraj P
 // Created: 2025 October 01
-// Last Modified: 2026 April 05
-// Description: Lock screen for app security with mandatory App PIN and optional Phone Screen Lock quick unlock
+// Last Modified: 2026 May 27
+// Description: Lock screen for app security with optional App PIN and/or Phone Screen Lock
 
 import 'dart:async';
 
@@ -116,7 +116,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
     setState(() {
       _isAuthenticating = false;
-      _fallbackToPinUi = true;
+      _fallbackToPinUi = settingsProvider.hasPinSet;
       _errorMessage = _mapQuickUnlockError(settingsProvider, result);
     });
   }
@@ -669,6 +669,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
         ? 'Set up your App PIN'
         : settingsProvider.requiresAppPinForUnlock
         ? 'Enter your App PIN'
+        : !settingsProvider.hasPinSet
+        ? 'Unlock with Phone Screen Lock'
         : 'Unlock Authenticator';
     final subtitle = showPhonePrimary && !showPinPath
         ? (settingsProvider.needsMandatoryPinMigrationSync

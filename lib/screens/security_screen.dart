@@ -1,7 +1,7 @@
 // File Path: sreerajp_authenticator/lib/screens/security_screen.dart
 // Author: Sreeraj P
 // Created: 2025 September 30
-// Last Modified: 2026 April 05
+// Last Modified: 2026 May 27
 // Description: Screen for configuring app PIN, phone lock quick unlock, and adaptive authentication
 
 import 'package:flutter/material.dart';
@@ -10,6 +10,8 @@ import 'package:provider/provider.dart';
 
 import '../providers/settings_provider.dart';
 import '../services/auth_service.dart';
+
+enum _UnlockMethodChoice { pin, phoneLock }
 
 class SecurityScreen extends StatefulWidget {
   const SecurityScreen({super.key});
@@ -45,10 +47,33 @@ class _SecurityScreenState extends State<SecurityScreen> {
     SettingsProvider provider,
   ) async {
     if (value) {
-      final pinSet = provider.hasPinSet
-          ? true
-          : await _showPinSetupDialog(provider, isInitialSetup: true);
-      if (!pinSet || !mounted) return;
+      if (!provider.hasAnyUnlockMethod) {
+        final method = await _showInitialMethodChoiceDialog();
+        if (method == null || !mounted) return;
+
+        if (method == _UnlockMethodChoice.pin) {
+          final pinSet = await _showPinSetupDialog(
+            provider,
+            isInitialSetup: true,
+          );
+          if (!pinSet || !mounted) return;
+        } else {
+          if (!_isPhoneLockAvailable) {
+            _showMessage(
+              'Phone Screen Lock is not available on this device',
+              isError: true,
+            );
+            return;
+          }
+          final result = await _authService.authenticateWithPhoneLock();
+          if (!mounted) return;
+          if (!result.isSuccess) {
+            _showMessage(_mapQuickUnlockError(result), isError: true);
+            return;
+          }
+          await provider.setPhoneLockQuickUnlockEnabled(true);
+        }
+      }
 
       if (provider.hasPinSet && !await provider.hasRecoveryKey()) {
         if (!mounted) return;
@@ -61,7 +86,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
       await provider.setAppLockEnabled(true);
       if (!mounted) return;
-      _showMessage('App lock enabled with App PIN');
+      _showMessage(
+        provider.hasPinSet
+            ? 'App lock enabled with App PIN'
+            : 'App lock enabled with Phone Screen Lock',
+      );
     } else {
       final confirmed = await _showConfirmDialog(
         'Disable App Lock',
@@ -74,11 +103,89 @@ class _SecurityScreenState extends State<SecurityScreen> {
     }
   }
 
+  Future<_UnlockMethodChoice?> _showInitialMethodChoiceDialog() async {
+    return showDialog<_UnlockMethodChoice>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Choose Unlock Method'),
+        content: const Text(
+          'Pick how you want to unlock the app. App PIN is more secure; '
+          'Phone Screen Lock is more convenient.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: _isPhoneLockAvailable
+                ? () => Navigator.pop(
+                      dialogContext,
+                      _UnlockMethodChoice.phoneLock,
+                    )
+                : null,
+            child: const Text('Phone Screen Lock'),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, _UnlockMethodChoice.pin),
+            child: const Text('App PIN'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleUseAppPinToggle(
+    bool value,
+    SettingsProvider provider,
+  ) async {
+    if (value) {
+      final pinSet = await _showPinSetupDialog(
+        provider,
+        isInitialSetup: true,
+      );
+      if (!pinSet || !mounted) return;
+
+      if (!await provider.hasRecoveryKey()) {
+        if (!mounted) return;
+        setState(() => _isLoading = true);
+        final recoveryKey = await provider.generateRecoveryKey();
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        await _showRecoveryKeyDialog(recoveryKey);
+      }
+      if (mounted) _showMessage('App PIN enabled');
+    } else {
+      if (!provider.phoneLockQuickUnlockEnabled) {
+        _showMessage(
+          'Enable Phone Screen Lock first, or disable App Lock instead.',
+          isError: true,
+        );
+        return;
+      }
+      final confirmed = await _showConfirmDialog(
+        'Remove App PIN',
+        'Your App PIN and recovery key will be deleted. You will unlock the app with Phone Screen Lock only.',
+      );
+      if (!confirmed || !mounted) return;
+      await provider.setAppLockPin(null);
+      _showMessage('App PIN removed');
+    }
+  }
+
   Future<void> _handleQuickUnlockToggle(
     bool value,
     SettingsProvider provider,
   ) async {
     if (!value) {
+      if (!provider.hasPinSet) {
+        _showMessage(
+          'Set an App PIN first, or disable App Lock instead.',
+          isError: true,
+        );
+        return;
+      }
       await provider.setPhoneLockQuickUnlockEnabled(false);
       _showMessage('Phone Screen Lock quick unlock disabled');
       return;
@@ -89,7 +196,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
     if (result.isSuccess) {
       await provider.setPhoneLockQuickUnlockEnabled(true);
-      _showMessage('Phone Screen Lock quick unlock enabled');
+      _showMessage(
+        provider.hasPinSet
+            ? 'Phone Screen Lock quick unlock enabled'
+            : 'Phone Screen Lock enabled',
+      );
       return;
     }
 
@@ -556,28 +667,38 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         ),
                         child: Column(
                           children: [
-                            const ListTile(
-                              title: Text('App PIN'),
+                            SwitchListTile(
+                              title: const Text('Use App PIN'),
                               subtitle: Text(
-                                'Required for app protection and all secret access',
+                                settingsProvider.hasPinSet
+                                    ? 'App PIN is set'
+                                    : 'Set a 4-6 digit PIN for app protection',
+                              ),
+                              value: settingsProvider.hasPinSet,
+                              onChanged: (value) => _handleUseAppPinToggle(
+                                value,
+                                settingsProvider,
                               ),
                             ),
-                            const Divider(height: 1),
-                            ListTile(
-                              title: const Text('Change App PIN'),
-                              subtitle: const Text('Update your App PIN'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () => _handleChangePIN(settingsProvider),
-                            ),
-                            const Divider(height: 1),
-                            ListTile(
-                              title: const Text('Reset Recovery Key'),
-                              subtitle: const Text(
-                                'Generate a new recovery key for your App PIN',
+                            if (settingsProvider.hasPinSet) ...[
+                              const Divider(height: 1),
+                              ListTile(
+                                title: const Text('Change App PIN'),
+                                subtitle: const Text('Update your App PIN'),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => _handleChangePIN(settingsProvider),
                               ),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () => _handleResetRecoveryKey(settingsProvider),
-                            ),
+                              const Divider(height: 1),
+                              ListTile(
+                                title: const Text('Reset Recovery Key'),
+                                subtitle: const Text(
+                                  'Generate a new recovery key for your App PIN',
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () =>
+                                    _handleResetRecoveryKey(settingsProvider),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -601,9 +722,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         child: SwitchListTile(
                           title: const Text('Use Phone Screen Lock'),
                           subtitle: Text(
-                            _isPhoneLockAvailable
-                                ? 'Optional quick unlock for opening the app'
-                                : 'Phone Screen Lock is not available on this device',
+                            !_isPhoneLockAvailable
+                                ? 'Phone Screen Lock is not available on this device'
+                                : settingsProvider.hasPinSet
+                                    ? 'Optional quick unlock for opening the app'
+                                    : 'Unlock the app with your Phone Screen Lock',
                           ),
                           value: settingsProvider.phoneLockQuickUnlockEnabled,
                           onChanged: _isPhoneLockAvailable
@@ -612,33 +735,35 @@ class _SecurityScreenState extends State<SecurityScreen> {
                               : null,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: Text(
-                          'LOCKDOWN',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
+                      if (settingsProvider.hasPinSet) ...[
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Text(
+                            'LOCKDOWN',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
-                      ),
-                      Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: SwitchListTile(
-                          title: const Text('Lockdown Mode'),
-                          subtitle: const Text(
-                            'Disable quick unlock and require your App PIN until you turn this off',
+                        Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          value: settingsProvider.lockdownEnabled,
-                          onChanged: (value) =>
-                              settingsProvider.setLockdownEnabled(value),
+                          child: SwitchListTile(
+                            title: const Text('Lockdown Mode'),
+                            subtitle: const Text(
+                              'Disable quick unlock and require your App PIN until you turn this off',
+                            ),
+                            value: settingsProvider.lockdownEnabled,
+                            onChanged: (value) =>
+                                settingsProvider.setLockdownEnabled(value),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                     const SizedBox(height: 16),
                     Card(
@@ -658,7 +783,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Phone Screen Lock is optional quick unlock. App PIN is always required for revealing secrets.',
+                                    settingsProvider.hasPinSet
+                                        ? 'Phone Screen Lock is optional quick unlock. App PIN is required for revealing secrets.'
+                                        : 'Phone Screen Lock is your only unlock method. Set an App PIN for stronger protection.',
                                     style: theme.textTheme.bodySmall,
                                   ),
                                 ),
