@@ -46,6 +46,33 @@ void main() {
       expect(provider.isAppLockEnabled, isFalse);
     });
 
+    test('sync host idle timeout defaults, persists, and clamps to bounds',
+        () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      expect(
+        provider.syncHostIdleTimeout,
+        AppConstants.syncHostIdleTimeoutDefault,
+      );
+
+      await provider.setSyncHostIdleTimeout(300);
+      expect(provider.syncHostIdleTimeout, 300);
+
+      // Out-of-range values are clamped.
+      await provider.setSyncHostIdleTimeout(5);
+      expect(provider.syncHostIdleTimeout, AppConstants.syncHostIdleTimeoutMin);
+
+      await provider.setSyncHostIdleTimeout(99999);
+      expect(provider.syncHostIdleTimeout, AppConstants.syncHostIdleTimeoutMax);
+
+      // Persisted value is reloaded by a fresh provider.
+      await provider.setSyncHostIdleTimeout(60);
+      final reloaded = SettingsProvider();
+      await reloaded.initialized;
+      expect(reloaded.syncHostIdleTimeout, 60);
+    });
+
     test('enables app lock with phone lock only (no app pin)', () async {
       final provider = SettingsProvider();
       await provider.initialized;

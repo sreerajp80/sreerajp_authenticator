@@ -14,6 +14,7 @@ import 'providers/theme_provider.dart';
 import 'providers/account_provider.dart';
 import 'providers/group_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/sync_provider.dart';
 import 'services/otp_service.dart';
 
 // Screens
@@ -63,6 +64,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GroupsProvider()),
         // Accounts Provider for managing authenticator accounts
         ChangeNotifierProvider(create: (_) => AccountsProvider()),
+        // Sync Provider for P2P LAN sync state (lazily created when used)
+        ChangeNotifierProvider(create: (_) => SyncProvider()),
       ],
       child: Consumer2<ThemeProvider, SettingsProvider>(
         builder: (context, themeProvider, settingsProvider, child) {

@@ -67,7 +67,8 @@ class AppConstants {
   static const String recoveryKeyCharset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   static const Duration strongAuthTimeout = Duration(hours: 1);
 
-  static const String deviceStateChannel = 'sreerajp_authenticator/device_state';
+  static const String deviceStateChannel =
+      'sreerajp_authenticator/device_state';
   static const String getBootCountMethod = 'getBootCount';
 
   static const int lockoutSeconds5Attempts = 30;
@@ -80,5 +81,103 @@ class AppConstants {
   static const String backupVersion = '2.0';
   static const String encryptedBackupExtension = 'aes';
   static const String jsonBackupExtension = 'json';
+
+  // ─── P2P LAN Sync ──────────────────────────────────────────────────────────
+
+  // Hostile-peer hardening (see docs/security.md). Authenticator payloads are
+  // tiny; the payload cap is intentionally generous, not expected to be hit.
+  static const int syncMaxHandshakeLine = 4096; // bytes per handshake line
+  static const int syncMaxPayloadLine = 16 * 1024 * 1024; // 16 MB payload cap
+  static const Duration syncSocketTimeout = Duration(seconds: 30);
+  static const Duration syncConnectTimeout = Duration(seconds: 6);
+
+  // Payload validation caps applied before ingestion.
+  static const int syncMaxAccounts = 5000;
+  static const int syncMaxGroups = 1000;
+  static const int syncMaxFieldLength = 4096;
+
+  // Pairing code: 64 chars from a 31-symbol alphabet (no 0/O/1/I/L) ≈ 320 bits.
+  static const int syncPairingCodeLength = 64;
+  static const int syncPairingCodeGroup = 8; // display grouping
+  static const String syncPairingAlphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+
+  // Handshake messages (transmitted encrypted, never in clear).
+  static const String syncHelloMessage = 'HELLO_SYNC';
+  static const String syncAcceptMessage = 'ACCEPT_SYNC';
+  static const String syncDeniedMessage = 'DENIED';
+
+  // Host auto-stop on idle: configurable window (seconds) after which a host
+  // with no successful handshake tears down its listener.
+  static const int syncHostIdleTimeoutDefault = 120;
+  static const int syncHostIdleTimeoutMin = 30;
+  static const int syncHostIdleTimeoutMax = 600;
+
+  // ─── App / Branding (flavor-dependent) ─────────────────────────────────────
+
+  static const String appNameProd = 'Sreeraj P Authenticator';
+  static const String appNameDev = 'Sreeraj P Authenticator Dev';
+  static const String environmentNameProd = 'Production';
+  static const String environmentNameDev = 'Development';
+  static const String bannerLabelProd = 'PROD';
+  static const String bannerLabelDev = 'DEV';
+
+  // ─── About Screen ──────────────────────────────────────────────────────────
+
+  static const String licensesLegalese =
+      '© 2026 Sreeraj P. All rights reserved.';
+  static const String aboutSectionTitle = 'About';
+  static const String aboutDescription =
+      'A secure and reliable two-factor authentication app that helps protect your online accounts. Generate time-based one-time passwords (TOTP) and counter-based passwords (HOTP) with support for multiple algorithms.';
+  static const String featuresSectionTitle = 'Features';
+  static const String qrScanningFeature = 'QR code scanning';
+  static const String encryptedStorageFeature = 'Encrypted storage';
+  static const String backupRestoreFeature = 'Backup & restore';
+  static const String accountOrganizationFeature = 'Account organization';
+  static const String biometricAuthFeature = 'Biometric authentication';
+  static const String darkModeFeature = 'Dark mode support';
+  static const String linksSectionTitle = 'LINKS';
+  static const String privacyPolicyTitle = 'Privacy Policy';
+  static const String privacyPolicyStorageTitle = 'Data Storage';
+  static const String privacyPolicyStorageDescription =
+      'All your account data is stored locally on your device and is encrypted using industry-standard encryption algorithms. We do not collect, transmit, or store any of your data on external servers.';
+  static const String privacyPolicyPermissionsTitle = 'Permissions';
+  static const String privacyPolicyPermissionsDescription =
+      '• Camera: Used for scanning QR codes\n'
+      '• Storage: Used for backup and restore functionality\n'
+      '• Biometric: Optional, for app lock authentication';
+  static const String privacyPolicySecurityTitle = 'Security';
+  static const String privacyPolicySecurityDescription =
+      'Your secrets are encrypted using AES-256 encryption. The app does not require internet access and works completely offline, ensuring your authentication codes never leave your device.';
+  static const String closeButtonText = 'Close';
+  static const String openSourceLicensesTitle = 'Open Source Licenses';
+  static const String developerSectionTitle = 'DEVELOPER';
+  static const String designConceptLabel = 'Design & Concept';
+  static const String aiUsedLabel = 'AI Used';
+  static const String developerEmailLabel = 'Developer Email';
+  static const String developerName = 'Sreeraj P';
+  static const String developerEmail = 'sreerajp@zohomail.in';
+  static const String aiUsedValue = 'Claude 4.5, 4.6 & 4.8 and ChatGPT';
+  static const List<AboutInfoEntry> developerInfo = <AboutInfoEntry>[
+    AboutInfoEntry(designConceptLabel, developerName),
+    AboutInfoEntry(aiUsedLabel, aiUsedValue),
+    AboutInfoEntry(developerEmailLabel, developerEmail),
+  ];
+  static const String copyrightText = '© 2026 Sreeraj P. All rights reserved.';
+  static const String footerText = 'Made with ❤️ in India';
+
+  static String get developerInitials {
+    final parts = developerName
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2);
+
+    return parts.map((part) => part[0]).join().toUpperCase();
+  }
 }
 
+class AboutInfoEntry {
+  final String label;
+  final String value;
+
+  const AboutInfoEntry(this.label, this.value);
+}

@@ -1,3 +1,5 @@
+import '../utils/constants.dart';
+
 enum AppFlavor { dev, prod }
 
 class AppFlavorConfig {
@@ -29,23 +31,23 @@ class AppFlavorConfig {
 
   String get appName {
     if (isDev) {
-      return 'Sreeraj P Authenticator Dev';
+      return AppConstants.appNameDev;
     }
-    return 'Sreeraj P Authenticator';
+    return AppConstants.appNameProd;
   }
 
   String get environmentName {
     if (isDev) {
-      return 'Development';
+      return AppConstants.environmentNameDev;
     }
-    return 'Production';
+    return AppConstants.environmentNameProd;
   }
 
   String get bannerLabel {
     if (isDev) {
-      return 'DEV';
+      return AppConstants.bannerLabelDev;
     }
-    return 'PROD';
+    return AppConstants.bannerLabelProd;
   }
 
   bool get showEnvironmentBanner => isDev;

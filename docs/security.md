@@ -37,6 +37,7 @@ encryption, and gates access with app-lock controls.
 - Plaintext disclosure through logs or backups
 - Reverse engineering of the release binary
 - Accidental disclosure through screenshots or screen recording
+- Passive eavesdropping or active MITM on the local network during P2P sync (see §5.1)
 
 ### Out Of Scope Threats
 
@@ -44,6 +45,8 @@ encryption, and gates access with app-lock controls.
 - OS-level compromise
 - Physical hardware attacks
 - Nation-state or advanced forensic adversaries
+- An attacker who already knows the per-session P2P pairing code (it is shown only on the host
+  screen and transferred by the user out-of-band)
 
 ---
 
@@ -80,8 +83,43 @@ encryption, and gates access with app-lock controls.
 
 ### In Transit
 
-- Network use: `none`
-- Transport protections: `not applicable`
+- Network use: `P2P LAN sync only` (no internet/HTTP traffic; no app backend)
+- Transport protections: the transport (plain TCP) is **not** encrypted; confidentiality and
+  integrity are enforced at the payload layer (see §5.1). OTP secrets cross the wire only as
+  AES-256-GCM ciphertext keyed by the out-of-band pairing code.
+
+### 5.1 P2P LAN Sync Security Model
+
+Implemented in
+[`lib/services/p2p_sync_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart).
+Opt-in, user-initiated, foreground-only, same-LAN device-to-device account transfer. No server,
+no account, no internet.
+
+- **Secret never on the wire.** A fresh ~320-bit pairing code (64 chars from a 31-symbol alphabet)
+  is generated per session, shown only on the host, and typed into the client out-of-band. It is
+  never transmitted. An eavesdropper can capture the entire handshake and still cannot derive the
+  key; an active MITM cannot complete the handshake without the code.
+- **Payload-layer authenticated encryption.** The pairing code is stretched with
+  PBKDF2-HMAC-SHA256 (300,000 iterations, per-session random 16-byte salt sent in clear) to a
+  256-bit key; every line is sealed with AES-256-GCM (random 12-byte nonce, 128-bit tag).
+  Authentication is a side effect of decryption — a wrong code derives a wrong key and GCM tag
+  verification fails, which is treated as an auth failure and aborts. There is no fallback cipher
+  and no downgrade path.
+- **Forward secrecy.** Keys are per-session; there is no long-term sync key to steal.
+- **Secret lifecycle.** On the host, secrets are decrypted with the device key and re-encrypted
+  under the session key only transiently to build the payload. On the client, received secrets are
+  re-encrypted under the receiving device's own key by the import funnel
+  (`AccountsProvider.importData`) before storage. Plaintext exists only briefly in memory and is
+  never logged or written to disk.
+- **Hostile-peer hardening.** Even after authentication the peer is untrusted: bounded line reads
+  (4 KB handshake / 16 MB payload caps) prevent memory exhaustion, socket/connect timeouts resist
+  slow-loris/DoS, and payload caps (max accounts/groups, per-field length, schema checks) are
+  enforced *before* ingestion.
+- **Exposure minimisation.** The host binds a **random OS-assigned port** (displayed to the user)
+  and **auto-stops** after a configurable idle timeout (`SettingsProvider.syncHostIdleTimeout`,
+  default 120 s, 30–600 s) if no peer completes the handshake. The random port is conflict
+  avoidance and mild defense-in-depth only — it is **not** a security boundary, since a LAN
+  attacker can port-scan; security rests entirely on the pairing code and GCM sealing.
 
 ---
 
@@ -93,9 +131,12 @@ encryption, and gates access with app-lock controls.
 - PIN derivation: `PBKDF2-HMAC-SHA256` with `100000` iterations and a 16-byte salt (PIN version 3+; version 2 used 300000 and is transparently migrated on first successful unlock)
 - Recovery-key derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a 16-byte salt
 - Backup password derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a 16-byte salt (iteration count is not stored in the backup file — must not change)
+- P2P sync session-key derivation: `PBKDF2-HMAC-SHA256` with `300000` iterations and a per-session
+  random 16-byte salt, from the out-of-band pairing code (see §5.1)
 - Nonce or IV strategy:
   - Account secret encryption: random 12-byte GCM nonce
   - Backup encryption: random 12-byte GCM nonce plus random 16-byte salt
+  - P2P sync payload: random 12-byte GCM nonce per message, prepended to the ciphertext on the wire
 - Format versioning:
   - Account secrets: current `nonce:ciphertext` GCM format, with legacy XOR and AES-CBC decrypt support
   - Backups: current `v3:<salt>:<nonce>:<ciphertext>` format with legacy `v2` and CTR/SIC decrypt support
@@ -226,11 +267,14 @@ The app currently has no analytics or telemetry backend.
 | `CAMERA` | Scan OTP QR codes | When entering the QR scan flow | User can still add accounts manually |
 | `USE_BIOMETRIC` / `USE_FINGERPRINT` | Unlock via local-auth capabilities | When enabling or using quick unlock | App falls back to app PIN or device lock support checks |
 | `VIBRATE` | Minor haptic feedback | During supported UI interactions | App remains functional without it |
+| `INTERNET` | Open TCP sockets for P2P LAN sync | When hosting or joining a sync session | All other features work without network |
+| `ACCESS_NETWORK_STATE` / `ACCESS_WIFI_STATE` | Read the local IPv4 address to display for P2P sync | On the sync screen | Falls back to `127.0.0.1` if unavailable |
 | `NSPhotoLibraryUsageDescription` | Import encrypted backup files on iOS flows | At point of file selection | Backup import remains unavailable until granted |
 
 Permission review rules:
 
-- Android prod builds should not include `INTERNET`.
+- `INTERNET` is included for P2P LAN sync only; there is no internet/HTTP client and no app backend.
+  `NEARBY_WIFI_DEVICES` is intentionally **not** requested (no Wi-Fi scanning/discovery is performed).
 - Request permissions only at the point of use.
 - The app should remain usable in a safe degraded mode when non-critical permissions are denied.
 
@@ -244,7 +288,7 @@ Permission review rules:
 | M2 | Inadequate Supply Chain Security | `pubspec.lock` committed; dependency review still manual | `manual review` |
 | M3 | Insecure Authentication | App lock, PIN hashing, quick unlock policy, lockouts | `implemented` |
 | M4 | Insufficient Input/Output Validation | OTP parsing, import parsing, and DB writes are handled in code | `implemented` |
-| M5 | Insecure Communication | No app network traffic | `implemented` |
+| M5 | Insecure Communication | No internet traffic; P2P LAN sync seals payloads with AES-256-GCM keyed by an out-of-band pairing code (transport stays plaintext by design — see §5.1) | `implemented` |
 | M6 | Inadequate Privacy Controls | Screenshot blocking, no secrets in logs, backups encrypted in UI flow | `implemented` |
 | M7 | Insufficient Binary Protections | Release hardening is documented but still checklist-driven | `manual review` |
 | M8 | Security Misconfiguration | Minimal permissions, backup disabled on Android | `implemented` |
@@ -295,6 +339,9 @@ Permission review rules:
 - Import parsing must reject malformed or incompatible backup data safely.
 - Backup files must remain encrypted in normal user-facing flows.
 - Recovery and migration flows must be tested when changed.
+- P2P sync uses the same import funnel (`AccountsProvider.importData`) as file restore, so peer
+  data is validated, deduped, and re-encrypted under the device key identically. Received payloads
+  must additionally pass the sync caps (max accounts/groups, per-field length) before ingestion.
 
 ---
 
@@ -307,6 +354,7 @@ Permission review rules:
 | Lock / auth flow | Unit and widget | Covers PIN validation, recovery, lockouts, and settings policy |
 | Backup and recovery | Unit | Export/import parsing and legacy format support are tested |
 | Data migration | Unit | Legacy XOR, AES-CBC, and old PIN storage migration paths are covered |
+| P2P LAN sync | Unit | Pairing-code entropy, wire crypto round-trip, wrong-code rejection, payload caps, and a loopback host↔client transfer are covered; cross-device transfer is verified manually |
 | Release hardening | Manual release verification | Obfuscation, permissions, and debuggable checks are checklist-driven |
 
 ### Required Regression Areas
@@ -317,6 +365,7 @@ Permission review rules:
 - Backup format compatibility across current and legacy versions
 - SQLite schema migration from v1 to v2
 - Lockout and strong-auth policy transitions
+- P2P sync: wrong pairing code must never yield plaintext; payload caps must hold
 
 ---
 

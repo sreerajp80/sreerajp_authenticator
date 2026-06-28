@@ -39,6 +39,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _keyLockdownEnabled = 'lockdown_enabled';
   static const String _keyLastKnownBootCount = 'last_known_boot_count';
   static const String _keyPinRequiredReason = 'pin_required_reason';
+  static const String _keySyncHostIdleTimeout = 'sync_host_idle_timeout';
   static const String _legacyKeyAppLockPin = 'app_lock_pin';
 
   final AuthService _authService = AuthService();
@@ -47,6 +48,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _isAppLockEnabled = false;
   bool _isPhoneLockQuickUnlockEnabled = false;
   int _autoLockTimeout = 60;
+  int _syncHostIdleTimeout = AppConstants.syncHostIdleTimeoutDefault;
   String _exportFormat = 'json';
   ThemeMode _themeMode = ThemeMode.system;
   bool _requireAuthentication = false;
@@ -68,6 +70,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get phoneLockQuickUnlockEnabled => _isPhoneLockQuickUnlockEnabled;
   bool get isBiometricEnabled => _isPhoneLockQuickUnlockEnabled;
   int get autoLockTimeout => _autoLockTimeout;
+  int get syncHostIdleTimeout => _syncHostIdleTimeout;
   String get exportFormat => _exportFormat;
   ThemeMode get themeMode => _themeMode;
   bool get requireAuthentication => _requireAuthentication;
@@ -145,6 +148,10 @@ class SettingsProvider extends ChangeNotifier {
 
     _isAppLockEnabled = prefs.getBool(_keyAppLockEnabled) ?? false;
     _autoLockTimeout = prefs.getInt(_keyAutoLockTimeout) ?? 60;
+    _syncHostIdleTimeout = _clampSyncHostIdleTimeout(
+      prefs.getInt(_keySyncHostIdleTimeout) ??
+          AppConstants.syncHostIdleTimeoutDefault,
+    );
     _exportFormat = prefs.getString(_keyExportFormat) ?? 'json';
     _requireAuthentication = prefs.getBool(_keyRequireAuth) ?? false;
     _lastActiveTime = prefs.getInt(_keyLastActiveTime) ?? 0;
@@ -329,6 +336,20 @@ class SettingsProvider extends ChangeNotifier {
     if (_isAppLockEnabled) {
       _startAutoLockTimer();
     }
+
+    notifyListeners();
+  }
+
+  int _clampSyncHostIdleTimeout(int seconds) => seconds.clamp(
+    AppConstants.syncHostIdleTimeoutMin,
+    AppConstants.syncHostIdleTimeoutMax,
+  );
+
+  Future<void> setSyncHostIdleTimeout(int seconds) async {
+    _syncHostIdleTimeout = _clampSyncHostIdleTimeout(seconds);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keySyncHostIdleTimeout, _syncHostIdleTimeout);
 
     notifyListeners();
   }

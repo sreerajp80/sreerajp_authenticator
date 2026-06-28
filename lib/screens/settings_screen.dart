@@ -11,6 +11,7 @@ import '../providers/settings_provider.dart';
 import '../utils/theme.dart';
 import 'backup_restore_screen.dart';
 import 'security_screen.dart';
+import 'sync_screen.dart';
 import 'about_screen.dart';
 import 'permissions_screen.dart';
 
@@ -228,6 +229,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                 );
                               },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                color: theme.dividerColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                color: theme.dividerColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            _build3DListTile(
+                              context: context,
+                              icon: Icons.sync_outlined,
+                              title: 'Sync to Another Device',
+                              subtitle: 'Transfer accounts over local Wi-Fi',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SyncScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                color: theme.dividerColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            _build3DListTile(
+                              context: context,
+                              icon: Icons.timer_outlined,
+                              title: 'Sync Host Timeout',
+                              subtitle:
+                                  'Stop hosting after '
+                                  '${settingsProvider.syncHostIdleTimeout}s '
+                                  'if no device connects',
+                              onTap: () => _showSyncTimeoutDialog(
+                                context,
+                                settingsProvider,
+                              ),
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(
@@ -515,6 +576,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showSyncTimeoutDialog(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+  ) async {
+    const options = [30, 60, 120, 300, 600];
+    final current = settingsProvider.syncHostIdleTimeout;
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Sync Host Timeout'),
+        children: [
+          for (final seconds in options)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, seconds),
+              child: Row(
+                children: [
+                  Icon(
+                    seconds == current
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text('$seconds seconds'),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (selected != null) {
+      await settingsProvider.setSyncHostIdleTimeout(selected);
+    }
   }
 
   String _getThemeModeDescription(ThemeMode mode) {

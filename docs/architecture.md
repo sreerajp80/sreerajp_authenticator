@@ -24,10 +24,14 @@ This document describes the current implementation of the Sreeraj P Authenticato
 - Generate TOTP and HOTP codes fully offline.
 - Protect locally stored secrets with device-side encryption and app-lock controls.
 - Support QR onboarding, grouped account management, and encrypted backup/restore.
+- Support opt-in, user-initiated, same-LAN device-to-device account transfer (P2P sync)
+  with no internet backend (see §14 and `docs/security.md`).
 
 ### Non-Goals
 
-- Cloud sync, server-side account storage, or remote account recovery.
+- Cloud sync, server-side account storage, or remote account recovery (P2P sync is LAN-only,
+  peer-to-peer, and uses no server or account).
+- Background, unattended, or internet/relayed sync.
 - Protection against a fully compromised, rooted, or otherwise hostile device.
 
 ---
@@ -118,8 +122,13 @@ Primary lifecycle handling is implemented in [`lib/main.dart`](/l:/Android/Sreer
 
 ## 7. Offline Behavior
 
-- **Connectivity requirement**: `fully offline`
-- **Network permission**: Android main manifest does not request `INTERNET`; debug/profile manifests add it for tooling only
+- **Connectivity requirement**: `offline-first` — all core features (OTP generation, storage,
+  backup/restore) work with no network. The only networked feature is opt-in, user-initiated
+  P2P LAN sync (§14), which uses the local network but no internet backend.
+- **Network permission**: The Android main manifest requests `INTERNET`, `ACCESS_NETWORK_STATE`,
+  and `ACCESS_WIFI_STATE` to support P2P LAN sync (TCP sockets and reading the local IPv4 address
+  for display). `INTERNET` is also present in debug/profile manifests for tooling. The app has no
+  app-owned backend and makes no internet/HTTP requests.
 - **Offline data sources**:
   - `sqflite` for accounts and groups
   - `SharedPreferences` for non-secret settings
@@ -128,10 +137,12 @@ Primary lifecycle handling is implemented in [`lib/main.dart`](/l:/Android/Sreer
 
 Implications:
 
-- Production Android builds should keep `INTERNET` absent from the merged release manifest.
-- There is no app-owned backend and no intentional network client in the Dart code.
-- The current automated coverage is unit and widget testing; there is not yet a dedicated
-  airplane-mode integration test committed in this repo.
+- Production Android builds intentionally include `INTERNET` (plus `ACCESS_NETWORK_STATE` /
+  `ACCESS_WIFI_STATE`) to support P2P LAN sync. There is still no app-owned backend and no
+  internet/HTTP client in the Dart code — sockets are used only for same-LAN peer transfer.
+- P2P sync is foreground-only and user-initiated; nothing listens or connects in the background.
+- The current automated coverage is unit and widget testing (including a loopback sync round-trip);
+  there is not yet a dedicated airplane-mode integration test committed in this repo.
 
 ---
 
@@ -261,8 +272,20 @@ Migration history:
 
 ### Network
 
-- Network client: `none`
-- Offline behavior: `fully offline`
+- Network client: `none` (no HTTP/internet client)
+- Offline behavior: `offline-first`
+- P2P LAN sync: a `dart:io` `ServerSocket`/`Socket` engine
+  ([`lib/services/p2p_sync_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart))
+  for opt-in, same-LAN, device-to-device account transfer. The host binds a **random
+  OS-assigned port** and displays its IPv4 + port + a per-session pairing code; the client
+  connects by typing those in. Security is at the payload layer (PBKDF2-derived AES-256-GCM keyed
+  by the out-of-band pairing code), not the transport. State is driven by
+  [`lib/providers/sync_provider.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/sync_provider.dart)
+  and the UI by
+  [`lib/screens/sync_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_screen.dart).
+  Received data is routed through the existing import funnel (`AccountsProvider.importData`). The
+  host auto-stops after a configurable idle timeout (`SettingsProvider.syncHostIdleTimeout`).
+  Full threat model in `docs/security.md`.
 
 ### Platform Channels Or Native Integrations
 
@@ -359,7 +382,9 @@ test/
     committed in this repo yet
 - Regulatory or store constraints: standard mobile-store security and privacy requirements apply
 - Team constraints: single-developer maintenance at present
-- Offline constraints: no app network backend and no Android release `INTERNET` permission
+- Offline constraints: no app network backend and no internet/HTTP client. The Android release
+  manifest does include `INTERNET` (plus `ACCESS_NETWORK_STATE` / `ACCESS_WIFI_STATE`) solely for
+  opt-in, foreground, same-LAN P2P sync.
 
 ---
 
