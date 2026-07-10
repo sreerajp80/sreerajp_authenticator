@@ -29,6 +29,7 @@ class SettingsProvider extends ChangeNotifier {
       'phone_lock_quick_unlock_enabled';
   static const String _keyAutoLockTimeout = 'auto_lock_timeout';
   static const String _keyExportFormat = 'export_format';
+  static const String _keySortBy = 'sort_by';
   static const String _keyThemeMode = 'theme_mode';
   static const String _keyRequireAuth = 'require_authentication';
   static const String _keyLastActiveTime = 'last_active_time';
@@ -50,6 +51,7 @@ class SettingsProvider extends ChangeNotifier {
   int _autoLockTimeout = 60;
   int _syncHostIdleTimeout = AppConstants.syncHostIdleTimeoutDefault;
   String _exportFormat = 'json';
+  String _sortBy = AppConstants.defaultSortBy;
   ThemeMode _themeMode = ThemeMode.system;
   bool _requireAuthentication = false;
   bool _isDarkMode = false;
@@ -65,6 +67,7 @@ class SettingsProvider extends ChangeNotifier {
   PinRequiredReason _pinRequiredReason = PinRequiredReason.none;
   Timer? _autoLockTimer;
   bool _isBackupInProgress = false;
+  bool _isSyncInProgress = false;
 
   bool get isAppLockEnabled => _isAppLockEnabled;
   bool get phoneLockQuickUnlockEnabled => _isPhoneLockQuickUnlockEnabled;
@@ -72,6 +75,7 @@ class SettingsProvider extends ChangeNotifier {
   int get autoLockTimeout => _autoLockTimeout;
   int get syncHostIdleTimeout => _syncHostIdleTimeout;
   String get exportFormat => _exportFormat;
+  String get sortBy => _sortBy;
   ThemeMode get themeMode => _themeMode;
   bool get requireAuthentication => _requireAuthentication;
   bool get isDarkMode => _isDarkMode;
@@ -80,6 +84,7 @@ class SettingsProvider extends ChangeNotifier {
   String get lockType =>
       _isPhoneLockQuickUnlockEnabled ? 'device_lock' : 'app_pin';
   bool get isBackupInProgress => _isBackupInProgress;
+  bool get isSyncInProgress => _isSyncInProgress;
   bool get lockdownEnabled => _lockdownEnabled;
   PinRequiredReason get pinRequiredReason => _pinRequiredReason;
   bool get adaptiveAuthAvailable => _isAppLockEnabled && _hasPinSet;
@@ -131,6 +136,18 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  /// Suppress idle/background auto-lock while a P2P sync session is active, so a
+  /// host waiting for a peer is not locked out mid-transfer. Mirrors
+  /// [setBackupInProgress]; the sync screen sets this on entry and clears it on
+  /// exit. Clearing it while unlocked refreshes activity and restarts the timer.
+  void setSyncInProgress(bool value) {
+    _isSyncInProgress = value;
+    if (!value && _isAppLockEnabled && !_isLocked) {
+      _updateLastActiveTime();
+      _startAutoLockTimer();
+    }
+  }
+
   late final Future<void> initialized;
 
   SettingsProvider() {
@@ -153,6 +170,7 @@ class SettingsProvider extends ChangeNotifier {
           AppConstants.syncHostIdleTimeoutDefault,
     );
     _exportFormat = prefs.getString(_keyExportFormat) ?? 'json';
+    _sortBy = _normalizeSortBy(prefs.getString(_keySortBy));
     _requireAuthentication = prefs.getBool(_keyRequireAuth) ?? false;
     _lastActiveTime = prefs.getInt(_keyLastActiveTime) ?? 0;
     _lastStrongAuthAtMs = prefs.getInt(_keyLastStrongAuthAtMs) ?? 0;
@@ -363,6 +381,27 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Validate a stored/incoming sort value, falling back to the default when it
+  /// is null or not a recognized option.
+  String _normalizeSortBy(String? value) {
+    if (value != null && AppConstants.sortByOptions.contains(value)) {
+      return value;
+    }
+    return AppConstants.defaultSortBy;
+  }
+
+  Future<void> setSortBy(String value) async {
+    // Ignore unrecognized values so a bad input never changes the current sort.
+    if (!AppConstants.sortByOptions.contains(value)) return;
+    if (value == _sortBy) return;
+    _sortBy = value;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySortBy, value);
+
+    notifyListeners();
+  }
+
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     _updateDarkMode();
@@ -371,6 +410,59 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setInt(_keyThemeMode, mode.index);
 
     notifyListeners();
+  }
+
+  /// The only settings that ever cross devices during a P2P sync. Everything
+  /// else on this provider (app lock, App PIN, phone-lock/biometric unlock,
+  /// recovery key, lockdown, boot/adaptive-auth state) is device-specific and is
+  /// deliberately excluded. See docs/security.md.
+  Map<String, dynamic> syncableSettingsSnapshot() => {
+    AppConstants.syncSettingThemeMode: _themeMode.index,
+    AppConstants.syncSettingAutoLockTimeout: _autoLockTimeout,
+    AppConstants.syncSettingSyncHostIdleTimeout: _syncHostIdleTimeout,
+  };
+
+  /// Apply settings received from a peer. When [overwrite] is false (incremental
+  /// sync) a value is applied only if this device has not already set that key,
+  /// so the receiver's own choices always win — nothing is overridden. When
+  /// [overwrite] is true (full sync to a fresh device) values are applied
+  /// outright. Unknown keys and malformed values are ignored. Returns the number
+  /// of settings actually applied.
+  Future<int> applySyncedSettings(
+    Map<String, dynamic> settings, {
+    required bool overwrite,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    var applied = 0;
+
+    Future<bool> shouldApply(String prefKey) async =>
+        overwrite || !prefs.containsKey(prefKey);
+
+    final themeValue = settings[AppConstants.syncSettingThemeMode];
+    if (themeValue is int &&
+        themeValue >= 0 &&
+        themeValue < ThemeMode.values.length &&
+        await shouldApply(_keyThemeMode)) {
+      await setThemeMode(ThemeMode.values[themeValue]);
+      applied++;
+    }
+
+    final autoLockValue = settings[AppConstants.syncSettingAutoLockTimeout];
+    if (autoLockValue is int &&
+        autoLockValue >= 0 &&
+        await shouldApply(_keyAutoLockTimeout)) {
+      await setAutoLockTimeout(autoLockValue);
+      applied++;
+    }
+
+    final idleValue = settings[AppConstants.syncSettingSyncHostIdleTimeout];
+    if (idleValue is int && await shouldApply(_keySyncHostIdleTimeout)) {
+      // setSyncHostIdleTimeout clamps to the allowed range.
+      await setSyncHostIdleTimeout(idleValue);
+      applied++;
+    }
+
+    return applied;
   }
 
   Future<void> setLocked(bool locked) async {
@@ -525,6 +617,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> onAppPaused() async {
     if (_isBackupInProgress) return;
+    if (_isSyncInProgress) return;
 
     if (_isAppLockEnabled &&
         (hasAnyUnlockMethod || _needsMandatoryPinMigration)) {
@@ -539,6 +632,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> _checkAutoLock() async {
     if (_isBackupInProgress) return;
+    if (_isSyncInProgress) return;
     if (!_isAppLockEnabled) return;
     if (!hasAnyUnlockMethod && !_needsMandatoryPinMigration) return;
 
@@ -580,6 +674,7 @@ class SettingsProvider extends ChangeNotifier {
 
     _autoLockTimer = Timer(Duration(seconds: remaining), () {
       if (_isBackupInProgress) return;
+      if (_isSyncInProgress) return;
       _isLocked = true;
       OTPService.clearCache();
       _autoLockTimer = null;

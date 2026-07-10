@@ -54,6 +54,16 @@ class AppConstants {
   static const String defaultAlgorithm = 'SHA1';
   static const int defaultSortOrder = 0;
 
+  /// Default account sort on the home screen: alphabetical by issuer.
+  /// Allowed values: 'manual', 'issuer', 'account', 'date'.
+  static const String defaultSortBy = 'issuer';
+  static const List<String> sortByOptions = <String>[
+    'manual',
+    'issuer',
+    'account',
+    'date',
+  ];
+
   // ─── Group Defaults ────────────────────────────────────────────────────────
 
   static const String defaultGroupColor = 'blue';
@@ -101,6 +111,19 @@ class AppConstants {
   static const int syncPairingCodeGroup = 8; // display grouping
   static const String syncPairingAlphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
+  // Sync QR: a versioned, offline-only URI encoding the host IP, port, and
+  // pairing code so the receiving device can scan instead of typing. The QR is
+  // shown only on the host screen and read by the peer's camera — it is an
+  // out-of-band channel and is never sent over the network (see docs/security.md
+  // §5.1). Shape: spauth://sync?v=1&ip=<ip>&port=<port>&code=<code>.
+  static const String syncQrScheme = 'spauth';
+  static const String syncQrHost = 'sync';
+  static const String syncQrVersion = '1';
+  static const String syncQrKeyVersion = 'v';
+  static const String syncQrKeyIp = 'ip';
+  static const String syncQrKeyPort = 'port';
+  static const String syncQrKeyCode = 'code';
+
   // Handshake messages (transmitted encrypted, never in clear).
   static const String syncHelloMessage = 'HELLO_SYNC';
   static const String syncAcceptMessage = 'ACCEPT_SYNC';
@@ -111,6 +134,33 @@ class AppConstants {
   static const int syncHostIdleTimeoutDefault = 120;
   static const int syncHostIdleTimeoutMin = 30;
   static const int syncHostIdleTimeoutMax = 600;
+
+  // Once a client has authenticated the host holds the connection open and waits
+  // for the sender to choose what to share (Full Sync / selective Sync). This is
+  // how long the client waits for that payload before giving up.
+  static const Duration syncPayloadWaitTimeout = Duration(minutes: 10);
+
+  // Sync payload shape. In addition to 'accounts' and 'groups', the payload may
+  // carry a small 'settings' object and a 'syncMode' marker so the receiver can
+  // apply settings with the right semantics (overwrite for a full sync to a new
+  // client; fill-only / never-override for an incremental sync).
+  static const String syncPayloadKeySettings = 'settings';
+  static const String syncPayloadKeySyncMode = 'syncMode';
+  static const String syncModeFull = 'full';
+  static const String syncModeIncremental = 'incremental';
+
+  // Category identifiers used by the selective (incremental) sync UI and payload.
+  static const String syncCategoryAccounts = 'accounts';
+  static const String syncCategoryGroups = 'groups';
+  static const String syncCategorySettings = 'settings';
+
+  // Keys used inside the synced 'settings' object. These name the only settings
+  // that ever cross devices; every other SettingsProvider value (app lock, App
+  // PIN, phone-lock/biometric unlock, recovery key, lockdown, boot/adaptive-auth
+  // state) is device-specific and never transmitted. See docs/security.md.
+  static const String syncSettingThemeMode = 'theme_mode';
+  static const String syncSettingAutoLockTimeout = 'auto_lock_timeout';
+  static const String syncSettingSyncHostIdleTimeout = 'sync_host_idle_timeout';
 
   // ─── App / Branding (flavor-dependent) ─────────────────────────────────────
 

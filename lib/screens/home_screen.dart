@@ -34,7 +34,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   String _searchQuery = '';
-  String _sortBy = 'manual'; // manual, name, date
   int? _selectedGroupId;
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
@@ -96,7 +95,10 @@ class _HomeScreenState extends State<HomeScreen>
     context.read<SettingsProvider>().resetActivityTimer();
   }
 
-  List<Account> _getFilteredAndSortedAccounts(List<Account> accounts) {
+  List<Account> _getFilteredAndSortedAccounts(
+    List<Account> accounts,
+    String sortBy,
+  ) {
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
       accounts = accounts
@@ -121,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // Apply sorting
-    switch (_sortBy) {
+    switch (sortBy) {
       case 'issuer':
         accounts.sort((a, b) {
           final issuerA = (a.issuer ?? '').toLowerCase();
@@ -155,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final sortBy = context.watch<SettingsProvider>().sortBy;
 
     return GestureDetector(
       // Reset activity timer on any tap
@@ -251,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen>
                   tooltip: 'Sort',
                   onSelected: (value) {
                     _onUserInteraction();
-                    setState(() => _sortBy = value);
+                    context.read<SettingsProvider>().setSortBy(value);
                     if (value == 'manual') {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -268,25 +271,25 @@ class _HomeScreenState extends State<HomeScreen>
                       value: 'manual',
                       icon: Icons.drag_handle,
                       label: 'Manual',
-                      isSelected: _sortBy == 'manual',
+                      isSelected: sortBy == 'manual',
                     ),
                     _buildPopupMenuItem(
                       value: 'issuer',
                       icon: Icons.business,
                       label: 'By Issuer',
-                      isSelected: _sortBy == 'issuer',
+                      isSelected: sortBy == 'issuer',
                     ),
                     _buildPopupMenuItem(
                       value: 'account',
                       icon: Icons.sort_by_alpha,
                       label: 'By Account Name',
-                      isSelected: _sortBy == 'account',
+                      isSelected: sortBy == 'account',
                     ),
                     _buildPopupMenuItem(
                       value: 'date',
                       icon: Icons.calendar_today,
                       label: 'By Date Added',
-                      isSelected: _sortBy == 'date',
+                      isSelected: sortBy == 'date',
                     ),
                   ],
                 ),
@@ -353,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
 
                 // Info Banner
-                if (_sortBy == 'manual')
+                if (sortBy == 'manual')
                   Consumer<AccountsProvider>(
                     builder: (context, provider, _) {
                       if (provider.accounts.isNotEmpty) {
@@ -425,13 +428,14 @@ class _HomeScreenState extends State<HomeScreen>
                     builder: (context, provider, _) {
                       final accounts = _getFilteredAndSortedAccounts(
                         provider.accounts,
+                        sortBy,
                       );
 
                       if (accounts.isEmpty) {
                         return HomeEmptyState(searchQuery: _searchQuery);
                       }
 
-                      if (_sortBy == 'manual') {
+                      if (sortBy == 'manual') {
                         return ReorderableListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                           itemCount: accounts.length,

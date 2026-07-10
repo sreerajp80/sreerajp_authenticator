@@ -43,6 +43,19 @@ class P2pSyncService {
   bool _timedOut = false;
   bool _stopped = false;
 
+  // Held-open client session (host side). After a client authenticates the host
+  // keeps the connection open and waits for the sender to choose what to share;
+  // the payload is pushed later via [sendToConnectedClient].
+  Socket? _activeSocket;
+  enc.Key? _activeKey;
+  _BoundedLineReader? _activeReader;
+  void Function()? _onClientConnected;
+  void Function()? _onClientDisconnected;
+  void Function(String message)? _onHostError;
+
+  /// True once a client has authenticated and the connection is being held open.
+  bool get hasConnectedClient => _activeSocket != null;
+
   // ─── Crypto (app-agnostic core) ────────────────────────────────────────────
 
   static final Random _secureRandom = Random.secure();
@@ -76,6 +89,71 @@ class P2pSyncService {
       chunks.add(code.substring(i, min(i + group, code.length)));
     }
     return chunks.join('-');
+  }
+
+  /// Build the out-of-band QR payload for the host: a versioned URI carrying the
+  /// host IP, port, and pairing code so the peer can scan instead of typing. This
+  /// is shown only on-screen and read by the peer's camera — it is never sent
+  /// over the network (see docs/security.md §5.1).
+  static String buildSyncQrPayload({
+    required String ipAddress,
+    required int port,
+    required String code,
+  }) {
+    final uri = Uri(
+      scheme: AppConstants.syncQrScheme,
+      host: AppConstants.syncQrHost,
+      queryParameters: {
+        AppConstants.syncQrKeyVersion: AppConstants.syncQrVersion,
+        AppConstants.syncQrKeyIp: ipAddress,
+        AppConstants.syncQrKeyPort: port.toString(),
+        AppConstants.syncQrKeyCode: code,
+      },
+    );
+    return uri.toString();
+  }
+
+  /// Parse a scanned sync QR back into its host IP, port, and normalized code.
+  /// Throws [P2pSyncException] with a user-safe message on any foreign or
+  /// malformed QR (wrong scheme/host/version, missing/invalid port, empty code).
+  static ({String ipAddress, int port, String code}) parseSyncQrPayload(
+    String raw,
+  ) {
+    final Uri uri;
+    try {
+      uri = Uri.parse(raw.trim());
+    } catch (_) {
+      throw const P2pSyncException('Not a sync QR code');
+    }
+
+    if (uri.scheme != AppConstants.syncQrScheme ||
+        uri.host != AppConstants.syncQrHost) {
+      throw const P2pSyncException('Not a sync QR code');
+    }
+    if (uri.queryParameters[AppConstants.syncQrKeyVersion] !=
+        AppConstants.syncQrVersion) {
+      throw const P2pSyncException('Unsupported sync QR version');
+    }
+
+    final ipAddress =
+        (uri.queryParameters[AppConstants.syncQrKeyIp] ?? '').trim();
+    if (ipAddress.isEmpty) {
+      throw const P2pSyncException('Sync QR is missing the host address');
+    }
+
+    final port = int.tryParse(
+      uri.queryParameters[AppConstants.syncQrKeyPort] ?? '',
+    );
+    if (port == null || port < 1 || port > 65535) {
+      throw const P2pSyncException('Sync QR has an invalid port');
+    }
+
+    final code = normalizeCode(uri.queryParameters[AppConstants.syncQrKeyCode] ?? '');
+    if (code.isEmpty) {
+      throw const P2pSyncException('Sync QR is missing the pairing code');
+    }
+
+    return (ipAddress: ipAddress, port: port, code: code);
   }
 
   static Uint8List _randomBytes(int length) {
@@ -147,6 +225,8 @@ class P2pSyncService {
       throw const P2pSyncException('Malformed sync payload');
     }
 
+    final hasAccounts = decoded['accounts'] is List;
+    final hasGroups = decoded['groups'] is List;
     final accountsJson = (decoded['accounts'] as List?) ?? const [];
     final groupsJson = (decoded['groups'] as List?) ?? const [];
 
@@ -176,7 +256,24 @@ class P2pSyncService {
         groups.add(Group.fromMap(item));
       }
 
-      return {'accounts': accounts, 'groups': groups};
+      // Only include category keys that were actually present, so the receiver
+      // can tell "0 accounts sent" from "accounts not part of this sync".
+      final result = <String, dynamic>{};
+      if (hasAccounts) result['accounts'] = accounts;
+      if (hasGroups) result['groups'] = groups;
+
+      final settings = decoded[AppConstants.syncPayloadKeySettings];
+      if (settings is Map<String, dynamic>) {
+        _checkFieldLengths(settings);
+        result[AppConstants.syncPayloadKeySettings] = settings;
+      }
+
+      final mode = decoded[AppConstants.syncPayloadKeySyncMode];
+      if (mode is String) {
+        result[AppConstants.syncPayloadKeySyncMode] = mode;
+      }
+
+      return result;
     } on P2pSyncException {
       rethrow;
     } catch (_) {
@@ -198,15 +295,16 @@ class P2pSyncService {
   /// background. Returns the address/port to display to the user. The host
   /// auto-stops after [idleTimeout] if no client completes the handshake.
   ///
-  /// [buildPayload] is called only after a client authenticates; it returns the
-  /// plaintext JSON to send (the caller is responsible for decrypting secrets
-  /// with the device key when building it).
+  /// The payload is NOT sent on connect. When a client authenticates the host
+  /// sends the accept immediately and fires [onClientConnected], then holds the
+  /// connection open; the sender pushes the chosen data later via
+  /// [sendToConnectedClient]. If the held connection drops before a send,
+  /// [onClientDisconnected] fires and the host resumes waiting.
   Future<HostBinding> startHost({
     required String code,
     required Duration idleTimeout,
-    required Future<String> Function() buildPayload,
-    required void Function() onSyncing,
-    required void Function(int exportedCount) onCompleted,
+    required void Function() onClientConnected,
+    required void Function() onClientDisconnected,
     required void Function(String message) onError,
     required void Function() onTimedOut,
   }) async {
@@ -214,11 +312,24 @@ class P2pSyncService {
     _authenticated = false;
     _timedOut = false;
     _stopped = false;
+    _onClientConnected = onClientConnected;
+    _onClientDisconnected = onClientDisconnected;
+    _onHostError = onError;
 
     final ip = await NetworkUtils.getLocalIpAddress();
     final server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
     _serverSocket = server;
 
+    _armIdleTimer(idleTimeout, onTimedOut);
+
+    // Run the accept loop without awaiting so we can return the binding now.
+    unawaited(_runHostLoop(server, code));
+
+    return HostBinding(ip, server.port);
+  }
+
+  void _armIdleTimer(Duration idleTimeout, void Function() onTimedOut) {
+    _idleTimer?.cancel();
     _idleTimer = Timer(idleTimeout, () {
       if (!_authenticated) {
         _timedOut = true;
@@ -226,55 +337,33 @@ class P2pSyncService {
         stopHost();
       }
     });
-
-    // Run the accept loop without awaiting so we can return the binding now.
-    unawaited(
-      _runHostLoop(server, code, buildPayload, onSyncing, onCompleted, onError),
-    );
-
-    return HostBinding(ip, server.port);
   }
 
-  Future<void> _runHostLoop(
-    ServerSocket server,
-    String code,
-    Future<String> Function() buildPayload,
-    void Function() onSyncing,
-    void Function(int) onCompleted,
-    void Function(String) onError,
-  ) async {
+  Future<void> _runHostLoop(ServerSocket server, String code) async {
     try {
       await for (final socket in server) {
-        final done = await _handleHostTransaction(
-          socket,
-          code,
-          buildPayload,
-          onSyncing,
-          onCompleted,
-          onError,
-        );
-        if (done) break;
+        await _handleHostConnection(socket, code);
       }
     } catch (e) {
       if (!_timedOut && !_stopped) {
-        onError('Server error: $e');
+        _onHostError?.call('Server error: $e');
       }
-    } finally {
-      await stopHost();
     }
   }
 
-  /// Handles a single connection. Returns true when the host should stop
-  /// listening (successful sync, or a fatal post-auth error); false to keep
-  /// listening (rejected/garbled attempt — the idle timer remains active).
-  Future<bool> _handleHostTransaction(
-    Socket socket,
-    String code,
-    Future<String> Function() buildPayload,
-    void Function() onSyncing,
-    void Function(int) onCompleted,
-    void Function(String) onError,
-  ) async {
+  /// Handle one incoming connection. On successful auth the socket is retained
+  /// as the active client (connection held open) and the accept line is sent so
+  /// the peer knows it is connected; the payload follows later. Rejected or
+  /// garbled attempts are closed quietly and the host keeps listening.
+  Future<void> _handleHostConnection(Socket socket, String code) async {
+    // Single client at a time: reject anyone who connects while one is held.
+    if (_activeSocket != null) {
+      try {
+        await socket.close();
+      } catch (_) {}
+      return;
+    }
+
     final reader = _BoundedLineReader(socket);
     try {
       // 0. Per-session salt sent in clear (not secret), then derive key.
@@ -287,7 +376,10 @@ class P2pSyncService {
       final clientMessage = await reader
           .readLine(AppConstants.syncMaxHandshakeLine)
           .timeout(AppConstants.syncSocketTimeout);
-      if (clientMessage == null) return false;
+      if (clientMessage == null) {
+        await _closeQuietly(reader, socket);
+        return;
+      }
 
       bool authenticated;
       try {
@@ -301,50 +393,90 @@ class P2pSyncService {
           socket.write('${encryptWire(AppConstants.syncDeniedMessage, key)}\n');
           await socket.flush();
         } catch (_) {}
-        return false; // keep listening; idle timer still active
+        await _closeQuietly(reader, socket); // keep listening; idle timer active
+        return;
       }
 
+      // 2. Authenticated: acknowledge immediately, then hold the connection.
       _authenticated = true;
       _idleTimer?.cancel();
-      onSyncing();
-
-      // 2. Send accept + payload.
-      final payload = await buildPayload();
+      _idleTimer = null;
       socket.write('${encryptWire(AppConstants.syncAcceptMessage, key)}\n');
-      socket.write('${encryptWire(payload, key)}\n');
       await socket.flush();
 
-      onCompleted(_countAccounts(payload));
-      return true;
+      _activeSocket = socket;
+      _activeKey = key;
+      _activeReader = reader;
+
+      // Detect the peer dropping the held connection before we send.
+      unawaited(reader.closed.then((_) => _handleClientDropped()));
+
+      _onClientConnected?.call();
+    } catch (_) {
+      // Pre-auth transport error (e.g. a port scanner): close and keep listening.
+      await _closeQuietly(reader, socket);
+    }
+  }
+
+  /// Push the chosen plaintext JSON [payload] to the connected client over the
+  /// held connection, then tear the session down. Throws [P2pSyncException] if
+  /// no client is connected or the send fails.
+  Future<void> sendToConnectedClient(String payload) async {
+    final socket = _activeSocket;
+    final key = _activeKey;
+    if (socket == null || key == null) {
+      throw const P2pSyncException('The other device is no longer connected');
+    }
+    try {
+      socket.write('${encryptWire(payload, key)}\n');
+      await socket.flush();
     } catch (e) {
-      if (_authenticated) {
-        onError('Sync exchange failed: $e');
-        return true;
-      }
-      // Pre-auth transport error (e.g. a port scanner): keep listening quietly.
-      return false;
+      throw P2pSyncException('Sync send failed: $e');
     } finally {
-      await reader.cancel();
+      // A session sends exactly one payload; stop hosting once it is delivered.
+      await stopHost();
+    }
+  }
+
+  void _handleClientDropped() {
+    // Ignore drops caused by our own teardown (stop / successful send).
+    if (_stopped || _activeSocket == null) return;
+    _clearActiveClient();
+    _authenticated = false;
+    _onClientDisconnected?.call();
+  }
+
+  void _clearActiveClient() {
+    final reader = _activeReader;
+    final socket = _activeSocket;
+    _activeReader = null;
+    _activeSocket = null;
+    _activeKey = null;
+    if (reader != null) {
+      reader.cancel();
+    }
+    if (socket != null) {
       try {
-        await socket.close();
+        socket.destroy();
       } catch (_) {}
     }
   }
 
-  static int _countAccounts(String payload) {
+  Future<void> _closeQuietly(_BoundedLineReader reader, Socket socket) async {
+    await reader.cancel();
     try {
-      final decoded = jsonDecode(payload);
-      if (decoded is Map && decoded['accounts'] is List) {
-        return (decoded['accounts'] as List).length;
-      }
+      await socket.close();
     } catch (_) {}
-    return 0;
   }
 
   Future<void> stopHost() async {
     _stopped = true;
     _idleTimer?.cancel();
     _idleTimer = null;
+    _clearActiveClient();
+    _onClientConnected = null;
+    _onClientDisconnected = null;
+    _onHostError = null;
     final server = _serverSocket;
     _serverSocket = null;
     if (server != null) {
@@ -359,11 +491,15 @@ class P2pSyncService {
   /// Connect to a host, authenticate with [code], and return the decrypted
   /// plaintext JSON payload. Throws [P2pSyncException] on any failure. The
   /// caller validates and imports the returned payload.
+  ///
+  /// [onConnected] fires once the host has accepted this device but before the
+  /// payload arrives — the sender then chooses what to share, so the wait for
+  /// the payload can be long (bounded by [AppConstants.syncPayloadWaitTimeout]).
   Future<String> connectAndFetch({
     required String hostIp,
     required int port,
     required String code,
-    void Function()? onSyncing,
+    void Function()? onConnected,
   }) async {
     Socket? socket;
     _BoundedLineReader? reader;
@@ -411,14 +547,16 @@ class P2pSyncService {
         throw const P2pSyncException('Incorrect pairing code');
       }
 
-      onSyncing?.call();
+      // Connected and waiting: the sender now chooses what to share.
+      onConnected?.call();
 
-      // 3. Read + decrypt payload.
+      // 3. Read + decrypt payload. The sender may take a while to choose, so
+      // this read uses the long payload-wait timeout, not the socket timeout.
       final encPayload = await reader
           .readLine(AppConstants.syncMaxPayloadLine)
-          .timeout(AppConstants.syncSocketTimeout);
+          .timeout(AppConstants.syncPayloadWaitTimeout);
       if (encPayload == null) {
-        throw const P2pSyncException('No data received from host');
+        throw const P2pSyncException('The other device closed the connection');
       }
       try {
         return decryptWire(encPayload, key);
@@ -451,6 +589,7 @@ class _BoundedLineReader {
   Object? _error;
   Completer<String?>? _pending;
   int _pendingMax = 0;
+  final Completer<void> _closedCompleter = Completer<void>();
   late final StreamSubscription<Uint8List> _subscription;
 
   _BoundedLineReader(Stream<Uint8List> stream) {
@@ -462,6 +601,14 @@ class _BoundedLineReader {
     );
   }
 
+  /// Completes when the underlying stream ends or errors (i.e. the peer closed
+  /// the connection). Used by the host to notice a held client dropping.
+  Future<void> get closed => _closedCompleter.future;
+
+  void _completeClosed() {
+    if (!_closedCompleter.isCompleted) _closedCompleter.complete();
+  }
+
   void _onData(Uint8List data) {
     _buffer.addAll(data);
     _serve();
@@ -470,11 +617,13 @@ class _BoundedLineReader {
   void _onError(Object error) {
     _error = error;
     _serve();
+    _completeClosed();
   }
 
   void _onDone() {
     _closed = true;
     _serve();
+    _completeClosed();
   }
 
   Future<String?> readLine(int maxLen) {
@@ -530,6 +679,7 @@ class _BoundedLineReader {
   }
 
   Future<void> cancel() async {
+    _completeClosed();
     try {
       await _subscription.cancel();
     } catch (_) {}

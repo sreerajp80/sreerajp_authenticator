@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -97,6 +98,27 @@ void main() {
 
       expect(provider.isAppLockEnabled, isTrue);
       expect(provider.isLocked, isFalse);
+    });
+
+    test('setSyncInProgress(true) suppresses idle auto-lock', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      await provider.setAppLockPin('1234');
+      await provider.setAppLockEnabled(true);
+      // Timeout 0 means "lock on the next check".
+      await provider.setAutoLockTimeout(0);
+      expect(provider.isLocked, isFalse);
+
+      // While a sync is active, an auto-lock check must not lock.
+      provider.setSyncInProgress(true);
+      provider.checkAndLockApp();
+      expect(provider.isLocked, isFalse);
+
+      // Once the sync ends, normal auto-lock resumes.
+      provider.setSyncInProgress(false);
+      provider.checkAndLockApp();
+      expect(provider.isLocked, isTrue);
     });
 
     test('idle timeout requires app pin even when quick unlock is enabled', () async {
@@ -283,6 +305,132 @@ void main() {
       expect(prefs.getBool('app_lock_enabled'), isFalse);
       expect(prefs.getBool('require_authentication'), isFalse);
       expect(prefs.getBool('phone_lock_quick_unlock_enabled'), isFalse);
+    });
+
+    test('sortBy defaults to alphabetical issuer when unset', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      expect(provider.sortBy, AppConstants.defaultSortBy);
+      expect(provider.sortBy, 'issuer');
+    });
+
+    test('setSortBy persists and reloads on a fresh provider', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      await provider.setSortBy('account');
+      expect(provider.sortBy, 'account');
+
+      final reloaded = SettingsProvider();
+      await reloaded.initialized;
+      expect(reloaded.sortBy, 'account');
+    });
+
+    test('setSortBy ignores unknown values and keeps the current sort', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      await provider.setSortBy('manual');
+      await provider.setSortBy('not_a_real_sort');
+
+      expect(provider.sortBy, 'manual');
+    });
+
+    test('an unknown stored sort value falls back to the default', () async {
+      SharedPreferences.setMockInitialValues({
+        'sort_by': 'garbage_value',
+      });
+
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      expect(provider.sortBy, AppConstants.defaultSortBy);
+    });
+  });
+
+  group('SettingsProvider sync', () {
+    test('syncableSettingsSnapshot exposes only the three syncable settings',
+        () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      await provider.setThemeMode(ThemeMode.dark);
+      await provider.setAutoLockTimeout(120);
+      await provider.setSyncHostIdleTimeout(300);
+
+      final snap = provider.syncableSettingsSnapshot();
+
+      expect(snap.keys.toSet(), {
+        AppConstants.syncSettingThemeMode,
+        AppConstants.syncSettingAutoLockTimeout,
+        AppConstants.syncSettingSyncHostIdleTimeout,
+      });
+      expect(snap[AppConstants.syncSettingThemeMode], ThemeMode.dark.index);
+      expect(snap[AppConstants.syncSettingAutoLockTimeout], 120);
+      expect(snap[AppConstants.syncSettingSyncHostIdleTimeout], 300);
+    });
+
+    test('applySyncedSettings with overwrite applies all values', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      final applied = await provider.applySyncedSettings({
+        AppConstants.syncSettingThemeMode: ThemeMode.dark.index,
+        AppConstants.syncSettingAutoLockTimeout: 90,
+        AppConstants.syncSettingSyncHostIdleTimeout: 240,
+      }, overwrite: true);
+
+      expect(applied, 3);
+      expect(provider.themeMode, ThemeMode.dark);
+      expect(provider.autoLockTimeout, 90);
+      expect(provider.syncHostIdleTimeout, 240);
+    });
+
+    test('applySyncedSettings fill-only never overrides an already-set value',
+        () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      // The receiver has already chosen a theme and auto-lock.
+      await provider.setThemeMode(ThemeMode.light);
+      await provider.setAutoLockTimeout(30);
+
+      final applied = await provider.applySyncedSettings({
+        AppConstants.syncSettingThemeMode: ThemeMode.dark.index,
+        AppConstants.syncSettingAutoLockTimeout: 300,
+      }, overwrite: false);
+
+      // Both keys already set → nothing applied, receiver's choices retained.
+      expect(applied, 0);
+      expect(provider.themeMode, ThemeMode.light);
+      expect(provider.autoLockTimeout, 30);
+    });
+
+    test('applySyncedSettings clamps the sync idle timeout', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      await provider.applySyncedSettings({
+        AppConstants.syncSettingSyncHostIdleTimeout: 99999,
+      }, overwrite: true);
+
+      expect(
+        provider.syncHostIdleTimeout,
+        AppConstants.syncHostIdleTimeoutMax,
+      );
+    });
+
+    test('applySyncedSettings ignores unknown keys and bad types', () async {
+      final provider = SettingsProvider();
+      await provider.initialized;
+
+      final applied = await provider.applySyncedSettings({
+        'not_a_setting': 5,
+        AppConstants.syncSettingThemeMode: 'dark', // wrong type
+      }, overwrite: true);
+
+      expect(applied, 0);
     });
   });
 }

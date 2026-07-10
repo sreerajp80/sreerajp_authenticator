@@ -332,56 +332,6 @@ void main() {
     });
   });
 
-  // ─── CSV generation ───────────────────────────────────────────────────────
-
-  group('CSV export', () {
-    test('CSV header includes expected columns', () {
-      final csv = service.accountsToCsvForTest([]);
-      expect(csv, startsWith('Name,Issuer,Secret,Digits,Period,Algorithm,Group ID,Created At'));
-    });
-
-    test('CSV includes account data', () {
-      final accounts = [
-        makeAccount(name: 'GitHub', secret: 'SECRET', issuer: 'GitHub Inc', digits: 6),
-      ];
-      final csv = service.accountsToCsvForTest(accounts);
-      final lines = csv.trim().split('\n');
-
-      expect(lines.length, 2); // header + 1 row
-      expect(lines[1], contains('"GitHub"'));
-      expect(lines[1], contains('"GitHub Inc"'));
-      expect(lines[1], contains('"SECRET"'));
-      expect(lines[1], contains('6'));
-    });
-
-    test('CSV handles null issuer as empty string', () {
-      final accounts = [makeAccount(name: 'NoIssuer', issuer: null)];
-      final csv = service.accountsToCsvForTest(accounts);
-      final lines = csv.trim().split('\n');
-      // issuer field should be empty quotes
-      expect(lines[1], contains('"",'));
-    });
-
-    test('CSV handles multiple accounts', () {
-      final accounts = [
-        makeAccount(name: 'A'),
-        makeAccount(name: 'B'),
-        makeAccount(name: 'C'),
-      ];
-      final csv = service.accountsToCsvForTest(accounts);
-      final lines = csv.trim().split('\n');
-      expect(lines.length, 4); // header + 3 rows
-    });
-
-    test('CSV handles null groupId', () {
-      final accounts = [makeAccount(name: 'NoGroup', groupId: null)];
-      final csv = service.accountsToCsvForTest(accounts);
-      final lines = csv.trim().split('\n');
-      // groupId should be empty (not "null")
-      expect(lines[1], isNot(contains('null')));
-    });
-  });
-
   // ─── End-to-end: encrypt JSON backup then decrypt and parse ───────────────
 
   group('end-to-end backup integrity', () {

@@ -13,6 +13,23 @@ import '../services/migration_service.dart';
 import '../services/otp_service.dart';
 import '../utils/app_logger.dart';
 
+/// Outcome of an [AccountsProvider.importData] call: how many accounts and
+/// groups were newly added versus skipped as duplicates. Used to build the
+/// receiver's sync summary.
+class ImportResult {
+  final int accountsAdded;
+  final int accountsSkipped;
+  final int groupsAdded;
+  final int groupsSkipped;
+
+  const ImportResult({
+    this.accountsAdded = 0,
+    this.accountsSkipped = 0,
+    this.groupsAdded = 0,
+    this.groupsSkipped = 0,
+  });
+}
+
 class AccountsProvider extends ChangeNotifier {
   List<Account> _accounts = [];
   final DatabaseService _db = DatabaseService.instance;
@@ -299,12 +316,17 @@ class AccountsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> importData(
+  Future<ImportResult> importData(
     Map<String, dynamic> data, {
     required List<Group> existingGroups,
     VoidCallback? onGroupsChanged,
   }) async {
     try {
+      var groupsAdded = 0;
+      var groupsSkipped = 0;
+      var accountsAdded = 0;
+      var accountsSkipped = 0;
+
       // Maps old backup group IDs → new database group IDs so that
       // account.groupId references remain correct after import.
       final Map<int, int> groupIdMap = {};
@@ -326,6 +348,7 @@ class AccountsProvider extends ChangeNotifier {
             if (oldId != null && existing.id != null) {
               groupIdMap[oldId] = existing.id!;
             }
+            groupsSkipped++;
             AppLogger.verbose('Skipped a duplicate group during import');
           } else {
             // Insert without the old ID so the DB auto-generates a new one
@@ -337,6 +360,7 @@ class AccountsProvider extends ChangeNotifier {
             existingGroupsByName[group.name.toLowerCase()] = group.copyWith(
               id: newId,
             );
+            groupsAdded++;
           }
         }
       }
@@ -384,7 +408,9 @@ class AccountsProvider extends ChangeNotifier {
             );
             await _db.createAccount(encryptedAccount);
             existingKeys.add(key);
+            accountsAdded++;
           } else {
+            accountsSkipped++;
             AppLogger.verbose('Skipped a duplicate account during import');
           }
         }
@@ -392,6 +418,13 @@ class AccountsProvider extends ChangeNotifier {
 
       onGroupsChanged?.call();
       await loadAccounts();
+
+      return ImportResult(
+        accountsAdded: accountsAdded,
+        accountsSkipped: accountsSkipped,
+        groupsAdded: groupsAdded,
+        groupsSkipped: groupsSkipped,
+      );
     } catch (e) {
       AppLogger.error('Failed to import account data', e);
       rethrow;

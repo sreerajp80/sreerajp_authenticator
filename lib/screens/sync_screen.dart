@@ -1,10 +1,10 @@
 // File Path: sreerajp_authenticator/lib/screens/sync_screen.dart
 // Author: Sreeraj P
-// Description: P2P LAN sync UI. One device hosts (shows IP + random port +
-//   pairing code); the other joins by typing them in. See docs/security.md.
+// Description: P2P LAN sync UI. The sender hosts (Server Details + Sync tabs, see
+//   SendToDeviceView); the receiver joins by scanning the QR or typing the host
+//   IP, port, and pairing code. See docs/security.md.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/account_provider.dart';
@@ -12,6 +12,8 @@ import '../providers/group_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sync_provider.dart';
 import '../services/p2p_sync_service.dart';
+import 'send_to_device_screen.dart';
+import 'sync_qr_scanner_screen.dart';
 
 class SyncScreen extends StatefulWidget {
   const SyncScreen({super.key});
@@ -27,17 +29,23 @@ class _SyncScreenState extends State<SyncScreen> {
 
   bool _showJoinForm = false;
   SyncProvider? _syncProvider;
+  SettingsProvider? _settingsProvider;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _syncProvider = context.read<SyncProvider>();
+    // Suppress idle/background auto-lock while on this screen so a host waiting
+    // for a peer (or an in-flight transfer) is not locked out mid-sync.
+    _settingsProvider ??= context.read<SettingsProvider>()
+      ..setSyncInProgress(true);
   }
 
   @override
   void dispose() {
     // Tear down any active listener when leaving the screen.
     _syncProvider?.reset();
+    _settingsProvider?.setSyncInProgress(false);
     _hostIpController.dispose();
     _portController.dispose();
     _codeController.dispose();
@@ -56,18 +64,8 @@ class _SyncScreenState extends State<SyncScreen> {
   }
 
   Future<void> _startHosting() async {
-    final accounts = context.read<AccountsProvider>().accounts;
-    final groups = context.read<GroupsProvider>().groups;
     final idleTimeout = context.read<SettingsProvider>().syncHostIdleTimeout;
-
-    if (accounts.isEmpty) {
-      _showMessage('No accounts to send', isError: true);
-      return;
-    }
-
     await context.read<SyncProvider>().startHosting(
-      accounts: accounts,
-      groups: groups,
       idleTimeoutSeconds: idleTimeout,
     );
   }
@@ -93,19 +91,32 @@ class _SyncScreenState extends State<SyncScreen> {
 
     final accountsProvider = context.read<AccountsProvider>();
     final groupsProvider = context.read<GroupsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
 
     await context.read<SyncProvider>().joinSync(
       hostIp: hostIp,
       port: port,
       code: code,
-      onImport: (data) async {
-        await accountsProvider.importData(
-          data,
-          existingGroups: groupsProvider.groups,
-          onGroupsChanged: () => groupsProvider.loadGroups(),
-        );
-      },
+      importData: (data) => accountsProvider.importData(
+        data,
+        existingGroups: groupsProvider.groups,
+        onGroupsChanged: () => groupsProvider.loadGroups(),
+      ),
+      applySettings: (settings, {required overwrite}) =>
+          settingsProvider.applySyncedSettings(settings, overwrite: overwrite),
     );
+  }
+
+  Future<void> _scanQr() async {
+    final result = await Navigator.of(context).push<SyncQrResult>(
+      MaterialPageRoute(builder: (_) => const SyncQrScannerScreen()),
+    );
+    if (result == null || !mounted) return;
+
+    _hostIpController.text = result.ipAddress;
+    _portController.text = result.port.toString();
+    _codeController.text = result.code;
+    await _join();
   }
 
   @override
@@ -121,13 +132,20 @@ class _SyncScreenState extends State<SyncScreen> {
           });
         }
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Sync to another device')),
-          body: Consumer<SyncProvider>(
-            builder: (context, syncProvider, child) {
-              return _buildBody(context, syncProvider.state);
-            },
-          ),
+        return Consumer<SyncProvider>(
+          builder: (context, syncProvider, child) {
+            final isHosting = syncProvider.state is SyncHosting;
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  isHosting
+                      ? 'Send to another device'
+                      : 'Sync to another device',
+                ),
+              ),
+              body: _buildBody(context, syncProvider.state),
+            );
+          },
         );
       },
     );
@@ -135,9 +153,10 @@ class _SyncScreenState extends State<SyncScreen> {
 
   Widget _buildBody(BuildContext context, SyncState state) {
     return switch (state) {
-      SyncHosting() => _buildHosting(context, state),
+      SyncHosting() => SendToDeviceView(state: state),
       SyncConnecting() => _buildProgress('Connecting to host…'),
-      SyncSyncing() => _buildProgress('Syncing…'),
+      SyncWaitingForSender() => _buildWaitingForSender(context),
+      SyncSyncing() => _buildProgress('Receiving…'),
       SyncCompleted() => _buildCompleted(context, state),
       SyncError() => _buildError(context, state),
       SyncIdle() => _showJoinForm ? _buildJoinForm(context) : _buildMenu(context),
@@ -178,7 +197,7 @@ class _SyncScreenState extends State<SyncScreen> {
             leading: _iconBox(context, Icons.upload, theme.colorScheme.primaryContainer,
                 theme.colorScheme.onPrimaryContainer),
             title: const Text('Send to another device'),
-            subtitle: const Text('Host: share your accounts with a paired device'),
+            subtitle: const Text('Host: share your accounts, groups, and settings'),
             trailing: const Icon(Icons.chevron_right),
             onTap: _startHosting,
           ),
@@ -189,89 +208,10 @@ class _SyncScreenState extends State<SyncScreen> {
             leading: _iconBox(context, Icons.download, theme.colorScheme.secondaryContainer,
                 theme.colorScheme.onSecondaryContainer),
             title: const Text('Receive from another device'),
-            subtitle: const Text('Join: import accounts from a hosting device'),
+            subtitle: const Text('Join: scan the QR or import from a hosting device'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => setState(() => _showJoinForm = true),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHosting(BuildContext context, SyncHosting state) {
-    final theme = Theme.of(context);
-    final idleTimeout = context.read<SettingsProvider>().syncHostIdleTimeout;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'WAITING FOR THE OTHER DEVICE',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _infoRow(context, 'Host IP', state.ipAddress),
-                const SizedBox(height: 12),
-                _infoRow(context, 'Port', state.port.toString()),
-                const SizedBox(height: 16),
-                Text('Pairing code', style: theme.textTheme.labelMedium),
-                const SizedBox(height: 4),
-                SelectableText(
-                  P2pSyncService.formatPairingCode(state.code),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontFeatures: const [],
-                    letterSpacing: 1.0,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Copy code'),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: state.code));
-                      _showMessage('Pairing code copied');
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'On the other device, choose “Receive”, then enter this IP, '
-                'port, and code. Hosting stops automatically after '
-                '$idleTimeout seconds if no device connects.',
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        OutlinedButton(
-          onPressed: () => context.read<SyncProvider>().stopHosting(),
-          child: const Text('Stop hosting'),
         ),
       ],
     );
@@ -283,7 +223,7 @@ class _SyncScreenState extends State<SyncScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'ENTER THE HOST DETAILS',
+          'SCAN THE QR ON THE OTHER DEVICE',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
@@ -291,6 +231,26 @@ class _SyncScreenState extends State<SyncScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.qr_code_scanner),
+          label: const Text('Scan QR code'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
+          ),
+          onPressed: _scanQr,
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('or enter manually', style: theme.textTheme.bodySmall),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 16),
         TextField(
           controller: _hostIpController,
           keyboardType: TextInputType.number,
@@ -349,23 +309,45 @@ class _SyncScreenState extends State<SyncScreen> {
     );
   }
 
-  Widget _buildCompleted(BuildContext context, SyncCompleted state) {
+  Widget _buildWaitingForSender(BuildContext context) {
     final theme = Theme.of(context);
-    final isHostResult = state.sentCount > 0 && state.receivedCount == 0;
-    final summary = isHostResult
-        ? 'Sent ${state.sentCount} account(s) to the paired device.'
-        : 'Received ${state.receivedCount} account(s). Duplicates were skipped.';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(Icons.link, size: 56, color: theme.colorScheme.primary),
+            const SizedBox(height: 16),
+            Text('Connected', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const Text(
+              'Waiting for the sender to choose what to share…',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompleted(BuildContext context, SyncCompleted state) {
+    final theme = Theme.of(context);
+    final summary = state.summary;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
             Icon(Icons.check_circle, size: 64, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
             Text('Sync complete', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(summary, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ..._summaryLines(context, summary),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
@@ -378,6 +360,53 @@ class _SyncScreenState extends State<SyncScreen> {
         ),
       ),
     );
+  }
+
+  /// One line per synced category, phrased for the sender or the receiver.
+  List<Widget> _summaryLines(BuildContext context, SyncSummary s) {
+    final theme = Theme.of(context);
+    final lines = <String>[];
+
+    if (s.isHost) {
+      if (s.includedAccounts) lines.add('Sent ${s.accounts} account(s)');
+      if (s.includedGroups) lines.add('Sent ${s.groups} group(s)');
+      if (s.includedSettings) lines.add('Sent ${s.settings} setting(s)');
+    } else {
+      if (s.includedAccounts) {
+        final skipped = s.accountsSkipped > 0
+            ? ' (${s.accountsSkipped} already present, kept)'
+            : '';
+        lines.add('Added ${s.accounts} account(s)$skipped');
+      }
+      if (s.includedGroups) {
+        final skipped = s.groupsSkipped > 0
+            ? ' (${s.groupsSkipped} already present, kept)'
+            : '';
+        lines.add('Added ${s.groups} group(s)$skipped');
+      }
+      if (s.includedSettings) {
+        lines.add('Applied ${s.settings} setting(s)');
+      }
+    }
+
+    if (lines.isEmpty) lines.add('Nothing to sync.');
+
+    return [
+      for (final line in lines)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(line, style: theme.textTheme.bodyMedium),
+              ),
+            ],
+          ),
+        ),
+    ];
   }
 
   Widget _buildError(BuildContext context, SyncError state) {
@@ -415,22 +444,6 @@ class _SyncScreenState extends State<SyncScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(icon, color: fg),
-    );
-  }
-
-  Widget _infoRow(BuildContext context, String label, String value) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: theme.textTheme.labelMedium),
-        SelectableText(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 }

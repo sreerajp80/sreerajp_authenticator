@@ -158,5 +158,42 @@ void main() {
         );
       },
     );
+
+    test(
+      'importData reports added/skipped counts and retains existing data',
+      () async {
+        // The receiver already has one account.
+        await db.createAccount(makeAccount(name: 'GitHub', issuer: 'GitHub'));
+
+        final provider = AccountsProvider();
+        await waitForCondition(
+          () =>
+              provider.accounts.length == 1 &&
+              !provider.isLoading &&
+              !provider.isPreDecrypting,
+        );
+
+        final data = <String, dynamic>{
+          'groups': [makeGroup(name: 'Work')],
+          'accounts': [
+            // Duplicate (name + issuer + type) → skipped, existing retained.
+            makeAccount(name: 'GitHub', issuer: 'GitHub'),
+            // New → added.
+            makeAccount(name: 'Slack', issuer: 'Slack'),
+          ],
+        };
+
+        final result = await provider.importData(
+          data,
+          existingGroups: const [],
+        );
+
+        expect(result.groupsAdded, 1);
+        expect(result.groupsSkipped, 0);
+        expect(result.accountsAdded, 1);
+        expect(result.accountsSkipped, 1);
+        expect(provider.accounts.length, 2);
+      },
+    );
   });
 }

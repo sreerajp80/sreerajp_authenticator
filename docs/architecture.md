@@ -277,15 +277,28 @@ Migration history:
 - P2P LAN sync: a `dart:io` `ServerSocket`/`Socket` engine
   ([`lib/services/p2p_sync_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart))
   for opt-in, same-LAN, device-to-device account transfer. The host binds a **random
-  OS-assigned port** and displays its IPv4 + port + a per-session pairing code; the client
-  connects by typing those in. Security is at the payload layer (PBKDF2-derived AES-256-GCM keyed
-  by the out-of-band pairing code), not the transport. State is driven by
+  OS-assigned port** and displays its IPv4 + port + a per-session pairing code, both as a scannable
+  QR (`spauth://sync?…`) and as text; the client connects either by scanning the QR
+  ([`lib/screens/sync_qr_scanner_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_qr_scanner_screen.dart))
+  or by typing the details in. Security is at the payload layer (PBKDF2-derived AES-256-GCM keyed
+  by the out-of-band pairing code — the QR is out-of-band too, never on the wire), not the transport.
+  State is driven by
   [`lib/providers/sync_provider.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/sync_provider.dart)
   and the UI by
-  [`lib/screens/sync_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_screen.dart).
-  Received data is routed through the existing import funnel (`AccountsProvider.importData`). The
-  host auto-stops after a configurable idle timeout (`SettingsProvider.syncHostIdleTimeout`).
-  Full threat model in `docs/security.md`.
+  [`lib/screens/sync_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_screen.dart)
+  with the host's tabbed send UI in
+  [`lib/screens/send_to_device_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/send_to_device_screen.dart).
+  The host holds the connection open after a peer authenticates and the **sender chooses what to
+  share**: a Full Sync (all accounts, groups, and the syncable settings — theme, auto-lock, and sync
+  idle timeout — via `SettingsProvider.syncableSettingsSnapshot`) to a fresh device, or a selective
+  incremental sync of chosen categories. Payloads carry an optional `settings` object and a
+  `syncMode` marker; device-specific security settings are never sent. Received accounts/groups are
+  routed through the existing import funnel (`AccountsProvider.importData`, add-only / client-wins,
+  now returning `ImportResult` counts) and settings through `SettingsProvider.applySyncedSettings`
+  (fill-only on an incremental sync). The host auto-stops after a configurable idle timeout
+  (`SettingsProvider.syncHostIdleTimeout`), and idle auto-lock is suppressed while the sync screen is
+  open (`SettingsProvider.setSyncInProgress`) so a session is not torn down mid-transfer. Full threat
+  model in `docs/security.md`.
 
 ### Platform Channels Or Native Integrations
 

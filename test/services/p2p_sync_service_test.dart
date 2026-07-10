@@ -9,8 +9,13 @@ import 'package:sreerajp_authenticator/utils/constants.dart';
 void main() {
   final fixedTime = DateTime(2025, 10, 1);
 
-  String buildPayloadJson({int accounts = 1, int groups = 0}) {
-    return jsonEncode({
+  String buildPayloadJson({
+    int accounts = 1,
+    int groups = 0,
+    Map<String, dynamic>? settings,
+    String? syncMode,
+  }) {
+    final map = <String, dynamic>{
       'version': AppConstants.backupVersion,
       'created': fixedTime.toIso8601String(),
       'accounts': [
@@ -27,7 +32,10 @@ void main() {
         for (var i = 0; i < groups; i++)
           Group(name: 'Group $i', createdAt: fixedTime).toMap(),
       ],
-    });
+    };
+    if (settings != null) map[AppConstants.syncPayloadKeySettings] = settings;
+    if (syncMode != null) map[AppConstants.syncPayloadKeySyncMode] = syncMode;
+    return jsonEncode(map);
   }
 
   group('pairing code', () {
@@ -56,6 +64,82 @@ void main() {
       final code = P2pSyncService.generatePairingCode();
       final parts = P2pSyncService.formatPairingCode(code).split('-');
       expect(parts.first.length, AppConstants.syncPairingCodeGroup);
+    });
+  });
+
+  group('sync QR payload', () {
+    test('build -> parse round-trips ip, port, and normalized code', () {
+      final code = P2pSyncService.generatePairingCode();
+      final qr = P2pSyncService.buildSyncQrPayload(
+        ipAddress: '192.168.1.42',
+        port: 54321,
+        code: code,
+      );
+      final parsed = P2pSyncService.parseSyncQrPayload(qr);
+      expect(parsed.ipAddress, '192.168.1.42');
+      expect(parsed.port, 54321);
+      expect(parsed.code, code);
+    });
+
+    test('parse normalizes a hyphen-grouped, lowercased code', () {
+      final code = P2pSyncService.generatePairingCode();
+      final formatted = P2pSyncService.formatPairingCode(code).toLowerCase();
+      final qr =
+          '${AppConstants.syncQrScheme}://${AppConstants.syncQrHost}'
+          '?${AppConstants.syncQrKeyVersion}=${AppConstants.syncQrVersion}'
+          '&${AppConstants.syncQrKeyIp}=10.0.0.5'
+          '&${AppConstants.syncQrKeyPort}=8080'
+          '&${AppConstants.syncQrKeyCode}=${Uri.encodeQueryComponent(formatted)}';
+      final parsed = P2pSyncService.parseSyncQrPayload(qr);
+      expect(parsed.code, code);
+    });
+
+    test('rejects a foreign scheme', () {
+      expect(
+        () => P2pSyncService.parseSyncQrPayload(
+          'otpauth://totp/Acme?secret=JBSWY3DPEHPK3PXP',
+        ),
+        throwsA(isA<P2pSyncException>()),
+      );
+    });
+
+    test('rejects an unsupported version', () {
+      final qr =
+          '${AppConstants.syncQrScheme}://${AppConstants.syncQrHost}'
+          '?${AppConstants.syncQrKeyVersion}=99'
+          '&${AppConstants.syncQrKeyIp}=10.0.0.5'
+          '&${AppConstants.syncQrKeyPort}=8080'
+          '&${AppConstants.syncQrKeyCode}=ABCDEFGH';
+      expect(
+        () => P2pSyncService.parseSyncQrPayload(qr),
+        throwsA(isA<P2pSyncException>()),
+      );
+    });
+
+    test('rejects a missing or invalid port', () {
+      final qr =
+          '${AppConstants.syncQrScheme}://${AppConstants.syncQrHost}'
+          '?${AppConstants.syncQrKeyVersion}=${AppConstants.syncQrVersion}'
+          '&${AppConstants.syncQrKeyIp}=10.0.0.5'
+          '&${AppConstants.syncQrKeyPort}=70000'
+          '&${AppConstants.syncQrKeyCode}=ABCDEFGH';
+      expect(
+        () => P2pSyncService.parseSyncQrPayload(qr),
+        throwsA(isA<P2pSyncException>()),
+      );
+    });
+
+    test('rejects an empty pairing code', () {
+      final qr =
+          '${AppConstants.syncQrScheme}://${AppConstants.syncQrHost}'
+          '?${AppConstants.syncQrKeyVersion}=${AppConstants.syncQrVersion}'
+          '&${AppConstants.syncQrKeyIp}=10.0.0.5'
+          '&${AppConstants.syncQrKeyPort}=8080'
+          '&${AppConstants.syncQrKeyCode}=';
+      expect(
+        () => P2pSyncService.parseSyncQrPayload(qr),
+        throwsA(isA<P2pSyncException>()),
+      );
     });
   });
 
@@ -130,50 +214,87 @@ void main() {
         throwsA(isA<P2pSyncException>()),
       );
     });
+
+    test('surfaces settings and syncMode when present', () {
+      final data = P2pSyncService.validateAndParse(
+        buildPayloadJson(
+          accounts: 1,
+          settings: {AppConstants.syncSettingThemeMode: 2},
+          syncMode: AppConstants.syncModeFull,
+        ),
+      );
+      final settings =
+          data[AppConstants.syncPayloadKeySettings] as Map<String, dynamic>;
+      expect(settings[AppConstants.syncSettingThemeMode], 2);
+      expect(data[AppConstants.syncPayloadKeySyncMode], AppConstants.syncModeFull);
+    });
+
+    test('omits category keys that were not part of the payload', () {
+      // A settings-only incremental payload carries no accounts/groups keys.
+      final json = jsonEncode({
+        AppConstants.syncPayloadKeySettings: {
+          AppConstants.syncSettingThemeMode: 1,
+        },
+        AppConstants.syncPayloadKeySyncMode: AppConstants.syncModeIncremental,
+      });
+      final data = P2pSyncService.validateAndParse(json);
+      expect(data.containsKey('accounts'), isFalse);
+      expect(data.containsKey('groups'), isFalse);
+      expect(data.containsKey(AppConstants.syncPayloadKeySettings), isTrue);
+    });
   });
 
   group('host <-> client over loopback', () {
-    test('happy path: client receives the host payload', () async {
+    test('client connects, then receives the payload the host sends', () async {
       final code = P2pSyncService.generatePairingCode();
       final host = P2pSyncService();
-      final payload = buildPayloadJson(accounts: 3, groups: 1);
+      final payload = buildPayloadJson(
+        accounts: 3,
+        groups: 1,
+        syncMode: AppConstants.syncModeFull,
+      );
 
-      var hostCompleted = false;
+      // The host holds the connection open on connect and pushes the payload
+      // only when the sender chooses — modelled here by sending on connect.
+      var connectedFired = false;
       final binding = await host.startHost(
         code: code,
         idleTimeout: const Duration(seconds: 10),
-        buildPayload: () async => payload,
-        onSyncing: () {},
-        onCompleted: (_) => hostCompleted = true,
+        onClientConnected: () {
+          connectedFired = true;
+          host.sendToConnectedClient(payload);
+        },
+        onClientDisconnected: () {},
         onError: (_) {},
         onTimedOut: () {},
       );
 
       final client = P2pSyncService();
+      var clientSawConnected = false;
       final received = await client.connectAndFetch(
         hostIp: '127.0.0.1',
         port: binding.port,
         code: code,
+        onConnected: () => clientSawConnected = true,
       );
 
       expect(received, payload);
+      expect(connectedFired, isTrue);
+      expect(clientSawConnected, isTrue);
       final data = P2pSyncService.validateAndParse(received);
       expect((data['accounts'] as List<Account>).length, 3);
 
-      // Allow the host's send/close to settle.
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(hostCompleted, isTrue);
       await host.stopHost();
     });
 
-    test('wrong pairing code is rejected', () async {
+    test('wrong pairing code is rejected and never connects', () async {
       final host = P2pSyncService();
+      var connectedFired = false;
       final binding = await host.startHost(
         code: P2pSyncService.generatePairingCode(),
         idleTimeout: const Duration(seconds: 10),
-        buildPayload: () async => buildPayloadJson(),
-        onSyncing: () {},
-        onCompleted: (_) {},
+        onClientConnected: () => connectedFired = true,
+        onClientDisconnected: () {},
         onError: (_) {},
         onTimedOut: () {},
       );
@@ -188,6 +309,24 @@ void main() {
         throwsA(isA<P2pSyncException>()),
       );
 
+      expect(connectedFired, isFalse);
+      await host.stopHost();
+    });
+
+    test('sendToConnectedClient without a client throws', () async {
+      final host = P2pSyncService();
+      await host.startHost(
+        code: P2pSyncService.generatePairingCode(),
+        idleTimeout: const Duration(seconds: 10),
+        onClientConnected: () {},
+        onClientDisconnected: () {},
+        onError: (_) {},
+        onTimedOut: () {},
+      );
+      await expectLater(
+        host.sendToConnectedClient(buildPayloadJson()),
+        throwsA(isA<P2pSyncException>()),
+      );
       await host.stopHost();
     });
   });

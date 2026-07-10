@@ -106,117 +106,6 @@ class ExportImportService {
     }
   }
 
-  // Export accounts as plain JSON (NOT RECOMMENDED - for backward compatibility only)
-  // Consider removing this after migration
-  Future<bool> exportAccounts(
-    List<Account> accounts,
-    List<Group> groups,
-  ) async {
-    File? file;
-    try {
-      // Decrypt secrets before exporting
-      final decryptedAccounts = await Future.wait(
-        accounts.map((account) async {
-          final decryptedSecret = await _encryptionService.decrypt(
-            account.secret,
-          );
-          return account.copyWith(secret: decryptedSecret);
-        }),
-      );
-
-      final jsonData = _dataToJson(decryptedAccounts, groups);
-      final fileName =
-          'authenticator_backup_${DateTime.now().millisecondsSinceEpoch}.json';
-
-      final directory = await getTemporaryDirectory();
-      file = File('${directory.path}/$fileName');
-      await file.writeAsString(jsonData);
-
-      final xFile = XFile(file.path);
-      final params = ShareParams(
-        files: [xFile],
-        subject: 'Authenticator Backup (UNENCRYPTED)',
-        text: '⚠️ WARNING: This backup contains unencrypted secrets!',
-      );
-      final result = await SharePlus.instance.share(params);
-
-      return result.status == ShareResultStatus.success;
-    } catch (e) {
-      AppLogger.error('Failed to export plaintext JSON backup', e);
-      return false;
-    } finally {
-      try {
-        await file?.delete();
-      } catch (_) {}
-    }
-  }
-
-  // Import accounts and groups from JSON file
-  Future<Map<String, dynamic>?> importAccounts() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return null;
-      }
-
-      final file = File(result.files.single.path!);
-      final jsonData = await file.readAsString();
-
-      return _parseBackupJson(jsonData);
-    } catch (e) {
-      AppLogger.error('Failed to import plaintext JSON backup', e);
-      return null;
-    }
-  }
-
-  // Export accounts as CSV (NOT RECOMMENDED - secrets exposed)
-  Future<bool> exportAccountsAsCSV(
-    List<Account> accounts,
-    List<Group> groups,
-  ) async {
-    File? file;
-    try {
-      // Decrypt secrets before CSV export
-      final decryptedAccounts = await Future.wait(
-        accounts.map((account) async {
-          final decryptedSecret = await _encryptionService.decrypt(
-            account.secret,
-          );
-          return account.copyWith(secret: decryptedSecret);
-        }),
-      );
-
-      final csvData = _accountsToCsv(decryptedAccounts);
-      final fileName =
-          'authenticator_backup_${DateTime.now().millisecondsSinceEpoch}.csv';
-
-      final directory = await getTemporaryDirectory();
-      file = File('${directory.path}/$fileName');
-      await file.writeAsString(csvData);
-
-      final xFile = XFile(file.path);
-      final params = ShareParams(
-        files: [xFile],
-        subject: 'Authenticator Backup (CSV - UNENCRYPTED)',
-        text: '⚠️ WARNING: This CSV contains unencrypted secrets!',
-      );
-      final result = await SharePlus.instance.share(params);
-
-      return result.status == ShareResultStatus.success;
-    } catch (e) {
-      AppLogger.error('Failed to export CSV backup', e);
-      return false;
-    } finally {
-      try {
-        await file?.delete();
-      } catch (_) {}
-    }
-  }
-
   String _dataToJson(List<Account> accounts, List<Group> groups) {
     final backup = {
       'version': AppConstants.backupVersion,
@@ -248,29 +137,6 @@ class ExportImportService {
       AppLogger.error('Failed to parse backup JSON', e);
       return null;
     }
-  }
-
-  String _accountsToCsv(List<Account> accounts) {
-    final StringBuffer csv = StringBuffer();
-
-    csv.writeln(
-      'Name,Issuer,Secret,Digits,Period,Algorithm,Group ID,Created At',
-    );
-
-    for (final account in accounts) {
-      csv.writeln(
-        '"${account.name}",'
-        '"${account.issuer ?? ''}",'
-        '"${account.secret}",'
-        '${account.digits},'
-        '${account.period},'
-        '"${account.algorithm}",'
-        '${account.groupId ?? ""},'
-        '"${account.createdAt.toIso8601String()}"',
-      );
-    }
-
-    return csv.toString();
   }
 
   // Derive a 32-byte AES-256 key from password + salt using PBKDF2-HMAC-SHA256.
@@ -376,8 +242,4 @@ class ExportImportService {
   @visibleForTesting
   Map<String, dynamic>? parseBackupJsonForTest(String jsonData) =>
       _parseBackupJson(jsonData);
-
-  @visibleForTesting
-  String accountsToCsvForTest(List<Account> accounts) =>
-      _accountsToCsv(accounts);
 }

@@ -92,19 +92,48 @@ encryption, and gates access with app-lock controls.
 
 Implemented in
 [`lib/services/p2p_sync_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart).
-Opt-in, user-initiated, foreground-only, same-LAN device-to-device account transfer. No server,
-no account, no internet.
+Opt-in, user-initiated, foreground-only, same-LAN device-to-device transfer of accounts, groups,
+and a small set of non-sensitive settings. No server, no account, no internet.
 
 - **Secret never on the wire.** A fresh ~320-bit pairing code (64 chars from a 31-symbol alphabet)
-  is generated per session, shown only on the host, and typed into the client out-of-band. It is
-  never transmitted. An eavesdropper can capture the entire handshake and still cannot derive the
-  key; an active MITM cannot complete the handshake without the code.
+  is generated per session, shown only on the host, and transferred to the client out-of-band. It is
+  never transmitted over the network. An eavesdropper can capture the entire handshake and still
+  cannot derive the key; an active MITM cannot complete the handshake without the code.
+- **Out-of-band transfer: typed or scanned.** The host details (IP, port, code) may be typed on the
+  client manually, or the host may display them as a QR (`spauth://sync?v=1&ip=…&port=…&code=…`,
+  built by `P2pSyncService.buildSyncQrPayload`) that the client scans with its camera. The QR is an
+  out-of-band channel identical in trust to typing: it is rendered only on the host screen and read
+  by the peer's camera, and is **never sent over the network**. It carries the same secret already
+  shown on-screen as text, so it does not increase exposure, and app-wide screenshot blocking
+  (`screen_protector`) still applies. A scanned QR is parsed and validated by
+  `P2pSyncService.parseSyncQrPayload` (foreign scheme/host/version, bad port, or empty code are
+  rejected) before it feeds the normal join flow.
+- **Foreground session, no mid-sync lock.** While the sync screen is active, idle/background
+  auto-lock is intentionally suppressed (`SettingsProvider.setSyncInProgress`, mirroring the backup
+  flag) so a host waiting for a peer is not locked out and the session torn down mid-transfer. This
+  is scoped to the sync screen and cleared on exit; it does not disable the lock elsewhere.
 - **Payload-layer authenticated encryption.** The pairing code is stretched with
   PBKDF2-HMAC-SHA256 (300,000 iterations, per-session random 16-byte salt sent in clear) to a
   256-bit key; every line is sealed with AES-256-GCM (random 12-byte nonce, 128-bit tag).
   Authentication is a side effect of decryption — a wrong code derives a wrong key and GCM tag
   verification fails, which is treated as an auth failure and aborts. There is no fallback cipher
   and no downgrade path.
+- **Sender chooses after connect; connection held open.** The host does not push data the instant a
+  peer authenticates. On successful auth it sends the encrypted accept immediately (so the peer knows
+  it is connected) and then **holds the connection open**; the sender then chooses what to share
+  (Full Sync, or a selective incremental sync) and the payload is pushed on that action via
+  `P2pSyncService.sendToConnectedClient`. The client waits for that payload up to
+  `AppConstants.syncPayloadWaitTimeout` (10 min). Only one client is held at a time; further
+  connection attempts are closed. This changes the timing of the transfer, not its trust model — the
+  same per-session key seals the accept and the payload.
+- **Only non-sensitive settings sync; device-specific security state never leaves.** The payload may
+  include a small `settings` object limited to theme mode, auto-lock timeout, and sync-host idle
+  timeout (`SettingsProvider.syncableSettingsSnapshot`). App lock enablement, the App PIN, phone-lock
+  / biometric quick-unlock, the recovery key, lockdown, and boot / adaptive-auth state are
+  **device-specific and never transmitted**. On the receiver, a Full Sync (fresh device) applies
+  these settings; an incremental sync applies a setting only if the receiver has not already set it
+  (`SettingsProvider.applySyncedSettings`, fill-only), so the receiver's own choices and data are
+  never overridden.
 - **Forward secrecy.** Keys are per-session; there is no long-term sync key to steal.
 - **Secret lifecycle.** On the host, secrets are decrypted with the device key and re-encrypted
   under the session key only transiently to build the payload. On the client, received secrets are
@@ -331,8 +360,9 @@ Permission review rules:
   - Encrypted backup restore using the backup password
   - App-lock recovery key for PIN reset
 - Plaintext export policy:
-  - Primary UI is encrypted backup only
-  - Legacy JSON and CSV export helpers still exist in the service layer and should not be treated as the recommended path
+  - Encrypted backup is the only export path
+  - No plaintext JSON or CSV export exists in the code; the service layer writes only
+    password-encrypted `.aes` backups
 
 ### Validation Requirements
 
@@ -340,8 +370,11 @@ Permission review rules:
 - Backup files must remain encrypted in normal user-facing flows.
 - Recovery and migration flows must be tested when changed.
 - P2P sync uses the same import funnel (`AccountsProvider.importData`) as file restore, so peer
-  data is validated, deduped, and re-encrypted under the device key identically. Received payloads
-  must additionally pass the sync caps (max accounts/groups, per-field length) before ingestion.
+  data is validated, deduped, and re-encrypted under the device key identically. The funnel is
+  add-only (client-wins): matching accounts/groups are skipped and the receiver's data is retained.
+  Any synced settings are applied fill-only on an incremental sync (never overriding the receiver).
+  Received payloads must additionally pass the sync caps (max accounts/groups, per-field length)
+  before ingestion.
 
 ---
 
