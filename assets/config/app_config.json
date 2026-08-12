@@ -1,8 +1,8 @@
 {
   "appName": "Sreeraj P Authenticator",
   "description": "Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption.",
-  "version": "2.8.1",
-  "build": "22",
+  "version": "2.8.2",
+  "build": "23",
   "details": {
     "Author": "Sreeraj P",
     "Email": "sreerajp@zohomail.in",

@@ -214,7 +214,9 @@ class _HomeScreenState extends State<HomeScreen>
           backgroundColor: Colors.transparent,
           extendBodyBehindAppBar: true,
           appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight + 46.0),
+            preferredSize: Size.fromHeight(
+              kToolbarHeight + 46.0 + MediaQuery.paddingOf(context).top,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
