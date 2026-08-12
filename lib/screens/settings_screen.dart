@@ -14,6 +14,7 @@ import 'security_screen.dart';
 import 'sync_screen.dart';
 import 'about_screen.dart';
 import 'permissions_screen.dart';
+import 'tag_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -241,6 +242,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               ),
                             ),
+                            _build3DListTile(
+                              context: context,
+                              icon: Icons.label_outlined,
+                              title: 'Manage Tags',
+                              subtitle: 'Edit, rename, or cleanup account tags',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const TagManagementScreen(),
+                                  ),
+                                );
+                              },
+                            ),
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -256,7 +271,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context: context,
                               icon: Icons.sync_outlined,
                               title: 'Sync to Another Device',
-                              subtitle: 'Transfer accounts over local Wi-Fi',
+                              subtitle:
+                                  'Transfer accounts via Wi-Fi or Optical Air-Gap',
                               onTap: () {
                                 Navigator.push(
                                   context,

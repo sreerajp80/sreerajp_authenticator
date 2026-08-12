@@ -33,12 +33,12 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   final _nameController = TextEditingController();
   final _issuerController = TextEditingController();
   final _secretController = TextEditingController();
+  final _tagsController = TextEditingController();
   final _authService = AuthService();
 
   int _digits = 6;
   int _period = 30;
   String _algorithm = 'SHA1';
-  int? _selectedGroupId;
   bool _isProcessing = false;
   bool _isLoadingSecret = false;
   String? _originalSecret; // Store original secret to check if changed
@@ -64,7 +64,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     // Load non-sensitive data immediately
     _nameController.text = account.name;
     _issuerController.text = account.issuer ?? '';
-    _selectedGroupId = account.groupId;
+    _tagsController.text = account.tags.join(', ');
 
     // Store original values for comparison later
     _originalDigits = account.digits;
@@ -260,6 +260,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     _nameController.dispose();
     _issuerController.dispose();
     _secretController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -340,6 +341,12 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
             ? widget.accountToEdit!.secret
             : cleanedSecret;
 
+        final tagsList = _tagsController.text
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+
         final account = Account(
           id: widget.accountToEdit!.id,
           name: _nameController.text.trim(),
@@ -351,7 +358,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
           digits: _digits,
           period: _period,
           algorithm: _algorithm,
-          groupId: _selectedGroupId,
+          tags: tagsList,
           createdAt: widget.accountToEdit!.createdAt,
           sortOrder: widget.accountToEdit!.sortOrder,
           counter: widget.accountToEdit!.counter,
@@ -382,6 +389,12 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         );
       } else {
         // ADDING new account
+        final tagsList = _tagsController.text
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+
         final account = Account(
           name: _nameController.text.trim(),
           issuer: _issuerController.text.trim().isEmpty
@@ -392,7 +405,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
           digits: _digits,
           period: _period,
           algorithm: _algorithm,
-          groupId: _selectedGroupId,
+          tags: tagsList,
           createdAt: DateTime.now(),
           sortOrder: provider.accounts.length,
         );
@@ -491,10 +504,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     nameController: _nameController,
                     issuerController: _issuerController,
                     secretController: _secretController,
-                    selectedGroupId: _selectedGroupId,
-                    onGroupChanged: (value) {
-                      setState(() => _selectedGroupId = value);
-                    },
+                    tagsController: _tagsController,
                     onSecretEditTap: _handleSecretEdit,
                     onQrScan: () async {
                       final result = await Navigator.push(

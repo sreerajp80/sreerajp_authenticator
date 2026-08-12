@@ -1,7 +1,7 @@
 // File Path: sreerajp_authenticator/lib/services/export_import_service.dart
 // Author: Sreeraj P
 // Created: 2025 September 30
-// Last Modified: 2025 October 14
+// Last Modified: 2026 August 01
 // Description: Service for exporting and importing account data with re-encryption
 
 import 'dart:convert';
@@ -16,7 +16,6 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:pointycastle/export.dart';
 
 import '../models/account.dart';
-import '../models/group.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'encryption_service.dart';
@@ -24,10 +23,9 @@ import 'encryption_service.dart';
 class ExportImportService {
   final _encryptionService = EncryptionService();
 
-  // Export accounts and groups as encrypted JSON (RECOMMENDED)
+  // Export accounts as encrypted JSON (RECOMMENDED)
   Future<bool> exportAccountsEncrypted(
     List<Account> accounts,
-    List<Group> groups,
     String password,
   ) async {
     File? file;
@@ -42,8 +40,8 @@ class ExportImportService {
         }),
       );
 
-      // Step 2: Convert to JSON (includes groups)
-      final jsonData = _dataToJson(decryptedAccounts, groups);
+      // Step 2: Convert to JSON (groups array is empty for format compatibility)
+      final jsonData = _dataToJson(decryptedAccounts);
 
       // Step 3: Encrypt with user password
       final encryptedData = _encryptData(jsonData, password);
@@ -74,8 +72,8 @@ class ExportImportService {
     }
   }
 
-  // Import accounts and groups from encrypted file
-  // Returns parsed backup data map (with 'accounts' and 'groups' keys),
+  // Import accounts from encrypted file.
+  // Returns parsed backup data map (with 'accounts' key),
   // or null if import failed. Secrets are plaintext — the caller is
   // responsible for encrypting with the device key.
   Future<Map<String, dynamic>?> importAccountsEncrypted(String password) async {
@@ -98,7 +96,7 @@ class ExportImportService {
         throw Exception('Invalid password or corrupted file');
       }
 
-      // Step 2: Parse accounts and groups
+      // Step 2: Parse accounts
       return _parseBackupJson(jsonData);
     } catch (e) {
       AppLogger.error('Failed to import encrypted backup', e);
@@ -106,31 +104,28 @@ class ExportImportService {
     }
   }
 
-  String _dataToJson(List<Account> accounts, List<Group> groups) {
+  String _dataToJson(List<Account> accounts) {
     final backup = {
       'version': AppConstants.backupVersion,
       'created': DateTime.now().toIso8601String(),
       'accounts': accounts.map((account) => account.toMap()).toList(),
-      'groups': groups.map((group) => group.toMap()).toList(),
+      // 'groups' kept as empty list for backward-compatible format readers.
+      'groups': <Map<String, dynamic>>[],
     };
 
     return jsonEncode(backup);
   }
 
-  /// Parse backup JSON into a map with 'accounts' and 'groups' lists.
-  /// Supports both old (no groups) and new (with groups) backup formats.
+  /// Parse backup JSON into a map with an 'accounts' list.
+  /// The legacy 'groups' key is accepted but ignored.
   Map<String, dynamic>? _parseBackupJson(String jsonData) {
     try {
       final Map<String, dynamic> backup = jsonDecode(jsonData);
       final List<dynamic> accountsJson = backup['accounts'] ?? [];
-      final List<dynamic> groupsJson = backup['groups'] ?? [];
 
       return {
         'accounts': accountsJson
             .map((json) => Account.fromMap(json as Map<String, dynamic>))
-            .toList(),
-        'groups': groupsJson
-            .map((json) => Group.fromMap(json as Map<String, dynamic>))
             .toList(),
       };
     } catch (e) {
@@ -236,8 +231,7 @@ class ExportImportService {
       _decryptData(encryptedData, password);
 
   @visibleForTesting
-  String dataToJsonForTest(List<Account> accounts, List<Group> groups) =>
-      _dataToJson(accounts, groups);
+  String dataToJsonForTest(List<Account> accounts) => _dataToJson(accounts);
 
   @visibleForTesting
   Map<String, dynamic>? parseBackupJsonForTest(String jsonData) =>

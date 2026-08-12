@@ -110,7 +110,7 @@ afterEvaluate {
                         """
                         SIGNING REQUIRED: prod release build blocked.
                         android/key.properties was not found.
-                        Configure release signing as documented in docs/flutter_build_flavors_guide.md.
+                        Configure release signing as documented in docs/guidelines/flutter_build_flavors_guide.md.
                         """.trimIndent(),
                     )
                 }

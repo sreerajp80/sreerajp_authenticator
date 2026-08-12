@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-import 'package:sreerajp_authenticator/models/group.dart';
-import 'package:sreerajp_authenticator/providers/group_provider.dart';
 import 'package:sreerajp_authenticator/widgets/home/home_empty_state.dart';
 import 'package:sreerajp_authenticator/widgets/home/home_fab_button.dart';
-import 'package:sreerajp_authenticator/widgets/home/home_group_tabs.dart';
 import 'package:sreerajp_authenticator/widgets/home/home_search_bar.dart';
 
 void main() {
@@ -97,48 +93,6 @@ void main() {
     });
   });
 
-  group('HomeGroupTabs', () {
-    testWidgets('renders groups and reports selection changes', (tester) async {
-      final provider = TestGroupsProvider([
-        makeGroup(id: 1, name: 'Work', sortOrder: 0),
-        makeGroup(id: 2, name: 'Personal', sortOrder: 1),
-      ]);
-      addTearDown(provider.dispose);
-
-      int? selectedGroupId = 1;
-
-      await tester.pumpWidget(
-        ChangeNotifierProvider<GroupsProvider>.value(
-          value: provider,
-          child: MaterialApp(
-            home: Scaffold(
-              body: HomeGroupTabs(
-                selectedGroupId: selectedGroupId,
-                onGroupSelected: (value) {
-                  selectedGroupId = value;
-                },
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 250));
-
-      expect(find.text('All'), findsOneWidget);
-      expect(find.text('Work'), findsOneWidget);
-      expect(find.text('Personal'), findsOneWidget);
-
-      tester.widget<GestureDetector>(_tabFinder('Work')).onTap?.call();
-      await tester.pump();
-      expect(selectedGroupId, isNull);
-
-      selectedGroupId = 1;
-      tester.widget<GestureDetector>(_tabFinder('Personal')).onTap?.call();
-      await tester.pump();
-      expect(selectedGroupId, 2);
-    });
-  });
-
   group('HomeFabButton', () {
     testWidgets('tap triggers QR scan', (tester) async {
       var qrScanTapped = 0;
@@ -198,13 +152,6 @@ void main() {
   });
 }
 
-Finder _tabFinder(String label) {
-  return find.ancestor(
-    of: find.text(label),
-    matching: find.byType(GestureDetector),
-  );
-}
-
 Future<void> pumpHomeWidget(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -212,25 +159,4 @@ Future<void> pumpHomeWidget(WidgetTester tester, Widget child) async {
     ),
   );
   await tester.pumpAndSettle();
-}
-
-Group makeGroup({required int id, required String name, int sortOrder = 0}) {
-  return Group(
-    id: id,
-    name: name,
-    sortOrder: sortOrder,
-    createdAt: DateTime.now(),
-  );
-}
-
-class TestGroupsProvider extends GroupsProvider {
-  TestGroupsProvider(List<Group> groups) : _groups = groups;
-
-  final List<Group> _groups;
-
-  @override
-  List<Group> get groups => _groups;
-
-  @override
-  Future<void> loadGroups() async {}
 }

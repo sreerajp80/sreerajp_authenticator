@@ -72,7 +72,9 @@ class OTPService {
 
   // === SHARED CRYPTO HELPERS ===
 
+  static const String _steamAlphabet = '23456789BCDFGHJKMNPQRTVWXY';
   static final RegExp _base32Regex = RegExp(r'^[A-Z2-7]+$');
+  static final RegExp _hexRegex = RegExp(r'^[0-9A-FA-F]+$');
 
   static String _cleanSecret(String secret) {
     return secret.toUpperCase().replaceAll(' ', '').replaceAll('-', '');
@@ -80,6 +82,20 @@ class OTPService {
 
   static bool _isValidBase32(String cleanSecret) {
     return _base32Regex.hasMatch(cleanSecret);
+  }
+
+  static bool _isHex(String cleanSecret) {
+    return cleanSecret.isNotEmpty &&
+        cleanSecret.length % 2 == 0 &&
+        _hexRegex.hasMatch(cleanSecret);
+  }
+
+  static Uint8List _hexDecode(String hex) {
+    final bytes = Uint8List(hex.length ~/ 2);
+    for (int i = 0; i < hex.length; i += 2) {
+      bytes[i ~/ 2] = int.parse(hex.substring(i, i + 2), radix: 16);
+    }
+    return bytes;
   }
 
   static Hash _getHashAlgorithm(String algorithm) {
@@ -97,6 +113,84 @@ class OTPService {
     final data = ByteData(8);
     data.setUint64(0, value, Endian.big);
     return data.buffer.asUint8List();
+  }
+
+  /// Core OTP generation dispatch helper.
+  static String _generateCodeForAccount(
+    Account account,
+    Uint8List secretBytes,
+    int timeStep,
+    String plainSecret,
+  ) {
+    final algo = account.algorithm.toUpperCase();
+    final type = account.type.toLowerCase();
+
+    if (algo == 'STEAM' || type == 'steam') {
+      return _generateSteamCode(secretBytes, timeStep);
+    } else if (algo == 'MOTP' || type == 'motp') {
+      return _generateMotpCode(
+        plainSecret,
+        account.counter,
+        timeStep,
+        account.period,
+      );
+    } else if (algo == 'BLIZZARD' || type == 'blizzard') {
+      return _generateCode(
+        secretBytes,
+        _int64Bytes(timeStep),
+        sha1,
+        account.digits == 6 ? 8 : account.digits,
+      );
+    } else if (algo == 'YUBIKEY') {
+      return _generateCode(
+        secretBytes,
+        _int64Bytes(timeStep),
+        sha1,
+        account.digits,
+      );
+    } else {
+      return _generateCode(
+        secretBytes,
+        _int64Bytes(timeStep),
+        _getHashAlgorithm(account.algorithm),
+        account.digits,
+      );
+    }
+  }
+
+  /// Steam Guard TOTP: HMAC-SHA1 dynamic truncation mapped to 5-char alphabet.
+  static String _generateSteamCode(Uint8List secretBytes, int timeStep) {
+    final messageBytes = _int64Bytes(timeStep);
+    final hmac = Hmac(sha1, secretBytes);
+    final digest = hmac.convert(messageBytes);
+
+    final offset = digest.bytes[digest.bytes.length - 1] & 0x0f;
+    int binary =
+        ((digest.bytes[offset] & 0x7f) << 24) |
+        ((digest.bytes[offset + 1] & 0xff) << 16) |
+        ((digest.bytes[offset + 2] & 0xff) << 8) |
+        (digest.bytes[offset + 3] & 0xff);
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < 5; i++) {
+      buffer.write(_steamAlphabet[binary % 26]);
+      binary ~/= 26;
+    }
+    return buffer.toString();
+  }
+
+  /// mOTP (Mobile OTP): MD5 digest of (timeStep + secret + pin).
+  static String _generateMotpCode(
+    String plainSecret,
+    int? pin,
+    int timeStep,
+    int period,
+  ) {
+    final cleanSecret = _cleanSecret(plainSecret).toLowerCase();
+    final pinStr = pin != null ? pin.toString() : '';
+    final inputStr = '$timeStep$cleanSecret$pinStr';
+    final digest = md5.convert(utf8.encode(inputStr));
+    return digest.toString().substring(0, 6).toUpperCase();
   }
 
   /// Core OTP generation: HMAC + dynamic truncation (RFC 4226).
@@ -260,12 +354,7 @@ class OTPService {
       final timeStep = timestamp ~/ account.period;
 
       return OTPGenerationResult.success(
-        _generateCode(
-          secretBytes,
-          _int64Bytes(timeStep),
-          _getHashAlgorithm(account.algorithm),
-          account.digits,
-        ),
+        _generateCodeForAccount(account, secretBytes, timeStep, actualSecret),
       );
     } on OTPException catch (e) {
       AppLogger.error('Failed to generate TOTP', e);
@@ -292,12 +381,7 @@ class OTPService {
       final timeStep = timestamp ~/ account.period;
 
       return OTPGenerationResult.success(
-        _generateCode(
-          secretBytes,
-          _int64Bytes(timeStep),
-          _getHashAlgorithm(account.algorithm),
-          account.digits,
-        ),
+        _generateCodeForAccount(account, secretBytes, timeStep, actualSecret),
       );
     } on OTPException catch (e) {
       AppLogger.error('Failed to generate cached TOTP', e);
@@ -345,23 +429,45 @@ class OTPService {
     bool requireMinLength = false,
   }) {
     final cleanSecret = _cleanSecret(secret);
-    if (!_isValidBase32(cleanSecret)) {
-      throw OTPInvalidSecretException(
-        'Secret for account "${account.name}" is not valid Base32',
-      );
+    final algo = account.algorithm.toUpperCase();
+    final type = account.type.toLowerCase();
+
+    if (algo == 'MOTP' || type == 'motp') {
+      return Uint8List.fromList(utf8.encode(cleanSecret));
     }
-    if (requireMinLength && cleanSecret.length < AppConstants.minSecretLength) {
+
+    if (requireMinLength &&
+        algo != 'STEAM' &&
+        type != 'steam' &&
+        algo != 'MOTP' &&
+        type != 'motp' &&
+        cleanSecret.length < AppConstants.minSecretLength) {
       throw OTPInvalidSecretException(
         'Secret for account "${account.name}" is shorter than ${AppConstants.minSecretLength} characters',
       );
     }
 
-    try {
-      return base32.decode(cleanSecret);
-    } catch (e) {
+    if (_isValidBase32(cleanSecret)) {
+      try {
+        return base32.decode(cleanSecret);
+      } catch (e) {
+        throw OTPInvalidSecretException(
+          'Secret for account "${account.name}" could not be decoded',
+          e,
+        );
+      }
+    } else if (_isHex(cleanSecret)) {
+      try {
+        return _hexDecode(cleanSecret);
+      } catch (e) {
+        throw OTPInvalidSecretException(
+          'Hex secret for account "${account.name}" could not be decoded',
+          e,
+        );
+      }
+    } else {
       throw OTPInvalidSecretException(
-        'Secret for account "${account.name}" could not be decoded',
-        e,
+        'Secret for account "${account.name}" is not valid Base32 or Hex',
       );
     }
   }
@@ -390,7 +496,8 @@ class OTPService {
     if (value.contains(':')) return true;
 
     final normalized = value.replaceAll(' ', '').replaceAll('-', '');
-    if (_isValidBase32(normalized.toUpperCase())) {
+    if (_isValidBase32(normalized.toUpperCase()) ||
+        _isHex(normalized.toUpperCase())) {
       return false;
     }
 
@@ -494,30 +601,116 @@ class OTPService {
     return period - (now % period);
   }
 
-  static Account? parseOtpAuthUri(String uri) {
+  static Account? parseOtpAuthUri(String uriStr) {
     try {
-      final parsedUri = Uri.parse(uri);
-      if (parsedUri.scheme != 'otpauth') return null;
+      final parsedUri = Uri.parse(uriStr.trim());
+      final scheme = parsedUri.scheme.toLowerCase();
 
-      final type = parsedUri.host;
-      if (type != 'totp' && type != 'hotp') return null;
+      if (scheme == 'steam') {
+        String secret = parsedUri.queryParameters['secret'] ?? '';
+        String label = 'Steam';
+
+        if (secret.isEmpty) {
+          if (parsedUri.host.isNotEmpty) {
+            secret = parsedUri.host;
+          } else if (parsedUri.path.isNotEmpty) {
+            secret = parsedUri.path.replaceAll('/', '');
+          }
+        }
+
+        if (parsedUri.path.contains(':')) {
+          label = parsedUri.path.split(':').last;
+        } else if (parsedUri.pathSegments.isNotEmpty &&
+            secret != parsedUri.pathSegments.last) {
+          label = parsedUri.pathSegments.last;
+        }
+
+        return Account(
+          name: label.isEmpty ? 'Steam' : label,
+          secret: _cleanSecret(secret),
+          issuer: 'Steam',
+          type: 'totp',
+          digits: 5,
+          period: 30,
+          algorithm: 'STEAM',
+        );
+      }
+
+      if (scheme == 'motp') {
+        final secret = parsedUri.queryParameters['secret'] ?? parsedUri.host;
+        final pin = int.tryParse(parsedUri.queryParameters['pin'] ?? '');
+        final pathText = parsedUri.path.replaceAll('/', '');
+        final name = pathText.isNotEmpty ? pathText : 'Mobile OTP';
+
+        return Account(
+          name: name,
+          secret: secret,
+          issuer: 'mOTP',
+          type: 'motp',
+          counter: pin,
+          digits: 6,
+          period: 10,
+          algorithm: 'MOTP',
+        );
+      }
+
+      if (scheme != 'otpauth') return null;
+
+      final rawType = parsedUri.host.toLowerCase();
+      if (rawType != 'totp' &&
+          rawType != 'hotp' &&
+          rawType != 'steam' &&
+          rawType != 'motp' &&
+          rawType != 'blizzard' &&
+          rawType != 'yubikey') {
+        return null;
+      }
 
       final pathSegments = parsedUri.path.split(':');
       final issuer = pathSegments.length > 1
-          ? pathSegments[0].substring(1)
+          ? pathSegments[0].startsWith('/')
+                ? pathSegments[0].substring(1)
+                : pathSegments[0]
           : null;
       final name = pathSegments.length > 1
           ? pathSegments[1]
-          : pathSegments[0].substring(1);
+          : pathSegments[0].startsWith('/')
+          ? pathSegments[0].substring(1)
+          : pathSegments[0];
 
       final secret = parsedUri.queryParameters['secret'] ?? '';
-      final digits =
-          int.tryParse(parsedUri.queryParameters['digits'] ?? '6') ?? 6;
-      final period =
-          int.tryParse(parsedUri.queryParameters['period'] ?? '30') ?? 30;
-      final counter = int.tryParse(parsedUri.queryParameters['counter'] ?? '0');
-      final algorithm =
+      var algorithm =
           parsedUri.queryParameters['algorithm']?.toUpperCase() ?? 'SHA1';
+      var type =
+          (rawType == 'steam' ||
+              rawType == 'blizzard' ||
+              rawType == 'yubikey' ||
+              rawType == 'motp')
+          ? 'totp'
+          : rawType;
+
+      if (rawType == 'steam' || algorithm == 'STEAM') {
+        algorithm = 'STEAM';
+      } else if (rawType == 'blizzard' || algorithm == 'BLIZZARD') {
+        algorithm = 'BLIZZARD';
+      } else if (rawType == 'yubikey' || algorithm == 'YUBIKEY') {
+        algorithm = 'YUBIKEY';
+      } else if (rawType == 'motp' || algorithm == 'MOTP') {
+        algorithm = 'MOTP';
+        type = 'motp';
+      }
+
+      final digits =
+          int.tryParse(parsedUri.queryParameters['digits'] ?? '') ??
+          (algorithm == 'STEAM' ? 5 : (algorithm == 'BLIZZARD' ? 8 : 6));
+      final period =
+          int.tryParse(parsedUri.queryParameters['period'] ?? '') ??
+          (algorithm == 'MOTP' ? 10 : 30);
+      final counter = int.tryParse(
+        parsedUri.queryParameters['counter'] ??
+            parsedUri.queryParameters['pin'] ??
+            '0',
+      );
 
       return Account(
         name: name,

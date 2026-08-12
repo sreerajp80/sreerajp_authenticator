@@ -6,15 +6,17 @@
 //   client (receiver) side it connects, waits for the sender to choose, then
 //   imports. Secrets are decrypted with the device key only transiently while
 //   building the payload and are never logged.
+//   Groups have been removed; accounts and settings are the only sync categories.
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
 import '../models/account.dart';
-import '../models/group.dart';
 import '../providers/account_provider.dart';
 import '../services/encryption_service.dart';
+import '../services/optical_sync_service.dart';
 import '../services/p2p_sync_service.dart';
 import '../utils/constants.dart';
 
@@ -27,33 +29,25 @@ class SyncSummary {
   final String mode;
 
   final bool includedAccounts;
-  final bool includedGroups;
   final bool includedSettings;
 
   /// Host: accounts sent. Client: accounts newly added.
   final int accounts;
 
-  /// Host: groups sent. Client: groups newly added.
-  final int groups;
-
   /// Host: settings sent. Client: settings applied.
   final int settings;
 
-  /// Client only: duplicates skipped (retained on the receiver).
+  /// Client only: duplicate accounts skipped (retained on the receiver).
   final int accountsSkipped;
-  final int groupsSkipped;
 
   const SyncSummary({
     required this.isHost,
     required this.mode,
     required this.includedAccounts,
-    required this.includedGroups,
     required this.includedSettings,
     this.accounts = 0,
-    this.groups = 0,
     this.settings = 0,
     this.accountsSkipped = 0,
-    this.groupsSkipped = 0,
   });
 
   bool get isFull => mode == AppConstants.syncModeFull;
@@ -131,6 +125,48 @@ class SyncError extends SyncState {
   const SyncError(this.message);
 }
 
+class SyncOpticalTransmitting extends SyncState {
+  final String sessionHash;
+  final int totalChunks;
+  final int currentFrameIndex;
+  final int fps;
+  final String currentQrData;
+
+  const SyncOpticalTransmitting({
+    required this.sessionHash,
+    required this.totalChunks,
+    required this.currentFrameIndex,
+    required this.fps,
+    required this.currentQrData,
+  });
+
+  SyncOpticalTransmitting copyWith({
+    int? currentFrameIndex,
+    int? fps,
+    String? currentQrData,
+  }) => SyncOpticalTransmitting(
+    sessionHash: sessionHash,
+    totalChunks: totalChunks,
+    currentFrameIndex: currentFrameIndex ?? this.currentFrameIndex,
+    fps: fps ?? this.fps,
+    currentQrData: currentQrData ?? this.currentQrData,
+  );
+}
+
+class SyncOpticalReceiving extends SyncState {
+  final int solvedChunks;
+  final int totalChunks;
+  final double progress;
+  final String? sessionHash;
+
+  const SyncOpticalReceiving({
+    required this.solvedChunks,
+    required this.totalChunks,
+    required this.progress,
+    this.sessionHash,
+  });
+}
+
 class SyncProvider extends ChangeNotifier {
   final P2pSyncService _service = P2pSyncService();
   final EncryptionService _encryption = EncryptionService();
@@ -190,18 +226,16 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
-  /// Full Sync to a fresh client: send all accounts, groups, and syncable
-  /// settings ([AppConstants.syncModeFull] — settings overwrite on the client).
+  /// Full Sync to a fresh client: send all accounts and syncable settings
+  /// ([AppConstants.syncModeFull] — settings overwrite on the client).
   Future<void> sendFullSync({
     required List<Account> accounts,
-    required List<Group> groups,
+    required List<dynamic> groups, // kept for API compatibility; always empty
     required Map<String, dynamic> settingsSnapshot,
   }) => _send(
     accounts: accounts,
-    groups: groups,
     settingsSnapshot: settingsSnapshot,
     includeAccounts: true,
-    includeGroups: true,
     includeSettings: true,
     mode: AppConstants.syncModeFull,
   );
@@ -211,27 +245,23 @@ class SyncProvider extends ChangeNotifier {
   /// data and applies settings fill-only).
   Future<void> sendSelectiveSync({
     required List<Account> accounts,
-    required List<Group> groups,
+    required List<dynamic> groups, // kept for API compatibility; always empty
     required Map<String, dynamic> settingsSnapshot,
     required bool includeAccounts,
-    required bool includeGroups,
+    required bool includeGroups, // kept for API compatibility; ignored
     required bool includeSettings,
   }) => _send(
     accounts: accounts,
-    groups: groups,
     settingsSnapshot: settingsSnapshot,
     includeAccounts: includeAccounts,
-    includeGroups: includeGroups,
     includeSettings: includeSettings,
     mode: AppConstants.syncModeIncremental,
   );
 
   Future<void> _send({
     required List<Account> accounts,
-    required List<Group> groups,
     required Map<String, dynamic> settingsSnapshot,
     required bool includeAccounts,
-    required bool includeGroups,
     required bool includeSettings,
     required String mode,
   }) async {
@@ -240,14 +270,13 @@ class SyncProvider extends ChangeNotifier {
       _setState(const SyncError('No device is connected to sync with.'));
       return;
     }
-    if (!includeAccounts && !includeGroups && !includeSettings) {
+    if (!includeAccounts && !includeSettings) {
       _setState(const SyncError('Select at least one item to sync.'));
       return;
     }
 
     final items = <String>[
       if (includeAccounts) 'Accounts',
-      if (includeGroups) 'Groups',
       if (includeSettings) 'Settings',
     ];
     _setState(current.copyWith(sending: true, sendingItems: items));
@@ -255,10 +284,8 @@ class SyncProvider extends ChangeNotifier {
     try {
       final payload = await _buildPayload(
         accounts: includeAccounts ? accounts : const [],
-        groups: includeGroups ? groups : const [],
         settingsSnapshot: includeSettings ? settingsSnapshot : null,
         includeAccounts: includeAccounts,
-        includeGroups: includeGroups,
         mode: mode,
       );
       await _service.sendToConnectedClient(payload);
@@ -268,10 +295,8 @@ class SyncProvider extends ChangeNotifier {
             isHost: true,
             mode: mode,
             includedAccounts: includeAccounts,
-            includedGroups: includeGroups,
             includedSettings: includeSettings,
             accounts: includeAccounts ? accounts.length : 0,
-            groups: includeGroups ? groups.length : 0,
             settings: includeSettings ? settingsSnapshot.length : 0,
           ),
         ),
@@ -285,14 +310,11 @@ class SyncProvider extends ChangeNotifier {
 
   /// Build the plaintext JSON payload: device-key-decrypted secrets in the same
   /// shape as an encrypted backup, plus an optional settings object and a sync
-  /// mode marker. Plaintext exists only transiently and is never logged. Only
-  /// the categories flagged for inclusion carry data.
+  /// mode marker. Plaintext exists only transiently and is never logged.
   Future<String> _buildPayload({
     required List<Account> accounts,
-    required List<Group> groups,
     required Map<String, dynamic>? settingsSnapshot,
     required bool includeAccounts,
-    required bool includeGroups,
     required String mode,
   }) async {
     final backup = <String, dynamic>{
@@ -311,9 +333,8 @@ class SyncProvider extends ChangeNotifier {
       backup['accounts'] = decryptedAccounts.map((a) => a.toMap()).toList();
     }
 
-    if (includeGroups) {
-      backup['groups'] = groups.map((g) => g.toMap()).toList();
-    }
+    // Always emit an empty groups array for format compatibility.
+    backup['groups'] = <Map<String, dynamic>>[];
 
     if (settingsSnapshot != null) {
       backup[AppConstants.syncPayloadKeySettings] = settingsSnapshot;
@@ -330,8 +351,8 @@ class SyncProvider extends ChangeNotifier {
   // ─── Client ────────────────────────────────────────────────────────────────
 
   /// Connect to a host, wait for the sender to choose, then import the received
-  /// payload. [importData] routes accounts/groups through the account import
-  /// funnel (client-wins) and [applySettings] applies any synced settings.
+  /// payload. [importData] routes accounts through the account import funnel
+  /// (client-wins) and [applySettings] applies any synced settings.
   Future<void> joinSync({
     required String hostIp,
     required int port,
@@ -378,13 +399,10 @@ class SyncProvider extends ChangeNotifier {
             isHost: false,
             mode: mode,
             includedAccounts: data.containsKey('accounts'),
-            includedGroups: data.containsKey('groups'),
             includedSettings: settings != null,
             accounts: importResult.accountsAdded,
-            groups: importResult.groupsAdded,
             settings: settingsApplied,
             accountsSkipped: importResult.accountsSkipped,
-            groupsSkipped: importResult.groupsSkipped,
           ),
         ),
       );
@@ -395,15 +413,165 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
-  /// Return to the idle state (e.g. to retry after an error or completion).
-  Future<void> reset() async {
-    await _service.stopHost();
-    _setState(const SyncIdle());
+  // ─── Optical Air-Gap Sync ──────────────────────────────────────────────────
+
+  OpticalSyncEncoder? _opticalEncoder;
+  OpticalSyncDecoder? _opticalDecoder;
+  Timer? _opticalStreamTimer;
+
+  /// Start animated QR video stream transmission at target [fps] (12-15 FPS).
+  Future<void> startOpticalTransmitting({
+    required List<Account> accounts,
+    required Map<String, dynamic> settingsSnapshot,
+    int fps = 12,
+  }) async {
+    await reset();
+    try {
+      final jsonPayload = await _buildPayload(
+        accounts: accounts,
+        settingsSnapshot: settingsSnapshot,
+        includeAccounts: true,
+        mode: AppConstants.syncModeFull,
+      );
+
+      final encoder = OpticalSyncEncoder(jsonPayload);
+      _opticalEncoder = encoder;
+
+      var frameIndex = 0;
+      final initialFrame = encoder.getFrame(frameIndex);
+
+      _setState(
+        SyncOpticalTransmitting(
+          sessionHash: encoder.sessionHash,
+          totalChunks: encoder.totalChunks,
+          currentFrameIndex: frameIndex,
+          fps: fps,
+          currentQrData: initialFrame.toJsonString(),
+        ),
+      );
+
+      _startOpticalTimer(fps);
+    } catch (e) {
+      _setState(SyncError('Failed to start optical stream: $e'));
+    }
   }
 
-  @override
-  void dispose() {
-    _service.stopHost();
-    super.dispose();
+  void _startOpticalTimer(int fps) {
+    _opticalStreamTimer?.cancel();
+    final intervalMs = (1000 / fps).round();
+    _opticalStreamTimer = Timer.periodic(Duration(milliseconds: intervalMs), (
+      _,
+    ) {
+      final current = _state;
+      final encoder = _opticalEncoder;
+      if (current is SyncOpticalTransmitting && encoder != null) {
+        final nextIdx = current.currentFrameIndex + 1;
+        final frame = encoder.getFrame(nextIdx);
+        _setState(
+          current.copyWith(
+            currentFrameIndex: nextIdx,
+            currentQrData: frame.toJsonString(),
+          ),
+        );
+      }
+    });
+  }
+
+  void setOpticalFps(int fps) {
+    final current = _state;
+    if (current is SyncOpticalTransmitting) {
+      _setState(current.copyWith(fps: fps));
+      _startOpticalTimer(fps);
+    }
+  }
+
+  /// Initialize Optical Receiver state.
+  void startOpticalReceiving() {
+    reset();
+    _opticalDecoder = OpticalSyncDecoder();
+    _setState(
+      const SyncOpticalReceiving(
+        solvedChunks: 0,
+        totalChunks: 0,
+        progress: 0.0,
+      ),
+    );
+  }
+
+  /// Ingest raw frame string scanned from transmitter QR stream.
+  Future<void> processOpticalFrame({
+    required String rawFrame,
+    required Future<ImportResult> Function(Map<String, dynamic> data)
+    importData,
+    required Future<int> Function(
+      Map<String, dynamic> settings, {
+      required bool overwrite,
+    })
+    applySettings,
+  }) async {
+    final decoder = _opticalDecoder;
+    if (decoder == null || decoder.isComplete) return;
+
+    final progressMade = decoder.processFrameString(rawFrame);
+    if (progressMade || _state is! SyncOpticalReceiving) {
+      _setState(
+        SyncOpticalReceiving(
+          solvedChunks: decoder.solvedCount,
+          totalChunks: decoder.totalChunks,
+          progress: decoder.progress,
+          sessionHash: decoder.sessionHash,
+        ),
+      );
+    }
+
+    if (decoder.isComplete) {
+      _setState(const SyncSyncing());
+      try {
+        final reconstructedJson = decoder.getReconstructedPayload();
+        final data = P2pSyncService.validateAndParse(reconstructedJson);
+
+        final importResult = await importData(data);
+        final mode =
+            (data[AppConstants.syncPayloadKeySyncMode] as String?) ??
+            AppConstants.syncModeFull;
+        final settings =
+            data[AppConstants.syncPayloadKeySettings] as Map<String, dynamic>?;
+        var settingsApplied = 0;
+        if (settings != null && settings.isNotEmpty) {
+          settingsApplied = await applySettings(
+            settings,
+            overwrite: mode == AppConstants.syncModeFull,
+          );
+        }
+
+        _setState(
+          SyncCompleted(
+            SyncSummary(
+              isHost: false,
+              mode: mode,
+              includedAccounts: data.containsKey('accounts'),
+              includedSettings: settings != null,
+              accounts: importResult.accountsAdded,
+              settings: settingsApplied,
+              accountsSkipped: importResult.accountsSkipped,
+            ),
+          ),
+        );
+      } on OpticalSyncException catch (e) {
+        _setState(SyncError(e.message));
+      } catch (e) {
+        _setState(SyncError('Optical sync decoding failed: $e'));
+      }
+    }
+  }
+
+  /// Return to the idle state (e.g. to retry after an error or completion).
+  Future<void> reset() async {
+    _opticalStreamTimer?.cancel();
+    _opticalStreamTimer = null;
+    _opticalEncoder = null;
+    _opticalDecoder = null;
+    await _service.stopHost();
+    _setState(const SyncIdle());
   }
 }

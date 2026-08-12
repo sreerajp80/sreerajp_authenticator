@@ -1,8 +1,6 @@
 // File Path: sreerajp_authenticator/lib/models/account.dart
 // Author: Sreeraj P
-// Created: 2025 September 25
-// Last Modified: 2025 September 25
-// Description: Model class for Account
+// Description: Model class for Account with tags support
 
 class Account {
   int? id;
@@ -15,7 +13,7 @@ class Account {
   int digits;
   int period; // For TOTP (usually 30 seconds)
   String algorithm; // SHA1, SHA256, SHA512
-  int? groupId;
+  List<String> tags;
   DateTime createdAt;
   int sortOrder;
 
@@ -30,10 +28,30 @@ class Account {
     this.digits = 6,
     this.period = 30,
     this.algorithm = 'SHA1',
-    this.groupId,
+    List<String>? tags,
     DateTime? createdAt,
     this.sortOrder = 0,
-  }) : createdAt = createdAt ?? DateTime.now();
+  }) : tags = tags ?? const [],
+       createdAt = createdAt ?? DateTime.now();
+
+  static List<String> _parseTags(dynamic rawTags) {
+    if (rawTags == null) return [];
+    if (rawTags is List) {
+      return rawTags
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    if (rawTags is String) {
+      if (rawTags.trim().isEmpty) return [];
+      return rawTags
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return [];
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -47,7 +65,7 @@ class Account {
       'digits': digits,
       'period': period,
       'algorithm': algorithm,
-      'groupId': groupId,
+      'tags': tags.join(','),
       'createdAt': createdAt.toIso8601String(),
       'sortOrder': sortOrder,
     };
@@ -65,7 +83,7 @@ class Account {
       digits: map['digits'],
       period: map['period'],
       algorithm: map['algorithm'],
-      groupId: map['groupId'],
+      tags: _parseTags(map['tags']),
       createdAt: DateTime.parse(map['createdAt']),
       sortOrder: map['sortOrder'],
     );
@@ -82,7 +100,7 @@ class Account {
     int? digits,
     int? period,
     String? algorithm,
-    int? groupId,
+    List<String>? tags,
     DateTime? createdAt,
     int? sortOrder,
   }) {
@@ -97,7 +115,7 @@ class Account {
       digits: digits ?? this.digits,
       period: period ?? this.period,
       algorithm: algorithm ?? this.algorithm,
-      groupId: groupId ?? this.groupId,
+      tags: tags ?? this.tags,
       createdAt: createdAt ?? this.createdAt,
       sortOrder: sortOrder ?? this.sortOrder,
     );

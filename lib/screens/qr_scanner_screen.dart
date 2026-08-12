@@ -9,6 +9,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../models/account.dart';
 import '../providers/account_provider.dart';
+import '../services/otp_service.dart';
 import '../utils/app_logger.dart';
 
 class QrScannerScreen extends StatefulWidget {
@@ -40,53 +41,19 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     });
 
     try {
-      // Parse OTP Auth URI
-      final uri = Uri.parse(code);
-      if (uri.scheme != 'otpauth') {
-        throw Exception('Invalid QR code. Not an authenticator code.');
+      final parsedAccount = OTPService.parseOtpAuthUri(code);
+      if (parsedAccount == null) {
+        throw Exception('Invalid QR code format or unsupported scheme.');
       }
 
-      final type = uri.host;
-      if (type != 'totp') {
-        throw Exception('Only TOTP codes are supported.');
+      if (parsedAccount.secret.isEmpty) {
+        throw Exception('Secret key is missing from QR code.');
       }
 
-      final pathSegments = uri.pathSegments.join('/');
-      String issuer = '';
-      String accountName = pathSegments;
-
-      // Extract issuer and account name
-      if (pathSegments.contains(':')) {
-        final parts = pathSegments.split(':');
-        issuer = parts[0];
-        accountName = parts.length > 1 ? parts[1] : parts[0];
-      }
-
-      // Get parameters
-      final secret = uri.queryParameters['secret'] ?? '';
-      final issuerParam = uri.queryParameters['issuer'] ?? issuer;
-      final digits = int.tryParse(uri.queryParameters['digits'] ?? '6') ?? 6;
-      final period = int.tryParse(uri.queryParameters['period'] ?? '30') ?? 30;
-      final algorithm =
-          uri.queryParameters['algorithm']?.toUpperCase() ?? 'SHA1'; // ✅ ADDED
-
-      if (secret.isEmpty) {
-        throw Exception('Secret key is missing.');
-      }
-
-      // Create account with correct parameters INCLUDING ALGORITHM
-      final account = Account(
+      final account = parsedAccount.copyWith(
         id: DateTime.now().millisecondsSinceEpoch,
-        name: accountName,
-        type: 'totp',
-        issuer: issuerParam,
-        secret: secret,
-        digits: digits,
-        period: period,
-        algorithm: algorithm, // ✅ ADDED
       );
 
-      // Add account
       final accountsProvider = context.read<AccountsProvider>();
       await accountsProvider.addAccount(account);
 
@@ -94,7 +61,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Account added: ${account.issuer} (${account.name})'),
+            content: Text(
+              'Account added: ${account.issuer ?? account.name}${account.issuer != null ? ' (${account.name})' : ''}',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -110,9 +79,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         );
       }
     } finally {
-      setState(() {
-        isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
     }
   }
 

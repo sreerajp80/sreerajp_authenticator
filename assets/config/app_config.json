@@ -1,0 +1,13 @@
+{
+  "appName": "Sreeraj P Authenticator",
+  "description": "Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption.",
+  "version": "2.8.1",
+  "build": "22",
+  "details": {
+    "Author": "Sreeraj P",
+    "Email": "sreerajp@zohomail.in",
+    "License": "All libraries used are open source (MIT License).",
+    "AI used": "Anthropic Claude, Gemini",
+    "IDE used": "VS Code / Android Studio"
+  }
+}

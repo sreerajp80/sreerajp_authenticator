@@ -18,15 +18,9 @@ import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 
 Uint8List _derivePbkdf2Hash(String value, Uint8List salt, int iterations) {
-  final pbkdf2 =
-      PBKDF2KeyDerivator(HMac(SHA256Digest(), AppConstants.hmacBlockSize))
-        ..init(
-          Pbkdf2Parameters(
-            salt,
-            iterations,
-            AppConstants.pbkdf2HashSize,
-          ),
-        );
+  final pbkdf2 = PBKDF2KeyDerivator(
+    HMac(SHA256Digest(), AppConstants.hmacBlockSize),
+  )..init(Pbkdf2Parameters(salt, iterations, AppConstants.pbkdf2HashSize));
   return pbkdf2.process(Uint8List.fromList(utf8.encode(value)));
 }
 

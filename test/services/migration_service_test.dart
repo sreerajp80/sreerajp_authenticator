@@ -33,30 +33,31 @@ void main() {
     migrationStatuses.clear();
 
     // Mock FlutterSecureStorage
-    const secureChannel =
-        MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+    const secureChannel = MethodChannel(
+      'plugins.it_nomads.com/flutter_secure_storage',
+    );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(secureChannel, (MethodCall methodCall) async {
-      switch (methodCall.method) {
-        case 'read':
-          final key = methodCall.arguments['key'] as String;
-          return fakeSecureStorage[key];
-        case 'write':
-          final key = methodCall.arguments['key'] as String;
-          final value = methodCall.arguments['value'] as String;
-          fakeSecureStorage[key] = value;
-          return null;
-        case 'delete':
-          final key = methodCall.arguments['key'] as String;
-          fakeSecureStorage.remove(key);
-          return null;
-        case 'deleteAll':
-          fakeSecureStorage.clear();
-          return null;
-        default:
-          return null;
-      }
-    });
+          switch (methodCall.method) {
+            case 'read':
+              final key = methodCall.arguments['key'] as String;
+              return fakeSecureStorage[key];
+            case 'write':
+              final key = methodCall.arguments['key'] as String;
+              final value = methodCall.arguments['value'] as String;
+              fakeSecureStorage[key] = value;
+              return null;
+            case 'delete':
+              final key = methodCall.arguments['key'] as String;
+              fakeSecureStorage.remove(key);
+              return null;
+            case 'deleteAll':
+              fakeSecureStorage.clear();
+              return null;
+            default:
+              return null;
+          }
+        });
 
     SharedPreferences.setMockInitialValues({});
 
@@ -72,9 +73,9 @@ void main() {
     DatabaseService.testDbPath = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-      null,
-    );
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+          null,
+        );
   });
 
   // Helper: create a XOR-encrypted secret using the same key the encryption service uses
@@ -117,11 +118,9 @@ void main() {
       // XOR secrets have no ':' separator
       expect(xorSecret.contains(':'), isFalse);
 
-      await db.createAccount(Account(
-        name: 'Test',
-        secret: xorSecret,
-        type: 'totp',
-      ));
+      await db.createAccount(
+        Account(name: 'Test', secret: xorSecret, type: 'totp'),
+      );
 
       final didMigrate = await migrationService.runPendingMigrations(
         onStatusChanged: statusCallback,
@@ -145,11 +144,9 @@ void main() {
       final aesSecret = await encryptionService.encrypt('ALREADY_AES');
       expect(aesSecret, contains(':'));
 
-      await db.createAccount(Account(
-        name: 'Already Migrated',
-        secret: aesSecret,
-        type: 'totp',
-      ));
+      await db.createAccount(
+        Account(name: 'Already Migrated', secret: aesSecret, type: 'totp'),
+      );
 
       await migrationService.runPendingMigrations(
         onStatusChanged: statusCallback,
@@ -193,11 +190,9 @@ void main() {
       final ivPart = cbcSecret.split(':')[0];
       expect(ivPart.length, AppConstants.cbcIvBase64Length);
 
-      await db.createAccount(Account(
-        name: 'CBC Account',
-        secret: cbcSecret,
-        type: 'totp',
-      ));
+      await db.createAccount(
+        Account(name: 'CBC Account', secret: cbcSecret, type: 'totp'),
+      );
 
       await migrationService.runPendingMigrations(
         onStatusChanged: statusCallback,
@@ -218,11 +213,9 @@ void main() {
       final originalParts = gcmSecret.split(':');
       expect(originalParts[0].length, AppConstants.gcmNonceBase64Length);
 
-      await db.createAccount(Account(
-        name: 'GCM Account',
-        secret: gcmSecret,
-        type: 'totp',
-      ));
+      await db.createAccount(
+        Account(name: 'GCM Account', secret: gcmSecret, type: 'totp'),
+      );
 
       await migrationService.runPendingMigrations(
         onStatusChanged: statusCallback,
@@ -262,11 +255,9 @@ void main() {
   group('status callbacks', () {
     test('calls onStatusChanged(true) then onStatusChanged(false)', () async {
       final xorSecret = await xorEncrypt('SECRET');
-      await db.createAccount(Account(
-        name: 'Test',
-        secret: xorSecret,
-        type: 'totp',
-      ));
+      await db.createAccount(
+        Account(name: 'Test', secret: xorSecret, type: 'totp'),
+      );
 
       await migrationService.runPendingMigrations(
         onStatusChanged: statusCallback,
@@ -301,8 +292,12 @@ void main() {
       final xorSecret = await xorEncrypt('XOR_PLAIN');
       final aesSecret = await encryptionService.encrypt('AES_PLAIN');
 
-      await db.createAccount(Account(name: 'XOR', secret: xorSecret, type: 'totp'));
-      await db.createAccount(Account(name: 'AES', secret: aesSecret, type: 'totp'));
+      await db.createAccount(
+        Account(name: 'XOR', secret: xorSecret, type: 'totp'),
+      );
+      await db.createAccount(
+        Account(name: 'AES', secret: aesSecret, type: 'totp'),
+      );
 
       await migrationService.runPendingMigrations(
         onStatusChanged: statusCallback,

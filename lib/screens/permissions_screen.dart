@@ -49,7 +49,8 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   static const _implicitPermissions = [
     _PermissionInfo(
       name: 'Biometric / Device Lock',
-      description: 'Used for app lock authentication via fingerprint or device credentials',
+      description:
+          'Used for app lock authentication via fingerprint or device credentials',
       icon: Icons.fingerprint,
       isImplicit: true,
     ),
@@ -138,12 +139,14 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer
-                              .withValues(alpha: 0.3),
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.3,
+                          ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: theme.colorScheme.primary
-                                .withValues(alpha: 0.2),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
                           ),
                         ),
                         child: Row(
@@ -185,11 +188,13 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                               _buildGlossyOverlay(theme),
                               Column(
                                 children: _explicitPermissions
-                                    .map((perm) => _buildExplicitPermissionTile(
-                                          context: context,
-                                          info: perm,
-                                          status: _statuses[perm.permission],
-                                        ))
+                                    .map(
+                                      (perm) => _buildExplicitPermissionTile(
+                                        context: context,
+                                        info: perm,
+                                        status: _statuses[perm.permission],
+                                      ),
+                                    )
                                     .toList(),
                               ),
                             ],
@@ -216,9 +221,11 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                               _buildGlossyOverlay(theme),
                               Column(
                                 children: [
-                                  for (int i = 0;
-                                      i < _implicitPermissions.length;
-                                      i++) ...[
+                                  for (
+                                    int i = 0;
+                                    i < _implicitPermissions.length;
+                                    i++
+                                  ) ...[
                                     _buildImplicitPermissionTile(
                                       context: context,
                                       info: _implicitPermissions[i],
@@ -230,8 +237,9 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                                         ),
                                         child: Divider(
                                           height: 1,
-                                          color: theme.dividerColor
-                                              .withValues(alpha: 0.3),
+                                          color: theme.dividerColor.withValues(
+                                            alpha: 0.3,
+                                          ),
                                         ),
                                       ),
                                   ],
@@ -269,10 +277,10 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                                     Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.successGreen
-                                            .withValues(alpha: 0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                        color: AppTheme.successGreen.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(
                                         Icons.wifi_off_outlined,
@@ -288,20 +296,20 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                                         children: [
                                           Text(
                                             'No Internet Access',
-                                            style: theme
-                                                .textTheme.titleMedium
+                                            style: theme.textTheme.titleMedium
                                                 ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'This app works completely offline. Your data never leaves your device.',
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
-                                              color: theme.colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
                                           ),
                                         ],
                                       ),
@@ -344,8 +352,12 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                     Colors.white.withValues(alpha: 0.03),
                   ]
                 : [
-                    const Color.fromARGB(255, 78, 78, 78)
-                        .withValues(alpha: 0.85),
+                    const Color.fromARGB(
+                      255,
+                      78,
+                      78,
+                      78,
+                    ).withValues(alpha: 0.85),
                     Colors.white.withValues(alpha: 0.4),
                   ],
           ),
@@ -412,8 +424,11 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child:
-                    Icon(info.icon, color: theme.colorScheme.primary, size: 24),
+                child: Icon(
+                  info.icon,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -508,10 +523,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),

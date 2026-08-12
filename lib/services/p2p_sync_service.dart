@@ -16,7 +16,6 @@ import 'package:encrypt/encrypt.dart' as enc;
 import 'package:pointycastle/export.dart';
 
 import '../models/account.dart';
-import '../models/group.dart';
 import '../utils/constants.dart';
 import '../utils/network_utils.dart';
 
@@ -135,8 +134,8 @@ class P2pSyncService {
       throw const P2pSyncException('Unsupported sync QR version');
     }
 
-    final ipAddress =
-        (uri.queryParameters[AppConstants.syncQrKeyIp] ?? '').trim();
+    final ipAddress = (uri.queryParameters[AppConstants.syncQrKeyIp] ?? '')
+        .trim();
     if (ipAddress.isEmpty) {
       throw const P2pSyncException('Sync QR is missing the host address');
     }
@@ -148,7 +147,9 @@ class P2pSyncService {
       throw const P2pSyncException('Sync QR has an invalid port');
     }
 
-    final code = normalizeCode(uri.queryParameters[AppConstants.syncQrKeyCode] ?? '');
+    final code = normalizeCode(
+      uri.queryParameters[AppConstants.syncQrKeyCode] ?? '',
+    );
     if (code.isEmpty) {
       throw const P2pSyncException('Sync QR is missing the pairing code');
     }
@@ -166,15 +167,15 @@ class P2pSyncService {
 
   /// PBKDF2-HMAC-SHA256 stretch of the pairing code into a 256-bit AES key.
   static enc.Key deriveKey(String code, List<int> salt) {
-    final pbkdf2 = PBKDF2KeyDerivator(
-      HMac(SHA256Digest(), AppConstants.hmacBlockSize),
-    )..init(
-      Pbkdf2Parameters(
-        Uint8List.fromList(salt),
-        AppConstants.pbkdf2Iterations,
-        AppConstants.pbkdf2HashSize,
-      ),
-    );
+    final pbkdf2 =
+        PBKDF2KeyDerivator(HMac(SHA256Digest(), AppConstants.hmacBlockSize))
+          ..init(
+            Pbkdf2Parameters(
+              Uint8List.fromList(salt),
+              AppConstants.pbkdf2Iterations,
+              AppConstants.pbkdf2HashSize,
+            ),
+          );
     final keyBytes = pbkdf2.process(Uint8List.fromList(utf8.encode(code)));
     return enc.Key(keyBytes);
   }
@@ -186,8 +187,11 @@ class P2pSyncService {
     final encrypted = encrypter.encrypt(data, iv: iv);
     final combined = Uint8List(iv.bytes.length + encrypted.bytes.length)
       ..setRange(0, iv.bytes.length, iv.bytes)
-      ..setRange(iv.bytes.length, iv.bytes.length + encrypted.bytes.length,
-          encrypted.bytes);
+      ..setRange(
+        iv.bytes.length,
+        iv.bytes.length + encrypted.bytes.length,
+        encrypted.bytes,
+      );
     return base64.encode(combined);
   }
 
@@ -226,15 +230,10 @@ class P2pSyncService {
     }
 
     final hasAccounts = decoded['accounts'] is List;
-    final hasGroups = decoded['groups'] is List;
     final accountsJson = (decoded['accounts'] as List?) ?? const [];
-    final groupsJson = (decoded['groups'] as List?) ?? const [];
 
     if (accountsJson.length > AppConstants.syncMaxAccounts) {
       throw const P2pSyncException('Payload exceeds the account limit');
-    }
-    if (groupsJson.length > AppConstants.syncMaxGroups) {
-      throw const P2pSyncException('Payload exceeds the group limit');
     }
 
     try {
@@ -247,20 +246,10 @@ class P2pSyncService {
         accounts.add(Account.fromMap(item));
       }
 
-      final groups = <Group>[];
-      for (final item in groupsJson) {
-        if (item is! Map<String, dynamic>) {
-          throw const P2pSyncException('Malformed group entry');
-        }
-        _checkFieldLengths(item);
-        groups.add(Group.fromMap(item));
-      }
-
       // Only include category keys that were actually present, so the receiver
       // can tell "0 accounts sent" from "accounts not part of this sync".
       final result = <String, dynamic>{};
       if (hasAccounts) result['accounts'] = accounts;
-      if (hasGroups) result['groups'] = groups;
 
       final settings = decoded[AppConstants.syncPayloadKeySettings];
       if (settings is Map<String, dynamic>) {
@@ -393,7 +382,10 @@ class P2pSyncService {
           socket.write('${encryptWire(AppConstants.syncDeniedMessage, key)}\n');
           await socket.flush();
         } catch (_) {}
-        await _closeQuietly(reader, socket); // keep listening; idle timer active
+        await _closeQuietly(
+          reader,
+          socket,
+        ); // keep listening; idle timer active
         return;
       }
 

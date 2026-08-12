@@ -120,9 +120,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
           TextButton(
             onPressed: _isPhoneLockAvailable
                 ? () => Navigator.pop(
-                      dialogContext,
-                      _UnlockMethodChoice.phoneLock,
-                    )
+                    dialogContext,
+                    _UnlockMethodChoice.phoneLock,
+                  )
                 : null,
             child: const Text('Phone Screen Lock'),
           ),
@@ -141,10 +141,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     SettingsProvider provider,
   ) async {
     if (value) {
-      final pinSet = await _showPinSetupDialog(
-        provider,
-        isInitialSetup: true,
-      );
+      final pinSet = await _showPinSetupDialog(provider, isInitialSetup: true);
       if (!pinSet || !mounted) return;
 
       if (!await provider.hasRecoveryKey()) {
@@ -362,8 +359,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                 content: const Text(
                                   'App PIN must be at least 4 digits',
                                 ),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.error,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.error,
                               ),
                             );
                             return;
@@ -371,10 +369,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           if (pinController.text != confirmController.text) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content:
-                                    const Text('App PINs do not match'),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.error,
+                                content: const Text('App PINs do not match'),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.error,
                               ),
                             );
                             return;
@@ -461,10 +459,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outline
-                      .withValues(alpha: 0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withValues(alpha: 0.3),
                 ),
               ),
               child: SelectableText(
@@ -483,7 +480,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: recoveryKey));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Recovery key copied to clipboard')),
+                  const SnackBar(
+                    content: Text('Recovery key copied to clipboard'),
+                  ),
                 );
               },
               icon: const Icon(Icons.copy, size: 18),
@@ -640,8 +639,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                 ),
                               ),
                               trailing: const Icon(Icons.chevron_right),
-                              onTap: () =>
-                                  _handleAutoLockTimeoutChange(settingsProvider),
+                              onTap: () => _handleAutoLockTimeoutChange(
+                                settingsProvider,
+                              ),
                             ),
                           ],
                         ],
@@ -725,13 +725,15 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             !_isPhoneLockAvailable
                                 ? 'Phone Screen Lock is not available on this device'
                                 : settingsProvider.hasPinSet
-                                    ? 'Optional quick unlock for opening the app'
-                                    : 'Unlock the app with your Phone Screen Lock',
+                                ? 'Optional quick unlock for opening the app'
+                                : 'Unlock the app with your Phone Screen Lock',
                           ),
                           value: settingsProvider.phoneLockQuickUnlockEnabled,
                           onChanged: _isPhoneLockAvailable
-                              ? (value) =>
-                                  _handleQuickUnlockToggle(value, settingsProvider)
+                              ? (value) => _handleQuickUnlockToggle(
+                                  value,
+                                  settingsProvider,
+                                )
                               : null,
                         ),
                       ),
@@ -796,7 +798,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                               'Phone Screen Lock may use fingerprint, face, pattern, PIN, or password depending on your device.',
                               style: theme.textTheme.bodySmall,
                             ),
-                            if (settingsProvider.needsMandatoryPinMigrationSync) ...[
+                            if (settingsProvider
+                                .needsMandatoryPinMigrationSync) ...[
                               const SizedBox(height: 12),
                               Text(
                                 'Finish your one-time App PIN setup from the lock screen before using the app normally.',

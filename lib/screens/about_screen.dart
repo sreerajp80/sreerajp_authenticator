@@ -1,14 +1,15 @@
 // File Path: sreerajp_authenticator/lib/screens/about_screen.dart
 // Author: Sreeraj P
-// Created: 2025 September 30
-// Last Modified: 2025 October 15
-// Description: About screen displaying app information with auto-lock monitoring
+// Description: About screen displaying app information dynamically from AppConfig with auto-lock monitoring
 
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../config/app_config.dart';
 import '../config/app_flavor_config.dart';
 import '../providers/settings_provider.dart';
+import '../services/config_service.dart';
 import '../utils/constants.dart';
 
 class AboutScreen extends StatefulWidget {
@@ -20,24 +21,27 @@ class AboutScreen extends StatefulWidget {
 
 class _AboutScreenState extends State<AboutScreen> {
   PackageInfo? _packageInfo;
+  AppConfig _config = AppConfig.fallback;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadPackageInfo();
+    _loadInfo();
   }
 
-  Future<void> _loadPackageInfo() async {
+  Future<void> _loadInfo() async {
     try {
       final info = await PackageInfo.fromPlatform();
+      final config = await ConfigService().loadAndVerify(packageInfo: info);
       if (mounted) {
         setState(() {
           _packageInfo = info;
+          _config = config;
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -47,8 +51,10 @@ class _AboutScreenState extends State<AboutScreen> {
   void _showLicensesDialog() {
     showLicensePage(
       context: context,
-      applicationName: AppFlavorConfig.instance.appName,
-      applicationVersion: _packageInfo?.version ?? 'Unknown',
+      applicationName: _config.appName.isNotEmpty
+          ? _config.appName
+          : AppFlavorConfig.instance.appName,
+      applicationVersion: _packageInfo?.version ?? _config.version,
       applicationIcon: const Icon(Icons.security, size: 48),
       applicationLegalese: AppConstants.licensesLegalese,
     );
@@ -65,6 +71,13 @@ class _AboutScreenState extends State<AboutScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openMail(String email) async {
+    final Uri uri = Uri(scheme: 'mailto', path: email);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 
   void _showPrivacyPolicy() {
@@ -149,14 +162,16 @@ class _AboutScreenState extends State<AboutScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            AppFlavorConfig.instance.appName,
+                            _config.appName.isNotEmpty
+                                ? _config.appName
+                                : AppFlavorConfig.instance.appName,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Version ${_packageInfo?.version ?? '1.0.0'}',
+                            'Version ${_packageInfo?.version ?? _config.version}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -172,7 +187,9 @@ class _AboutScreenState extends State<AboutScreen> {
                                   Icons.flag_outlined,
                                   size: 18,
                                 ),
-                                label: Text(AppFlavorConfig.instance.environmentName),
+                                label: Text(
+                                  AppFlavorConfig.instance.environmentName,
+                                ),
                               ),
                               Chip(
                                 avatar: const Icon(
@@ -203,7 +220,11 @@ class _AboutScreenState extends State<AboutScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(AppConstants.aboutDescription),
+                            Text(
+                              _config.description.isNotEmpty
+                                  ? _config.description
+                                  : AppConstants.aboutDescription,
+                            ),
                           ],
                         ),
                       ),
@@ -250,6 +271,37 @@ class _AboutScreenState extends State<AboutScreen> {
                         ),
                       ),
                     ),
+                    if (_config.details.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          AppConstants.developerSectionTitle,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      Card(
+                        child: Column(
+                          children: [
+                            for (final entry in _config.details.entries)
+                              if (entry.key.trim().isNotEmpty &&
+                                  entry.value.trim().isNotEmpty)
+                                ListTile(
+                                  title: Text(entry.key),
+                                  subtitle: Text(entry.value),
+                                  onTap:
+                                      entry.key.trim().toLowerCase() == 'email'
+                                      ? () => _openMail(entry.value)
+                                      : null,
+                                ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -267,9 +319,7 @@ class _AboutScreenState extends State<AboutScreen> {
                         children: [
                           ListTile(
                             leading: const Icon(Icons.privacy_tip),
-                            title: const Text(
-                              AppConstants.privacyPolicyTitle,
-                            ),
+                            title: const Text(AppConstants.privacyPolicyTitle),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => _showPrivacyPolicy(),
                           ),
@@ -283,64 +333,6 @@ class _AboutScreenState extends State<AboutScreen> {
                             onTap: _showLicensesDialog,
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        AppConstants.developerSectionTitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundColor:
-                                  theme.colorScheme.primaryContainer,
-                              child: Text(
-                                AppConstants.developerInitials,
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            ...AppConstants.developerInfo
-                                .where((entry) => entry.value.isNotEmpty)
-                                .map(
-                                  (entry) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Text(
-                                      '${entry.label}: ${entry.value}',
-                                      style:
-                                          entry.label ==
-                                              AppConstants.designConceptLabel
-                                          ? theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                )
-                                          : theme.textTheme.bodyMedium
-                                                ?.copyWith(
-                                                  color: theme
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                    ),
-                                  ),
-                                ),
-                          ],
-                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

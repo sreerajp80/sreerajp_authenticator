@@ -1,7 +1,8 @@
-# Security
+# Security — SreerajP Authenticator
 
-This app is security-sensitive. It stores OTP secrets locally, protects them with authenticated
-encryption, and gates access with app-lock controls.
+This document governs the security architecture, threat model, sensitive data inventory, encryption design, session policy, and security testing checklist for SreerajP Authenticator. Read this before touching permissions, crypto, secure storage, authentication, or logging.
+
+[Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md) | [guidelines/security.md](guidelines/security.md)
 
 ---
 

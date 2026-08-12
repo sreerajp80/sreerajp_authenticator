@@ -6,7 +6,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/account_provider.dart';
-import '../providers/group_provider.dart';
 import '../services/export_import_service.dart';
 import '../providers/settings_provider.dart';
 
@@ -56,9 +55,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                     prefixIcon: const Icon(Icons.lock),
                     helperText: 'Minimum 8 characters',
                     suffixIcon: IconButton(
-                      icon: Icon(obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility),
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
                       onPressed: () =>
                           setState(() => obscurePassword = !obscurePassword),
                     ),
@@ -73,9 +74,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(obscureConfirm
-                          ? Icons.visibility_off
-                          : Icons.visibility),
+                      icon: Icon(
+                        obscureConfirm
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
                       onPressed: () =>
                           setState(() => obscureConfirm = !obscureConfirm),
                     ),
@@ -138,7 +141,6 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       if (!mounted) return;
       final accountProvider = context.read<AccountsProvider>();
       final accounts = accountProvider.accounts;
-      final groups = context.read<GroupsProvider>().groups;
 
       if (accounts.isEmpty) {
         _showMessage('No accounts to backup', isError: true);
@@ -147,7 +149,6 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
       final result = await _exportImportService.exportAccountsEncrypted(
         accounts,
-        groups,
         password,
       );
 
@@ -209,9 +210,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
-                      icon: Icon(obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility),
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
                       onPressed: () =>
                           setState(() => obscurePassword = !obscurePassword),
                     ),
@@ -267,18 +270,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
       if (!mounted) return;
       final accountProvider = context.read<AccountsProvider>();
-      final groupsProvider = context.read<GroupsProvider>();
-      await accountProvider.importData(
-        backupData,
-        existingGroups: groupsProvider.groups,
-        onGroupsChanged: () => groupsProvider.loadGroups(),
-      );
+      final result = await accountProvider.importData(backupData);
 
-      final groups = backupData['groups'] as List? ?? [];
       if (mounted) {
         _showMessage(
-          'Successfully restored ${accounts.length} account(s)'
-          '${groups.isNotEmpty ? ' and ${groups.length} group(s)' : ''}',
+          'Successfully restored ${result.accountsAdded} account(s)',
         );
       }
     } catch (e) {

@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/account_provider.dart';
-import '../providers/group_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sync_provider.dart';
 import '../services/p2p_sync_service.dart';
+import 'optical_sync_screen.dart';
 import 'send_to_device_screen.dart';
 import 'sync_qr_scanner_screen.dart';
 
@@ -90,18 +90,13 @@ class _SyncScreenState extends State<SyncScreen> {
     }
 
     final accountsProvider = context.read<AccountsProvider>();
-    final groupsProvider = context.read<GroupsProvider>();
     final settingsProvider = context.read<SettingsProvider>();
 
     await context.read<SyncProvider>().joinSync(
       hostIp: hostIp,
       port: port,
       code: code,
-      importData: (data) => accountsProvider.importData(
-        data,
-        existingGroups: groupsProvider.groups,
-        onGroupsChanged: () => groupsProvider.loadGroups(),
-      ),
+      importData: (data) => accountsProvider.importData(data),
       applySettings: (settings, {required overwrite}) =>
           settingsProvider.applySyncedSettings(settings, overwrite: overwrite),
     );
@@ -159,7 +154,12 @@ class _SyncScreenState extends State<SyncScreen> {
       SyncSyncing() => _buildProgress('Receiving…'),
       SyncCompleted() => _buildCompleted(context, state),
       SyncError() => _buildError(context, state),
-      SyncIdle() => _showJoinForm ? _buildJoinForm(context) : _buildMenu(context),
+      SyncOpticalTransmitting() =>
+        _showJoinForm ? _buildJoinForm(context) : _buildMenu(context),
+      SyncOpticalReceiving() =>
+        _showJoinForm ? _buildJoinForm(context) : _buildMenu(context),
+      SyncIdle() =>
+        _showJoinForm ? _buildJoinForm(context) : _buildMenu(context),
     };
   }
 
@@ -178,9 +178,8 @@ class _SyncScreenState extends State<SyncScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'Both devices must be on the same Wi-Fi or hotspot. '
-                    'Nothing is sent over the internet, and the pairing code '
-                    'never leaves your device — type it on the other device.',
+                    'P2P LAN Sync: Both devices on the same Wi-Fi or hotspot. '
+                    'Pairing code never leaves your device.',
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontSize: 13,
@@ -191,13 +190,19 @@ class _SyncScreenState extends State<SyncScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         Card(
           child: ListTile(
-            leading: _iconBox(context, Icons.upload, theme.colorScheme.primaryContainer,
-                theme.colorScheme.onPrimaryContainer),
-            title: const Text('Send to another device'),
-            subtitle: const Text('Host: share your accounts, groups, and settings'),
+            leading: _iconBox(
+              context,
+              Icons.upload,
+              theme.colorScheme.primaryContainer,
+              theme.colorScheme.onPrimaryContainer,
+            ),
+            title: const Text('Send over Wi-Fi / LAN'),
+            subtitle: const Text(
+              'Host: share your accounts and settings over local Wi-Fi',
+            ),
             trailing: const Icon(Icons.chevron_right),
             onTap: _startHosting,
           ),
@@ -205,12 +210,75 @@ class _SyncScreenState extends State<SyncScreen> {
         const SizedBox(height: 12),
         Card(
           child: ListTile(
-            leading: _iconBox(context, Icons.download, theme.colorScheme.secondaryContainer,
-                theme.colorScheme.onSecondaryContainer),
-            title: const Text('Receive from another device'),
-            subtitle: const Text('Join: scan the QR or import from a hosting device'),
+            leading: _iconBox(
+              context,
+              Icons.download,
+              theme.colorScheme.secondaryContainer,
+              theme.colorScheme.onSecondaryContainer,
+            ),
+            title: const Text('Receive over Wi-Fi / LAN'),
+            subtitle: const Text('Join: scan the host QR or enter host IP'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => setState(() => _showJoinForm = true),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'OPTICAL AIR-GAP SYNC (NO WI-FI / NO SOCKETS)',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: _iconBox(
+              context,
+              Icons.sensors,
+              theme.colorScheme.tertiaryContainer,
+              theme.colorScheme.onTertiaryContainer,
+            ),
+            title: const Text('Optical Air-Gap Stream (Send)'),
+            subtitle: const Text(
+              'Transmit vault as animated QR stream (12-15 FPS)',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const OpticalSyncScreen(
+                    initialMode: OpticalSyncMode.transmit,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: _iconBox(
+              context,
+              Icons.qr_code_scanner,
+              theme.colorScheme.surfaceContainerHighest,
+              theme.colorScheme.onSurfaceVariant,
+            ),
+            title: const Text('Scan Optical Air-Gap Stream (Receive)'),
+            subtitle: const Text(
+              'Capture animated QR stream using camera live preview',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const OpticalSyncScreen(
+                    initialMode: OpticalSyncMode.receive,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -245,7 +313,10 @@ class _SyncScreenState extends State<SyncScreen> {
             const Expanded(child: Divider()),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('or enter manually', style: theme.textTheme.bodySmall),
+              child: Text(
+                'or enter manually',
+                style: theme.textTheme.bodySmall,
+              ),
             ),
             const Expanded(child: Divider()),
           ],
@@ -343,7 +414,11 @@ class _SyncScreenState extends State<SyncScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, size: 64, color: theme.colorScheme.primary),
+            Icon(
+              Icons.check_circle,
+              size: 64,
+              color: theme.colorScheme.primary,
+            ),
             const SizedBox(height: 16),
             Text('Sync complete', style: theme.textTheme.titleLarge),
             const SizedBox(height: 16),
@@ -369,7 +444,6 @@ class _SyncScreenState extends State<SyncScreen> {
 
     if (s.isHost) {
       if (s.includedAccounts) lines.add('Sent ${s.accounts} account(s)');
-      if (s.includedGroups) lines.add('Sent ${s.groups} group(s)');
       if (s.includedSettings) lines.add('Sent ${s.settings} setting(s)');
     } else {
       if (s.includedAccounts) {
@@ -377,12 +451,6 @@ class _SyncScreenState extends State<SyncScreen> {
             ? ' (${s.accountsSkipped} already present, kept)'
             : '';
         lines.add('Added ${s.accounts} account(s)$skipped');
-      }
-      if (s.includedGroups) {
-        final skipped = s.groupsSkipped > 0
-            ? ' (${s.groupsSkipped} already present, kept)'
-            : '';
-        lines.add('Added ${s.groups} group(s)$skipped');
       }
       if (s.includedSettings) {
         lines.add('Applied ${s.settings} setting(s)');
@@ -400,9 +468,7 @@ class _SyncScreenState extends State<SyncScreen> {
             children: [
               Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
-              Flexible(
-                child: Text(line, style: theme.textTheme.bodyMedium),
-              ),
+              Flexible(child: Text(line, style: theme.textTheme.bodyMedium)),
             ],
           ),
         ),

@@ -12,7 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../providers/account_provider.dart';
-import '../providers/group_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sync_provider.dart';
 import '../services/p2p_sync_service.dart';
@@ -33,7 +32,6 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
 
   // Selection for the incremental "Sync to a Phone" section.
   bool _syncAccounts = true;
-  bool _syncGroups = true;
   bool _syncSettings = false;
 
   @override
@@ -60,29 +58,31 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
 
   Future<void> _fullSync() async {
     final accounts = context.read<AccountsProvider>().accounts;
-    final groups = context.read<GroupsProvider>().groups;
-    final settings = context.read<SettingsProvider>().syncableSettingsSnapshot();
+    final settings = context
+        .read<SettingsProvider>()
+        .syncableSettingsSnapshot();
     await context.read<SyncProvider>().sendFullSync(
       accounts: accounts,
-      groups: groups,
+      groups: const [],
       settingsSnapshot: settings,
     );
   }
 
   Future<void> _selectiveSync() async {
-    if (!_syncAccounts && !_syncGroups && !_syncSettings) {
+    if (!_syncAccounts && !_syncSettings) {
       _showMessage('Select at least one item to sync', isError: true);
       return;
     }
     final accounts = context.read<AccountsProvider>().accounts;
-    final groups = context.read<GroupsProvider>().groups;
-    final settings = context.read<SettingsProvider>().syncableSettingsSnapshot();
+    final settings = context
+        .read<SettingsProvider>()
+        .syncableSettingsSnapshot();
     await context.read<SyncProvider>().sendSelectiveSync(
       accounts: accounts,
-      groups: groups,
+      groups: const [],
       settingsSnapshot: settings,
       includeAccounts: _syncAccounts,
-      includeGroups: _syncGroups,
+      includeGroups: false,
       includeSettings: _syncSettings,
     );
   }
@@ -101,10 +101,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: [
-              _buildServerDetailsTab(context),
-              _buildSyncTab(context),
-            ],
+            children: [_buildServerDetailsTab(context), _buildSyncTab(context)],
           ),
         ),
       ],
@@ -291,7 +288,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Send everything — all accounts, groups, and app settings — to '
+                  'Send everything — all accounts and app settings — to '
                   'a phone that is setting up for the first time. Device-specific '
                   'items (app lock, PIN, phone-lock unlock, recovery key) are not '
                   'sent.',
@@ -336,16 +333,6 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                       ? (v) => setState(() => _syncAccounts = v ?? false)
                       : null,
                   title: const Text('Accounts'),
-                ),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  value: _syncGroups,
-                  onChanged: connected
-                      ? (v) => setState(() => _syncGroups = v ?? false)
-                      : null,
-                  title: const Text('Groups'),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,

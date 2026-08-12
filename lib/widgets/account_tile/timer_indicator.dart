@@ -4,7 +4,11 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 class TimerIndicator extends StatelessWidget {
   final int remainingTime;
   final int period;
-  const TimerIndicator({super.key, required this.remainingTime, required this.period});
+  const TimerIndicator({
+    super.key,
+    required this.remainingTime,
+    required this.period,
+  });
 
   Color _getProgressColor(ThemeData theme) {
     final percentage = remainingTime / period;
@@ -30,18 +34,12 @@ class TimerIndicator extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            _getProgressColor(
-              theme,
-            ).withValues(alpha: 0.51),
+            _getProgressColor(theme).withValues(alpha: 0.51),
             const Color.fromARGB(0, 22, 21, 21),
           ],
         ),
         boxShadow: [
-          BoxShadow(
-            color: _getProgressColor(
-              theme,
-            ).withValues(alpha: 0.01),
-          ),
+          BoxShadow(color: _getProgressColor(theme).withValues(alpha: 0.01)),
         ],
       ),
       child: CircularPercentIndicator(
@@ -58,14 +56,8 @@ class TimerIndicator extends StatelessWidget {
         ),
         progressColor: _getProgressColor(theme),
         backgroundColor: isDark
-            ? const Color.fromARGB(
-                255,
-                8,
-                8,
-                8,
-              ).withValues(alpha: 0.3)
-            : theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.53),
+            ? const Color.fromARGB(255, 8, 8, 8).withValues(alpha: 0.3)
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.53),
         circularStrokeCap: CircularStrokeCap.round,
         animateFromLastPercent: true,
         animation: true,

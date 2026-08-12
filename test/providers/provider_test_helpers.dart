@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sreerajp_authenticator/models/account.dart';
-import 'package:sreerajp_authenticator/models/group.dart';
 import 'package:sreerajp_authenticator/services/database_service.dart';
 import 'package:sreerajp_authenticator/services/otp_service.dart';
 import 'package:sreerajp_authenticator/utils/constants.dart';
@@ -146,7 +145,7 @@ Account makeAccount({
   int digits = 6,
   int period = 30,
   String algorithm = 'SHA1',
-  int? groupId,
+  List<String>? tags,
   int sortOrder = 0,
 }) {
   return Account(
@@ -160,26 +159,7 @@ Account makeAccount({
     digits: digits,
     period: period,
     algorithm: algorithm,
-    groupId: groupId,
+    tags: tags,
     sortOrder: sortOrder,
-  );
-}
-
-Group makeGroup({
-  int? id,
-  String name = 'Work',
-  String? description,
-  String color = 'blue',
-  String? icon,
-  int sortOrder = 0,
-}) {
-  return Group(
-    id: id,
-    name: name,
-    description: description,
-    color: color,
-    icon: icon,
-    sortOrder: sortOrder,
-    createdAt: DateTime.now(),
   );
 }

@@ -227,7 +227,7 @@ The current test suite covers:
 ## Related Docs
 
 - `docs/project_structure.md`
-- `docs/flutter_build_flavors_guide.md`
+- `docs/guidelines/flutter_build_flavors_guide.md`
 - `docs/release_process.md`
 
 ## License

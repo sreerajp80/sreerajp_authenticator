@@ -322,7 +322,7 @@ void main() {
     });
 
     test('returns null for unsupported OTP type', () {
-      const uri = 'otpauth://steam/Test:user?secret=JBSWY3DPEHPK3PXP';
+      const uri = 'otpauth://unsupportedtype/Test:user?secret=JBSWY3DPEHPK3PXP';
       expect(OTPService.parseOtpAuthUri(uri), isNull);
     });
   });
@@ -401,6 +401,122 @@ void main() {
       OTPService.clearCache();
       final secondResult = OTPService.generateHOTP(account);
       expectSuccess(secondResult, expectedCode: rfcHotpValues[0]);
+    });
+  });
+
+  group('Non-Standard Algorithms — Steam Guard, Blizzard, YubiKey, mOTP', () {
+    test('Steam Guard generates 5-character alphanumeric code', () {
+      final account = Account(
+        name: 'Steam Account',
+        secret: rfcSecret,
+        type: 'totp',
+        digits: 5,
+        period: 30,
+        algorithm: 'STEAM',
+      );
+
+      final result = OTPService.generateTOTP(account);
+      expectSuccess(result);
+      expect(result.code!.length, 5);
+      expect(
+        RegExp(r'^[23456789BCDFGHJKMNPQRTVWXY]{5}$').hasMatch(result.code!),
+        isTrue,
+      );
+    });
+
+    test('Blizzard generates 8-digit numeric code with Hex secret', () {
+      final account = Account(
+        name: 'Blizzard Account',
+        secret: '3132333435363738393031323334353637383930',
+        type: 'totp',
+        digits: 8,
+        period: 30,
+        algorithm: 'BLIZZARD',
+      );
+
+      final result = OTPService.generateTOTP(account);
+      expectSuccess(result);
+      expect(result.code!.length, 8);
+      expect(int.tryParse(result.code!), isNotNull);
+    });
+
+    test('YubiKey HMAC-SHA1 generates numeric code with Hex secret', () {
+      final account = Account(
+        name: 'YubiKey Account',
+        secret: '3132333435363738393031323334353637383930',
+        type: 'totp',
+        digits: 6,
+        period: 30,
+        algorithm: 'YUBIKEY',
+      );
+
+      final result = OTPService.generateTOTP(account);
+      expectSuccess(result);
+      expect(result.code!.length, 6);
+      expect(int.tryParse(result.code!), isNotNull);
+    });
+
+    test('mOTP generates 6-character hex code', () {
+      final account = Account(
+        name: 'mOTP Account',
+        secret: '1234567890abcdef',
+        type: 'motp',
+        counter: 1234,
+        digits: 6,
+        period: 10,
+        algorithm: 'MOTP',
+      );
+
+      final result = OTPService.generateTOTP(account);
+      expectSuccess(result);
+      expect(result.code!.length, 6);
+      expect(RegExp(r'^[0-9A-F]{6}$').hasMatch(result.code!), isTrue);
+    });
+  });
+
+  group('steam:// and non-standard URI parsing', () {
+    test('parses steam:// secret URI', () {
+      const uri = 'steam://GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+      final account = OTPService.parseOtpAuthUri(uri);
+
+      expect(account, isNotNull);
+      expect(account!.issuer, 'Steam');
+      expect(account.algorithm, 'STEAM');
+      expect(account.digits, 5);
+      expect(account.secret, rfcSecret);
+    });
+
+    test('parses steam://totp/Steam:user?secret=... URI', () {
+      const uri =
+          'steam://totp/Steam:GamerTag?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+      final account = OTPService.parseOtpAuthUri(uri);
+
+      expect(account, isNotNull);
+      expect(account!.name, 'GamerTag');
+      expect(account.issuer, 'Steam');
+      expect(account.algorithm, 'STEAM');
+      expect(account.digits, 5);
+    });
+
+    test('parses otpauth://steam/ URI', () {
+      const uri =
+          'otpauth://steam/Steam:user?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+      final account = OTPService.parseOtpAuthUri(uri);
+
+      expect(account, isNotNull);
+      expect(account!.algorithm, 'STEAM');
+      expect(account.digits, 5);
+    });
+
+    test('parses motp:// URI', () {
+      const uri = 'motp://mysecretkey?pin=1234';
+      final account = OTPService.parseOtpAuthUri(uri);
+
+      expect(account, isNotNull);
+      expect(account!.algorithm, 'MOTP');
+      expect(account.type, 'motp');
+      expect(account.counter, 1234);
+      expect(account.period, 10);
     });
   });
 }

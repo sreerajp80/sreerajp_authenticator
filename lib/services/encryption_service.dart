@@ -21,7 +21,10 @@ class EncryptionService {
     if (key == null) {
       // Generate a new secure random key (32 bytes for AES-256)
       final random = Random.secure();
-      final keyBytes = List<int>.generate(AppConstants.aesKeySize, (_) => random.nextInt(256));
+      final keyBytes = List<int>.generate(
+        AppConstants.aesKeySize,
+        (_) => random.nextInt(256),
+      );
       key = base64.encode(keyBytes);
       await _storage.write(key: _keyAlias, value: key);
     }
@@ -74,8 +77,9 @@ class EncryptionService {
       final iv = enc.IV.fromBase64(ivBase64);
       final encrypted = enc.Encrypted.fromBase64(parts[1]);
 
-      final mode =
-          ivBase64.length == AppConstants.gcmNonceBase64Length ? enc.AESMode.gcm : enc.AESMode.cbc;
+      final mode = ivBase64.length == AppConstants.gcmNonceBase64Length
+          ? enc.AESMode.gcm
+          : enc.AESMode.cbc;
 
       final encrypter = enc.Encrypter(enc.AES(key, mode: mode));
       return encrypter.decrypt(encrypted, iv: iv);
@@ -124,5 +128,4 @@ class EncryptionService {
   Future<void> clearAllSecureData() async {
     await _storage.deleteAll();
   }
-
 }

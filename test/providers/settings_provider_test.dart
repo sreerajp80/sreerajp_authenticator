@@ -47,32 +47,40 @@ void main() {
       expect(provider.isAppLockEnabled, isFalse);
     });
 
-    test('sync host idle timeout defaults, persists, and clamps to bounds',
-        () async {
-      final provider = SettingsProvider();
-      await provider.initialized;
+    test(
+      'sync host idle timeout defaults, persists, and clamps to bounds',
+      () async {
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      expect(
-        provider.syncHostIdleTimeout,
-        AppConstants.syncHostIdleTimeoutDefault,
-      );
+        expect(
+          provider.syncHostIdleTimeout,
+          AppConstants.syncHostIdleTimeoutDefault,
+        );
 
-      await provider.setSyncHostIdleTimeout(300);
-      expect(provider.syncHostIdleTimeout, 300);
+        await provider.setSyncHostIdleTimeout(300);
+        expect(provider.syncHostIdleTimeout, 300);
 
-      // Out-of-range values are clamped.
-      await provider.setSyncHostIdleTimeout(5);
-      expect(provider.syncHostIdleTimeout, AppConstants.syncHostIdleTimeoutMin);
+        // Out-of-range values are clamped.
+        await provider.setSyncHostIdleTimeout(5);
+        expect(
+          provider.syncHostIdleTimeout,
+          AppConstants.syncHostIdleTimeoutMin,
+        );
 
-      await provider.setSyncHostIdleTimeout(99999);
-      expect(provider.syncHostIdleTimeout, AppConstants.syncHostIdleTimeoutMax);
+        await provider.setSyncHostIdleTimeout(99999);
+        expect(
+          provider.syncHostIdleTimeout,
+          AppConstants.syncHostIdleTimeoutMax,
+        );
 
-      // Persisted value is reloaded by a fresh provider.
-      await provider.setSyncHostIdleTimeout(60);
-      final reloaded = SettingsProvider();
-      await reloaded.initialized;
-      expect(reloaded.syncHostIdleTimeout, 60);
-    });
+        // Persisted value is reloaded by a fresh provider.
+        await provider.setSyncHostIdleTimeout(60);
+        final reloaded = SettingsProvider();
+        await reloaded.initialized;
+        expect(reloaded.syncHostIdleTimeout, 60);
+      },
+    );
 
     test('enables app lock with phone lock only (no app pin)', () async {
       final provider = SettingsProvider();
@@ -88,17 +96,19 @@ void main() {
       expect(provider.canUsePhoneLockQuickUnlock, isTrue);
     });
 
-    test('setAppLockEnabled(true) keeps session unlocked until pause or timeout',
-        () async {
-      final provider = SettingsProvider();
-      await provider.initialized;
+    test(
+      'setAppLockEnabled(true) keeps session unlocked until pause or timeout',
+      () async {
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      await provider.setAppLockPin('1234');
-      await provider.setAppLockEnabled(true);
+        await provider.setAppLockPin('1234');
+        await provider.setAppLockEnabled(true);
 
-      expect(provider.isAppLockEnabled, isTrue);
-      expect(provider.isLocked, isFalse);
-    });
+        expect(provider.isAppLockEnabled, isTrue);
+        expect(provider.isLocked, isFalse);
+      },
+    );
 
     test('setSyncInProgress(true) suppresses idle auto-lock', () async {
       final provider = SettingsProvider();
@@ -121,46 +131,53 @@ void main() {
       expect(provider.isLocked, isTrue);
     });
 
-    test('idle timeout requires app pin even when quick unlock is enabled', () async {
-      SharedPreferences.setMockInitialValues({
-        'app_lock_enabled': true,
-        'require_authentication': true,
-        'phone_lock_quick_unlock_enabled': true,
-        'last_strong_auth_at_ms': DateTime.now()
-            .subtract(const Duration(hours: 2))
-            .millisecondsSinceEpoch,
-      });
-      await AuthService().setPin('1234');
+    test(
+      'idle timeout requires app pin even when quick unlock is enabled',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'app_lock_enabled': true,
+          'require_authentication': true,
+          'phone_lock_quick_unlock_enabled': true,
+          'last_strong_auth_at_ms': DateTime.now()
+              .subtract(const Duration(hours: 2))
+              .millisecondsSinceEpoch,
+        });
+        await AuthService().setPin('1234');
 
-      final provider = SettingsProvider();
-      await provider.initialized;
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      expect(provider.pinRequiredReason, PinRequiredReason.idleTimeout);
-      expect(provider.requiresAppPinForUnlock, isTrue);
-      expect(provider.unlockInstructionText, 'Enter your App PIN');
-    });
+        expect(provider.pinRequiredReason, PinRequiredReason.idleTimeout);
+        expect(provider.requiresAppPinForUnlock, isTrue);
+        expect(provider.unlockInstructionText, 'Enter your App PIN');
+      },
+    );
 
-    test('successful app pin unlock clears idle timeout and enables quick unlock',
-        () async {
-      SharedPreferences.setMockInitialValues({
-        'app_lock_enabled': true,
-        'require_authentication': true,
-        'phone_lock_quick_unlock_enabled': true,
-        'last_strong_auth_at_ms': DateTime.now()
-            .subtract(const Duration(hours: 2))
-            .millisecondsSinceEpoch,
-      });
-      await AuthService().setPin('1234');
+    test(
+      'successful app pin unlock clears idle timeout and enables quick unlock',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'app_lock_enabled': true,
+          'require_authentication': true,
+          'phone_lock_quick_unlock_enabled': true,
+          'last_strong_auth_at_ms': DateTime.now()
+              .subtract(const Duration(hours: 2))
+              .millisecondsSinceEpoch,
+        });
+        await AuthService().setPin('1234');
 
-      final provider = SettingsProvider();
-      await provider.initialized;
-      await provider.handleSuccessfulAppPinUnlock();
+        final provider = SettingsProvider();
+        await provider.initialized;
+        await provider.handleSuccessfulAppPinUnlock();
 
-      expect(provider.pinRequiredReason, PinRequiredReason.none);
-      expect(provider.canUsePhoneLockQuickUnlock, isTrue);
-      expect(provider.unlockInstructionText,
-          'Use your Phone Screen Lock or enter your App PIN');
-    });
+        expect(provider.pinRequiredReason, PinRequiredReason.none);
+        expect(provider.canUsePhoneLockQuickUnlock, isTrue);
+        expect(
+          provider.unlockInstructionText,
+          'Use your Phone Screen Lock or enter your App PIN',
+        );
+      },
+    );
 
     test('three quick unlock failures require app pin', () async {
       SharedPreferences.setMockInitialValues({
@@ -237,36 +254,38 @@ void main() {
       expect(provider.requiresAppPinForUnlock, isTrue);
     });
 
-    test('reboot detection requires app pin until successful pin refreshes state',
-        () async {
-      SharedPreferences.setMockInitialValues({
-        'app_lock_enabled': true,
-        'require_authentication': true,
-        'phone_lock_quick_unlock_enabled': true,
-        'last_strong_auth_at_ms': DateTime.now()
-            .subtract(const Duration(minutes: 5))
-            .millisecondsSinceEpoch,
-        'last_known_boot_count': 41,
-      });
-      await AuthService().setPin('1234');
+    test(
+      'reboot detection requires app pin until successful pin refreshes state',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'app_lock_enabled': true,
+          'require_authentication': true,
+          'phone_lock_quick_unlock_enabled': true,
+          'last_strong_auth_at_ms': DateTime.now()
+              .subtract(const Duration(minutes: 5))
+              .millisecondsSinceEpoch,
+          'last_known_boot_count': 41,
+        });
+        await AuthService().setPin('1234');
 
-      final provider = SettingsProvider();
-      await provider.initialized;
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      expect(provider.pinRequiredReason, PinRequiredReason.reboot);
+        expect(provider.pinRequiredReason, PinRequiredReason.reboot);
 
-      await provider.handleSuccessfulAppPinUnlock();
+        await provider.handleSuccessfulAppPinUnlock();
 
-      expect(provider.pinRequiredReason, PinRequiredReason.none);
-      expect(provider.canUsePhoneLockQuickUnlock, isTrue);
-    });
+        expect(provider.pinRequiredReason, PinRequiredReason.none);
+        expect(provider.canUsePhoneLockQuickUnlock, isTrue);
+      },
+    );
 
     test('missing boot count skips reboot escalation', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
-        const MethodChannel(AppConstants.deviceStateChannel),
-        (methodCall) async => null,
-      );
+            const MethodChannel(AppConstants.deviceStateChannel),
+            (methodCall) async => null,
+          );
       SharedPreferences.setMockInitialValues({
         'app_lock_enabled': true,
         'require_authentication': true,
@@ -327,20 +346,21 @@ void main() {
       expect(reloaded.sortBy, 'account');
     });
 
-    test('setSortBy ignores unknown values and keeps the current sort', () async {
-      final provider = SettingsProvider();
-      await provider.initialized;
+    test(
+      'setSortBy ignores unknown values and keeps the current sort',
+      () async {
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      await provider.setSortBy('manual');
-      await provider.setSortBy('not_a_real_sort');
+        await provider.setSortBy('manual');
+        await provider.setSortBy('not_a_real_sort');
 
-      expect(provider.sortBy, 'manual');
-    });
+        expect(provider.sortBy, 'manual');
+      },
+    );
 
     test('an unknown stored sort value falls back to the default', () async {
-      SharedPreferences.setMockInitialValues({
-        'sort_by': 'garbage_value',
-      });
+      SharedPreferences.setMockInitialValues({'sort_by': 'garbage_value'});
 
       final provider = SettingsProvider();
       await provider.initialized;
@@ -350,26 +370,28 @@ void main() {
   });
 
   group('SettingsProvider sync', () {
-    test('syncableSettingsSnapshot exposes only the three syncable settings',
-        () async {
-      final provider = SettingsProvider();
-      await provider.initialized;
+    test(
+      'syncableSettingsSnapshot exposes only the three syncable settings',
+      () async {
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      await provider.setThemeMode(ThemeMode.dark);
-      await provider.setAutoLockTimeout(120);
-      await provider.setSyncHostIdleTimeout(300);
+        await provider.setThemeMode(ThemeMode.dark);
+        await provider.setAutoLockTimeout(120);
+        await provider.setSyncHostIdleTimeout(300);
 
-      final snap = provider.syncableSettingsSnapshot();
+        final snap = provider.syncableSettingsSnapshot();
 
-      expect(snap.keys.toSet(), {
-        AppConstants.syncSettingThemeMode,
-        AppConstants.syncSettingAutoLockTimeout,
-        AppConstants.syncSettingSyncHostIdleTimeout,
-      });
-      expect(snap[AppConstants.syncSettingThemeMode], ThemeMode.dark.index);
-      expect(snap[AppConstants.syncSettingAutoLockTimeout], 120);
-      expect(snap[AppConstants.syncSettingSyncHostIdleTimeout], 300);
-    });
+        expect(snap.keys.toSet(), {
+          AppConstants.syncSettingThemeMode,
+          AppConstants.syncSettingAutoLockTimeout,
+          AppConstants.syncSettingSyncHostIdleTimeout,
+        });
+        expect(snap[AppConstants.syncSettingThemeMode], ThemeMode.dark.index);
+        expect(snap[AppConstants.syncSettingAutoLockTimeout], 120);
+        expect(snap[AppConstants.syncSettingSyncHostIdleTimeout], 300);
+      },
+    );
 
     test('applySyncedSettings with overwrite applies all values', () async {
       final provider = SettingsProvider();
@@ -387,25 +409,27 @@ void main() {
       expect(provider.syncHostIdleTimeout, 240);
     });
 
-    test('applySyncedSettings fill-only never overrides an already-set value',
-        () async {
-      final provider = SettingsProvider();
-      await provider.initialized;
+    test(
+      'applySyncedSettings fill-only never overrides an already-set value',
+      () async {
+        final provider = SettingsProvider();
+        await provider.initialized;
 
-      // The receiver has already chosen a theme and auto-lock.
-      await provider.setThemeMode(ThemeMode.light);
-      await provider.setAutoLockTimeout(30);
+        // The receiver has already chosen a theme and auto-lock.
+        await provider.setThemeMode(ThemeMode.light);
+        await provider.setAutoLockTimeout(30);
 
-      final applied = await provider.applySyncedSettings({
-        AppConstants.syncSettingThemeMode: ThemeMode.dark.index,
-        AppConstants.syncSettingAutoLockTimeout: 300,
-      }, overwrite: false);
+        final applied = await provider.applySyncedSettings({
+          AppConstants.syncSettingThemeMode: ThemeMode.dark.index,
+          AppConstants.syncSettingAutoLockTimeout: 300,
+        }, overwrite: false);
 
-      // Both keys already set → nothing applied, receiver's choices retained.
-      expect(applied, 0);
-      expect(provider.themeMode, ThemeMode.light);
-      expect(provider.autoLockTimeout, 30);
-    });
+        // Both keys already set → nothing applied, receiver's choices retained.
+        expect(applied, 0);
+        expect(provider.themeMode, ThemeMode.light);
+        expect(provider.autoLockTimeout, 30);
+      },
+    );
 
     test('applySyncedSettings clamps the sync idle timeout', () async {
       final provider = SettingsProvider();
@@ -415,10 +439,7 @@ void main() {
         AppConstants.syncSettingSyncHostIdleTimeout: 99999,
       }, overwrite: true);
 
-      expect(
-        provider.syncHostIdleTimeout,
-        AppConstants.syncHostIdleTimeoutMax,
-      );
+      expect(provider.syncHostIdleTimeout, AppConstants.syncHostIdleTimeoutMax);
     });
 
     test('applySyncedSettings ignores unknown keys and bad types', () async {

@@ -1,19 +1,25 @@
-# Project Structure
+# Project Structure — SreerajP Authenticator
 
-This document describes the current tracked repository layout for `sreerajp_authenticator` and the responsibility of each major area. Generated build outputs may exist locally, but they are not part of the maintained source structure described here.
+This document describes the tracked repository file tree and directory responsibility layout for SreerajP Authenticator. Read this to understand where files live and maintain project layout conventions.
 
-## Repository Root
+[Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/guideline.md](guidelines/guideline.md)
+
+---
+
+## 1. Repository Root
 
 ```text
 sreerajp_authenticator/
 |-- android/               Android app module, flavors, Gradle config, launcher resources
 |-- assets/                Bundled application assets
-|-- docs/                  Project documentation, architecture, security, and release guides
+|-- change_log/            Completed change logs (yyyymmdd_hhMMss_<short-slug>.md)
+|-- docs/                  Project documentation and shared Flutter guidelines submodule
 |-- fonts/                 Inter font files declared in pubspec.yaml
 |-- ios/                   iOS runner project and test target
 |-- lib/                   Flutter application source
 |-- linux/                 Linux desktop runner
 |-- macos/                 macOS runner and test target
+|-- plans/                 Change proposals (yyyymmdd_hhMMss_<short-slug>.md)
 |-- test/                  Unit and widget tests mirroring app layers
 |-- web/                   Web runner shell and icons
 |-- windows/               Windows desktop runner
@@ -23,10 +29,31 @@ sreerajp_authenticator/
 |-- README.md              Main project overview and usage instructions
 |-- LICENSE                Project license
 |-- AGENTS.md              Repository-specific automation rules
-`-- CLAUDE.md              Additional local agent guidance
+`-- CLAUDE.md              Agent entry point and canonical project rules
 ```
 
-## Flutter App Layout
+---
+
+## 2. Documentation Directory (`docs/`)
+
+```text
+docs/
+|-- guidelines/                  Git submodule (https://github.com/sreerajp80/Flutter_Guidelines)
+|-- GUIDELINES_MANIFEST.md       Portable pointer file linking shared guidelines
+|-- architecture.md              [Living] Architecture, layers, lifecycle, state, and persistence
+|-- security.md                  [Living] Security rules, threat model, sensitive data, and crypto
+|-- release_process.md           [Living] Build commands, signing, obfuscation, release checklist
+|-- workflow_rules.md            [Living] Plan-before-changing, approval gate, log-after-changing
+|-- dependencies.md              [Living] Approved baseline and prohibited package constraints
+|-- project_structure.md         [Living] File tree and directory responsibility layout
+|-- implementation_plan.md       [Point-in-time] Phase-by-phase build and compliance roadmap
+|-- implementation_progress.md   [Point-in-time] Live status checklist by phase
+`-- feature_analysis_and_roadmap.md [Point-in-time] Detailed feature expansion analysis
+```
+
+---
+
+## 3. Flutter App Layout
 
 ```text
 lib/
@@ -135,8 +162,8 @@ test/
 | `docs/architecture.md` | High-level architecture reference |
 | `docs/security.md` | Security model and implementation notes |
 | `docs/release_process.md` | Release workflow documentation |
-| `docs/flutter_build_flavors_guide.md` | Build flavor and release command guide |
-| `docs/flutter_project_engineering_standard.md` | Local engineering standards for the Flutter project |
+| `docs/guidelines/flutter_build_flavors_guide.md` | Build flavor and release command guide |
+| `docs/guidelines/flutter_project_engineering_standard.md` | Shared engineering standards for the Flutter project |
 | `analysis_options.yaml` | Lint and analyzer configuration |
 
 ## Working Conventions

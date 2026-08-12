@@ -22,25 +22,20 @@ class OtpCodeDisplay extends StatelessWidget {
           opacity: fadeAnimation,
           child: Text(
             formattedCode,
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color:
-                      theme.colorScheme.primary,
-                  fontFamily: 'monospace',
-                  letterSpacing: 2,
-                  fontSize: 22,
-                  shadows: [
-                    Shadow(
-                      color: theme
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.2),
-                      offset: const Offset(0, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.primary,
+              fontFamily: 'monospace',
+              letterSpacing: 2,
+              fontSize: 22,
+              shadows: [
+                Shadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
                 ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -51,25 +46,17 @@ class OtpCodeDisplay extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                theme.colorScheme.secondary,
-                theme.colorScheme.primary,
-              ],
+              colors: [theme.colorScheme.secondary, theme.colorScheme.primary],
             ),
-            borderRadius: BorderRadius.circular(
-              8,
-            ),
+            borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.primary
-                    .withValues(alpha: 0.3),
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
                 blurRadius: 6,
                 offset: const Offset(1, 2),
               ),
               BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: 0.2,
-                ),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
@@ -84,23 +71,16 @@ class OtpCodeDisplay extends StatelessWidget {
                 height: 16,
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius:
-                        const BorderRadius.only(
-                          topLeft:
-                              Radius.circular(8),
-                          topRight:
-                              Radius.circular(8),
-                        ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white.withValues(
-                          alpha: 0.85,
-                        ),
-                        Colors.white.withValues(
-                          alpha: 0.25,
-                        ),
+                        Colors.white.withValues(alpha: 0.85),
+                        Colors.white.withValues(alpha: 0.25),
                       ],
                     ),
                   ),
@@ -110,15 +90,12 @@ class OtpCodeDisplay extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: onToggleVisibility,
-                  borderRadius:
-                      BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8),
                   child: Center(
                     child: Icon(
                       isCodeVisible
-                          ? Icons
-                                .visibility_off_rounded
-                          : Icons
-                                .visibility_rounded,
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
                       size: 16,
                       color: Colors.white,
                     ),

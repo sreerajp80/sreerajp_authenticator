@@ -7,13 +7,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+
 import '../models/account.dart';
-import '../models/group.dart';
 import '../services/otp_service.dart';
 import '../utils/constants.dart';
 import '../utils/app_logger.dart';
-import '../providers/group_provider.dart';
 import 'account_tile/pattern_painter.dart';
 import 'account_tile/account_avatar.dart';
 import 'account_tile/otp_code_display.dart';
@@ -22,13 +20,19 @@ import 'account_tile/timer_indicator.dart';
 class AccountTile extends StatefulWidget {
   final Account account;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final Key? dismissibleKey;
+  final bool isSelectionMode;
+  final bool isSelected;
 
   const AccountTile({
     super.key,
     required this.account,
     this.onTap,
+    this.onLongPress,
     this.dismissibleKey,
+    this.isSelectionMode = false,
+    this.isSelected = false,
   });
 
   @override
@@ -260,7 +264,8 @@ class _AccountTileState extends State<AccountTile>
   String _formatOTP(String otp) {
     if (otp == AppConstants.otpUnavailablePlaceholder) return otp;
 
-    // If showing asterisks, format them too
+    if (otp.length == 5) return otp; // Steam Guard 5-char code
+
     if (otp.contains('*')) {
       if (otp.length == 6) {
         return '${otp.substring(0, 3)} ${otp.substring(3)}';
@@ -282,19 +287,6 @@ class _AccountTileState extends State<AccountTile>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    // Get group name
-    final provider = context.watch<GroupsProvider>();
-    Group? group;
-    if (widget.account.groupId != null) {
-      try {
-        group = provider.groups.firstWhere(
-          (g) => g.id == widget.account.groupId,
-        );
-      } catch (e) {
-        group = null;
-      }
-    }
 
     return Container(
       key: widget.dismissibleKey,
@@ -434,7 +426,11 @@ class _AccountTileState extends State<AccountTile>
                     onTapUp: (_) => setState(() => _isPressed = false),
                     onTapCancel: () => setState(() => _isPressed = false),
                     onTap: widget.onTap,
-                    onDoubleTap: widget.onTap == null ? _copyToClipboard : null,
+                    onLongPress: widget.onLongPress,
+                    onDoubleTap:
+                        (widget.isSelectionMode || widget.onTap != null)
+                        ? null
+                        : _copyToClipboard,
                     borderRadius: BorderRadius.circular(16),
                     highlightColor: theme.colorScheme.primary.withValues(
                       alpha: 0.85,
@@ -451,12 +447,29 @@ class _AccountTileState extends State<AccountTile>
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            if (widget.isSelectionMode)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Icon(
+                                  widget.isSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  color: widget.isSelected
+                                      ? theme.colorScheme.primary
+                                      : (isDark
+                                            ? Colors.grey.shade500
+                                            : Colors.grey.shade400),
+                                  size: 24,
+                                ),
+                              ),
                             AccountAvatar(
                               displayLetter:
                                   (widget.account.issuer?.isNotEmpty == true
                                           ? widget.account.issuer![0]
                                           : widget.account.name[0])
                                       .toUpperCase(),
+                              issuer: widget.account.issuer,
+                              accountName: widget.account.name,
                             ),
                             const SizedBox(width: 12),
 
@@ -522,57 +535,55 @@ class _AccountTileState extends State<AccountTile>
                                           ],
                                         ),
                                       ),
-                                      if (group != null)
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                            left: 8,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                theme.colorScheme.primary
-                                                    .withValues(alpha: 0.25),
-                                                theme.colorScheme.primary
-                                                    .withValues(alpha: 0.28),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                            border: Border.all(
-                                              color: theme.colorScheme.primary
-                                                  .withValues(alpha: 0.78),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            group.name,
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                                  fontSize: 12,
-                                                  color: isDark
-                                                      ? const Color.fromARGB(
-                                                          255,
-                                                          121,
-                                                          232,
-                                                          240,
-                                                        ) // Cyan for dark theme
-                                                      : const Color.fromARGB(
-                                                          255,
-                                                          233,
-                                                          36,
-                                                          22,
-                                                        ), // Darker teal for light theme
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                          ),
-                                        ),
                                     ],
                                   ),
+                                  if (widget.account.tags.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        children: widget.account.tags.map((
+                                          tag,
+                                        ) {
+                                          final label = tag.startsWith('#')
+                                              ? tag
+                                              : '#$tag';
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? theme.colorScheme.primary
+                                                        .withValues(alpha: 0.25)
+                                                  : theme.colorScheme.primary
+                                                        .withValues(
+                                                          alpha: 0.12,
+                                                        ),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: theme.colorScheme.primary
+                                                    .withValues(alpha: 0.4),
+                                                width: 1.0,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark
+                                                    ? const Color(0xFF90CAF9)
+                                                    : theme.colorScheme.primary,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
                                   const SizedBox(height: 8),
                                   OtpCodeDisplay(
                                     fadeAnimation: _fadeAnimation,

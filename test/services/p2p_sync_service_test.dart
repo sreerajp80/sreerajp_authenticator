@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sreerajp_authenticator/models/account.dart';
-import 'package:sreerajp_authenticator/models/group.dart';
 import 'package:sreerajp_authenticator/services/p2p_sync_service.dart';
 import 'package:sreerajp_authenticator/utils/constants.dart';
 
@@ -11,7 +10,6 @@ void main() {
 
   String buildPayloadJson({
     int accounts = 1,
-    int groups = 0,
     Map<String, dynamic>? settings,
     String? syncMode,
   }) {
@@ -28,10 +26,7 @@ void main() {
             createdAt: fixedTime,
           ).toMap(),
       ],
-      'groups': [
-        for (var i = 0; i < groups; i++)
-          Group(name: 'Group $i', createdAt: fixedTime).toMap(),
-      ],
+      'groups': <Map<String, dynamic>>[],
     };
     if (settings != null) map[AppConstants.syncPayloadKeySettings] = settings;
     if (syncMode != null) map[AppConstants.syncPayloadKeySyncMode] = syncMode;
@@ -159,17 +154,19 @@ void main() {
       final badKey = P2pSyncService.deriveKey('CODETWO', salt);
 
       final encoded = P2pSyncService.encryptWire('ACCEPT_SYNC', goodKey);
-      expect(() => P2pSyncService.decryptWire(encoded, badKey), throwsA(anything));
+      expect(
+        () => P2pSyncService.decryptWire(encoded, badKey),
+        throwsA(anything),
+      );
     });
   });
 
   group('validateAndParse', () {
-    test('parses a valid payload into accounts and groups', () {
+    test('parses a valid payload into accounts', () {
       final data = P2pSyncService.validateAndParse(
-        buildPayloadJson(accounts: 2, groups: 1),
+        buildPayloadJson(accounts: 2),
       );
       expect((data['accounts'] as List<Account>).length, 2);
-      expect((data['groups'] as List<Group>).length, 1);
     });
 
     test('rejects malformed JSON', () {
@@ -226,7 +223,10 @@ void main() {
       final settings =
           data[AppConstants.syncPayloadKeySettings] as Map<String, dynamic>;
       expect(settings[AppConstants.syncSettingThemeMode], 2);
-      expect(data[AppConstants.syncPayloadKeySyncMode], AppConstants.syncModeFull);
+      expect(
+        data[AppConstants.syncPayloadKeySyncMode],
+        AppConstants.syncModeFull,
+      );
     });
 
     test('omits category keys that were not part of the payload', () {
@@ -250,7 +250,6 @@ void main() {
       final host = P2pSyncService();
       final payload = buildPayloadJson(
         accounts: 3,
-        groups: 1,
         syncMode: AppConstants.syncModeFull,
       );
 

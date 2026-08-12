@@ -90,10 +90,8 @@ class SettingsProvider extends ChangeNotifier {
   bool get adaptiveAuthAvailable => _isAppLockEnabled && _hasPinSet;
   bool get hasQuickUnlockAvailable => _isPhoneLockQuickUnlockEnabled;
   bool get needsMandatoryPinMigrationSync => _needsMandatoryPinMigration;
-  bool get hasAnyUnlockMethod =>
-      _hasPinSet || _isPhoneLockQuickUnlockEnabled;
-  bool get requiresAppPinForUnlock =>
-      _hasPinSet && !canUsePhoneLockQuickUnlock;
+  bool get hasAnyUnlockMethod => _hasPinSet || _isPhoneLockQuickUnlockEnabled;
+  bool get requiresAppPinForUnlock => _hasPinSet && !canUsePhoneLockQuickUnlock;
   bool get canUsePhoneLockQuickUnlock =>
       _isAppLockEnabled &&
       !_needsMandatoryPinMigration &&
@@ -174,8 +172,7 @@ class SettingsProvider extends ChangeNotifier {
     _requireAuthentication = prefs.getBool(_keyRequireAuth) ?? false;
     _lastActiveTime = prefs.getInt(_keyLastActiveTime) ?? 0;
     _lastStrongAuthAtMs = prefs.getInt(_keyLastStrongAuthAtMs) ?? 0;
-    _quickUnlockFailureCount =
-        prefs.getInt(_keyQuickUnlockFailureCount) ?? 0;
+    _quickUnlockFailureCount = prefs.getInt(_keyQuickUnlockFailureCount) ?? 0;
     _lockdownEnabled = prefs.getBool(_keyLockdownEnabled) ?? false;
     _lastKnownBootCount = prefs.getInt(_keyLastKnownBootCount);
     _pinRequiredReason = _reasonFromString(
@@ -535,7 +532,8 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<bool> hasRecoveryKey() => _authService.hasRecoveryKey();
 
-  Future<bool> needsMandatoryPinMigration() async => _needsMandatoryPinMigration;
+  Future<bool> needsMandatoryPinMigration() async =>
+      _needsMandatoryPinMigration;
 
   Future<void> handleQuickUnlockResult(LocalAuthResult result) async {
     if (result.outcome == LocalAuthOutcome.success) {

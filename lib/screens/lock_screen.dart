@@ -11,7 +11,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/account_provider.dart';
-import '../providers/group_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/auth_service.dart';
 
@@ -617,13 +616,9 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   Future<void> _unlockApp() async {
     final settingsProvider = context.read<SettingsProvider>();
     final accountsProvider = context.read<AccountsProvider>();
-    final groupsProvider = context.read<GroupsProvider>();
 
     await settingsProvider.setLocked(false);
-    await Future.wait([
-      accountsProvider.loadAccounts(),
-      groupsProvider.loadGroups(),
-    ]);
+    await accountsProvider.loadAccounts();
   }
 
   @override

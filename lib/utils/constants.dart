@@ -37,9 +37,8 @@ class AppConstants {
   // ─── Database ──────────────────────────────────────────────────────────────
 
   static const String databaseName = 'authenticator.db';
-  static const int databaseVersion = 2;
+  static const int databaseVersion = 4;
   static const String accountsTable = 'accounts';
-  static const String groupsTable = 'groups';
 
   // ─── OTP ───────────────────────────────────────────────────────────────────
 
@@ -63,10 +62,6 @@ class AppConstants {
     'account',
     'date',
   ];
-
-  // ─── Group Defaults ────────────────────────────────────────────────────────
-
-  static const String defaultGroupColor = 'blue';
 
   // ─── PIN / Auth ────────────────────────────────────────────────────────────
 
@@ -103,7 +98,6 @@ class AppConstants {
 
   // Payload validation caps applied before ingestion.
   static const int syncMaxAccounts = 5000;
-  static const int syncMaxGroups = 1000;
   static const int syncMaxFieldLength = 4096;
 
   // Pairing code: 64 chars from a 31-symbol alphabet (no 0/O/1/I/L) ≈ 320 bits.
@@ -151,8 +145,13 @@ class AppConstants {
 
   // Category identifiers used by the selective (incremental) sync UI and payload.
   static const String syncCategoryAccounts = 'accounts';
-  static const String syncCategoryGroups = 'groups';
   static const String syncCategorySettings = 'settings';
+
+  // ─── Optical Air-Gap Sync ──────────────────────────────────────────────────
+
+  /// Threshold (chunk count) above which a payload is considered large for camera QR streaming.
+  /// 60 chunks at 12 FPS is ~5 seconds of streaming.
+  static const int opticalLargeVaultChunkThreshold = 60;
 
   // Keys used inside the synced 'settings' object. These name the only settings
   // that ever cross devices; every other SettingsProvider value (app lock, App

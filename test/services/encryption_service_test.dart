@@ -16,37 +16,39 @@ void main() {
     encryptionService = EncryptionService();
 
     // Mock the FlutterSecureStorage method channel
-    const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+    const channel = MethodChannel(
+      'plugins.it_nomads.com/flutter_secure_storage',
+    );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      switch (methodCall.method) {
-        case 'read':
-          final key = methodCall.arguments['key'] as String;
-          return fakeStorage[key];
-        case 'write':
-          final key = methodCall.arguments['key'] as String;
-          final value = methodCall.arguments['value'] as String;
-          fakeStorage[key] = value;
-          return null;
-        case 'delete':
-          final key = methodCall.arguments['key'] as String;
-          fakeStorage.remove(key);
-          return null;
-        case 'deleteAll':
-          fakeStorage.clear();
-          return null;
-        default:
-          return null;
-      }
-    });
+          switch (methodCall.method) {
+            case 'read':
+              final key = methodCall.arguments['key'] as String;
+              return fakeStorage[key];
+            case 'write':
+              final key = methodCall.arguments['key'] as String;
+              final value = methodCall.arguments['value'] as String;
+              fakeStorage[key] = value;
+              return null;
+            case 'delete':
+              final key = methodCall.arguments['key'] as String;
+              fakeStorage.remove(key);
+              return null;
+            case 'deleteAll':
+              fakeStorage.clear();
+              return null;
+            default:
+              return null;
+          }
+        });
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-      null,
-    );
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+          null,
+        );
   });
 
   group('encrypt / decrypt round-trip', () {
@@ -67,17 +69,20 @@ void main() {
       expect(enc1, isNot(equals(enc2)));
     });
 
-    test('same plaintext produces different ciphertexts (random nonce)', () async {
-      final enc1 = await encryptionService.encrypt('same_text');
-      final enc2 = await encryptionService.encrypt('same_text');
-      expect(enc1, isNot(equals(enc2)));
+    test(
+      'same plaintext produces different ciphertexts (random nonce)',
+      () async {
+        final enc1 = await encryptionService.encrypt('same_text');
+        final enc2 = await encryptionService.encrypt('same_text');
+        expect(enc1, isNot(equals(enc2)));
 
-      // But both decrypt to the same value
-      final dec1 = await encryptionService.decrypt(enc1);
-      final dec2 = await encryptionService.decrypt(enc2);
-      expect(dec1, dec2);
-      expect(dec1, 'same_text');
-    });
+        // But both decrypt to the same value
+        final dec1 = await encryptionService.decrypt(enc1);
+        final dec2 = await encryptionService.decrypt(enc2);
+        expect(dec1, dec2);
+        expect(dec1, 'same_text');
+      },
+    );
 
     test('handles unicode text', () async {
       const unicode = 'Hello 🔐 Wörld こんにちは';

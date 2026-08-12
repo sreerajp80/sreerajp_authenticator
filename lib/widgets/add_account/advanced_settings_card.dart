@@ -64,10 +64,7 @@ class AdvancedSettingsCard extends StatelessWidget {
                         : 'Enable app lock first',
                   ),
                 if (isEditing && isAdvancedUnlocked)
-                  const Icon(
-                    Icons.lock_open,
-                    color: Colors.green,
-                  ),
+                  const Icon(Icons.lock_open, color: Colors.green),
               ],
             ),
 
@@ -83,14 +80,13 @@ class AdvancedSettingsCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: theme
-                              .colorScheme
-                              .surfaceContainerHighest
+                          color: theme.colorScheme.surfaceContainerHighest
                               .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: theme.colorScheme.primary
-                                .withValues(alpha: 0.3),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         ),
                         child: Column(
@@ -100,24 +96,18 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 Icon(
                                   Icons.numbers,
                                   size: 20,
-                                  color: theme
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
                                   'Digits: ',
-                                  style:
-                                      theme.textTheme.bodyMedium,
+                                  style: theme.textTheme.bodyMedium,
                                 ),
                                 Text(
                                   '\u25CF\u25CF',
-                                  style: theme
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        letterSpacing: 2,
-                                      ),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    letterSpacing: 2,
+                                  ),
                                 ),
                               ],
                             ),
@@ -127,24 +117,18 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 Icon(
                                   Icons.timer,
                                   size: 20,
-                                  color: theme
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
                                   'Period: ',
-                                  style:
-                                      theme.textTheme.bodyMedium,
+                                  style: theme.textTheme.bodyMedium,
                                 ),
                                 Text(
                                   '\u25CF\u25CF seconds',
-                                  style: theme
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        letterSpacing: 2,
-                                      ),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    letterSpacing: 2,
+                                  ),
                                 ),
                               ],
                             ),
@@ -154,37 +138,29 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 Icon(
                                   Icons.lock,
                                   size: 20,
-                                  color: theme
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
                                   'Algorithm: ',
-                                  style:
-                                      theme.textTheme.bodyMedium,
+                                  style: theme.textTheme.bodyMedium,
                                 ),
                                 Text(
                                   '\u25CF\u25CF\u25CF\u25CF\u25CF',
-                                  style: theme
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        letterSpacing: 2,
-                                      ),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    letterSpacing: 2,
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.lock,
                                   size: 16,
-                                  color:
-                                      theme.colorScheme.primary,
+                                  color: theme.colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -193,8 +169,7 @@ class AdvancedSettingsCard extends StatelessWidget {
                                       : 'Enable app lock to edit',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color:
-                                        theme.colorScheme.primary,
+                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
                               ],
@@ -219,14 +194,8 @@ class AdvancedSettingsCard extends StatelessWidget {
                       prefixIcon: Icon(Icons.numbers),
                     ),
                     items: const [
-                      DropdownMenuItem(
-                        value: 6,
-                        child: Text('6'),
-                      ),
-                      DropdownMenuItem(
-                        value: 8,
-                        child: Text('8'),
-                      ),
+                      DropdownMenuItem(value: 6, child: Text('6')),
+                      DropdownMenuItem(value: 8, child: Text('8')),
                     ],
                     onChanged: onDigitsChanged,
                   ),
@@ -241,14 +210,8 @@ class AdvancedSettingsCard extends StatelessWidget {
                       prefixIcon: Icon(Icons.timer),
                     ),
                     items: const [
-                      DropdownMenuItem(
-                        value: 30,
-                        child: Text('30 seconds'),
-                      ),
-                      DropdownMenuItem(
-                        value: 60,
-                        child: Text('60 seconds'),
-                      ),
+                      DropdownMenuItem(value: 30, child: Text('30 seconds')),
+                      DropdownMenuItem(value: 60, child: Text('60 seconds')),
                     ],
                     onChanged: onPeriodChanged,
                   ),
@@ -263,18 +226,9 @@ class AdvancedSettingsCard extends StatelessWidget {
                       prefixIcon: Icon(Icons.lock),
                     ),
                     items: const [
-                      DropdownMenuItem(
-                        value: 'SHA1',
-                        child: Text('SHA-1'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'SHA256',
-                        child: Text('SHA-256'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'SHA512',
-                        child: Text('SHA-512'),
-                      ),
+                      DropdownMenuItem(value: 'SHA1', child: Text('SHA-1')),
+                      DropdownMenuItem(value: 'SHA256', child: Text('SHA-256')),
+                      DropdownMenuItem(value: 'SHA512', child: Text('SHA-512')),
                     ],
                     onChanged: onAlgorithmChanged,
                   ),

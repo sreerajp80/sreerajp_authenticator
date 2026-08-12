@@ -4,7 +4,6 @@ import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sreerajp_authenticator/models/account.dart';
-import 'package:sreerajp_authenticator/models/group.dart';
 import 'package:sreerajp_authenticator/services/export_import_service.dart';
 import 'package:sreerajp_authenticator/utils/constants.dart';
 
@@ -21,7 +20,6 @@ void main() {
     int digits = 6,
     int period = 30,
     String algorithm = 'SHA1',
-    int? groupId,
     int sortOrder = 0,
   }) {
     return Account(
@@ -32,24 +30,6 @@ void main() {
       digits: digits,
       period: period,
       algorithm: algorithm,
-      groupId: groupId,
-      sortOrder: sortOrder,
-      createdAt: fixedTime,
-    );
-  }
-
-  Group makeGroup({
-    String name = 'Work',
-    String? description,
-    String color = 'blue',
-    String? icon,
-    int sortOrder = 0,
-  }) {
-    return Group(
-      name: name,
-      description: description,
-      color: color,
-      icon: icon,
       sortOrder: sortOrder,
       createdAt: fixedTime,
     );
@@ -86,17 +66,20 @@ void main() {
       expect(decrypted, isNull);
     });
 
-    test('same plaintext produces different ciphertexts (random salt+nonce)', () {
-      const password = 'pass';
-      const text = 'same content';
-      final enc1 = service.encryptDataForTest(text, password);
-      final enc2 = service.encryptDataForTest(text, password);
-      expect(enc1, isNot(equals(enc2)));
+    test(
+      'same plaintext produces different ciphertexts (random salt+nonce)',
+      () {
+        const password = 'pass';
+        const text = 'same content';
+        final enc1 = service.encryptDataForTest(text, password);
+        final enc2 = service.encryptDataForTest(text, password);
+        expect(enc1, isNot(equals(enc2)));
 
-      // Both decrypt to the same value
-      expect(service.decryptDataForTest(enc1, password), text);
-      expect(service.decryptDataForTest(enc2, password), text);
-    });
+        // Both decrypt to the same value
+        expect(service.decryptDataForTest(enc1, password), text);
+        expect(service.decryptDataForTest(enc2, password), text);
+      },
+    );
 
     test('handles unicode content', () {
       const password = 'pass';
@@ -203,17 +186,16 @@ void main() {
   // ─── JSON serialization / deserialization ─────────────────────────────────
 
   group('JSON serialization', () {
-    test('dataToJson includes version, accounts, and groups', () {
+    test('dataToJson includes version, accounts, and empty groups array', () {
       final accounts = [makeAccount(name: 'GitHub', issuer: 'GitHub Inc')];
-      final groups = [makeGroup(name: 'Work')];
 
-      final json = service.dataToJsonForTest(accounts, groups);
+      final json = service.dataToJsonForTest(accounts);
       final parsed = jsonDecode(json) as Map<String, dynamic>;
 
       expect(parsed['version'], AppConstants.backupVersion);
       expect(parsed['created'], isNotNull);
       expect((parsed['accounts'] as List).length, 1);
-      expect((parsed['groups'] as List).length, 1);
+      expect((parsed['groups'] as List), isEmpty);
     });
 
     test('dataToJson preserves account fields', () {
@@ -230,7 +212,7 @@ void main() {
         ),
       ];
 
-      final json = service.dataToJsonForTest(accounts, []);
+      final json = service.dataToJsonForTest(accounts);
       final parsed = jsonDecode(json);
       final acc = (parsed['accounts'] as List).first;
 
@@ -243,79 +225,74 @@ void main() {
       expect(acc['algorithm'], 'SHA256');
       expect(acc['sortOrder'], 3);
     });
-
-    test('dataToJson preserves group fields', () {
-      final groups = [
-        makeGroup(name: 'Finance', description: 'Banking', color: 'green', icon: 'bank'),
-      ];
-
-      final json = service.dataToJsonForTest([], groups);
-      final parsed = jsonDecode(json);
-      final grp = (parsed['groups'] as List).first;
-
-      expect(grp['name'], 'Finance');
-      expect(grp['description'], 'Banking');
-      expect(grp['color'], 'green');
-      expect(grp['icon'], 'bank');
-    });
   });
 
   group('JSON parsing', () {
-    test('parseBackupJson parses accounts and groups', () {
+    test('parseBackupJson parses accounts', () {
       final accounts = [makeAccount(name: 'GitHub')];
-      final groups = [makeGroup(name: 'Work')];
-      final json = service.dataToJsonForTest(accounts, groups);
+      final json = service.dataToJsonForTest(accounts);
 
       final result = service.parseBackupJsonForTest(json);
       expect(result, isNotNull);
 
       final parsedAccounts = result!['accounts'] as List<Account>;
-      final parsedGroups = result['groups'] as List<Group>;
 
       expect(parsedAccounts.length, 1);
       expect(parsedAccounts.first.name, 'GitHub');
-      expect(parsedGroups.length, 1);
-      expect(parsedGroups.first.name, 'Work');
     });
 
-    test('parseBackupJson handles old format without groups', () {
+    test('parseBackupJson handles old format without groups key', () {
       final json = jsonEncode({
         'version': '1.0',
-        'accounts': [
-          makeAccount(name: 'OldAccount').toMap(),
+        'accounts': [makeAccount(name: 'OldAccount').toMap()],
+      });
+
+      final result = service.parseBackupJsonForTest(json);
+      expect(result, isNotNull);
+      expect((result!['accounts'] as List).length, 1);
+    });
+
+    test('parseBackupJson ignores legacy groups key', () {
+      // Old backup with a groups array should parse successfully;
+      // groups are silently ignored.
+      final json = jsonEncode({
+        'version': '2.0',
+        'accounts': [makeAccount(name: 'A').toMap()],
+        'groups': [
+          {'id': 1, 'name': 'Work', 'color': 'blue'},
         ],
       });
 
       final result = service.parseBackupJsonForTest(json);
       expect(result, isNotNull);
       expect((result!['accounts'] as List).length, 1);
-      expect((result['groups'] as List), isEmpty);
+      expect(result.containsKey('groups'), isFalse);
     });
 
     test('parseBackupJson returns null for invalid JSON', () {
       expect(service.parseBackupJsonForTest('not json at all'), isNull);
     });
 
-    test('parseBackupJson returns null for JSON missing accounts key', () {
+    test('parseBackupJson returns empty accounts list when key missing', () {
       final result = service.parseBackupJsonForTest('{"version":"2.0"}');
       expect(result, isNotNull);
       expect((result!['accounts'] as List), isEmpty);
     });
 
-    test('round-trip: serialize then parse preserves data', () {
+    test('round-trip: serialize then parse preserves account data', () {
       final accounts = [
-        makeAccount(name: 'A', issuer: 'Issuer', digits: 8, algorithm: 'SHA512'),
+        makeAccount(
+          name: 'A',
+          issuer: 'Issuer',
+          digits: 8,
+          algorithm: 'SHA512',
+        ),
         makeAccount(name: 'B', type: 'hotp'),
       ];
-      final groups = [
-        makeGroup(name: 'G1', color: 'red'),
-        makeGroup(name: 'G2'),
-      ];
 
-      final json = service.dataToJsonForTest(accounts, groups);
+      final json = service.dataToJsonForTest(accounts);
       final result = service.parseBackupJsonForTest(json)!;
       final parsedAccounts = result['accounts'] as List<Account>;
-      final parsedGroups = result['groups'] as List<Group>;
 
       expect(parsedAccounts.length, 2);
       expect(parsedAccounts[0].name, 'A');
@@ -324,42 +301,36 @@ void main() {
       expect(parsedAccounts[0].algorithm, 'SHA512');
       expect(parsedAccounts[1].name, 'B');
       expect(parsedAccounts[1].type, 'hotp');
-
-      expect(parsedGroups.length, 2);
-      expect(parsedGroups[0].name, 'G1');
-      expect(parsedGroups[0].color, 'red');
-      expect(parsedGroups[1].name, 'G2');
     });
   });
 
   // ─── End-to-end: encrypt JSON backup then decrypt and parse ───────────────
 
   group('end-to-end backup integrity', () {
-    test('encrypt then decrypt and parse produces original data', () {
+    test('encrypt then decrypt and parse produces original account data', () {
       const password = 'BackupPassword!';
       final accounts = [
         makeAccount(name: 'GitHub', issuer: 'GitHub', secret: 'ABCDEF'),
-        makeAccount(name: 'Google', issuer: 'Google', secret: 'GHIJKL', digits: 8),
+        makeAccount(
+          name: 'Google',
+          issuer: 'Google',
+          secret: 'GHIJKL',
+          digits: 8,
+        ),
       ];
-      final groups = [makeGroup(name: 'Work'), makeGroup(name: 'Personal')];
 
-      final json = service.dataToJsonForTest(accounts, groups);
+      final json = service.dataToJsonForTest(accounts);
       final encrypted = service.encryptDataForTest(json, password);
       final decrypted = service.decryptDataForTest(encrypted, password);
       expect(decrypted, isNotNull);
 
       final parsed = service.parseBackupJsonForTest(decrypted!)!;
       final restoredAccounts = parsed['accounts'] as List<Account>;
-      final restoredGroups = parsed['groups'] as List<Group>;
 
       expect(restoredAccounts.length, 2);
       expect(restoredAccounts[0].name, 'GitHub');
       expect(restoredAccounts[0].secret, 'ABCDEF');
       expect(restoredAccounts[1].digits, 8);
-
-      expect(restoredGroups.length, 2);
-      expect(restoredGroups[0].name, 'Work');
-      expect(restoredGroups[1].name, 'Personal');
     });
   });
 }

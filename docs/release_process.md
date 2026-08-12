@@ -1,7 +1,8 @@
-# Release Process
+# Release Process — SreerajP Authenticator
 
-This repository is Android-first. The app includes iOS and Windows runners, but the current
-tracked release process is centered on Android builds and Android validation.
+This document describes the step-by-step build, versioning, signing, obfuscation, and release runbook for SreerajP Authenticator. Read this before preparing or tag-releasing a build.
+
+[Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_build_flavors_guide.md](guidelines/flutter_build_flavors_guide.md) | [guidelines/release_process.md](guidelines/release_process.md)
 
 ---
 

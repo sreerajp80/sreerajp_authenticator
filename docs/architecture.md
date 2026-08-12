@@ -1,6 +1,10 @@
-# Architecture
+# Architecture — SreerajP Authenticator
 
-This document describes the current implementation of the Sreeraj P Authenticator Flutter app.
+This document describes the technical architecture, layer boundaries, app lifecycle, state management, and persistence design of SreerajP Authenticator. Read this before changing screens, services, providers, models, or state logic.
+
+[Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md) | [guidelines/architecture.md](guidelines/architecture.md)
+
+---
 
 ## 1. Scope
 

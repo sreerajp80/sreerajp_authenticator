@@ -94,44 +94,6 @@ void main() {
       );
     });
 
-    test('moveAccountsToGroup updates selected accounts', () async {
-      final groupId = await db.createGroup(makeGroup(name: 'Work'));
-      final accountId = await db.createAccount(makeAccount(name: 'Slack'));
-      await db.createAccount(makeAccount(name: 'Personal'));
-
-      final provider = AccountsProvider();
-      await waitForCondition(
-        () =>
-            provider.accounts.length == 2 &&
-            !provider.isLoading &&
-            !provider.isPreDecrypting,
-      );
-
-      await provider.moveAccountsToGroup([accountId], groupId);
-
-      await waitForCondition(
-        () =>
-            provider.accounts
-                .firstWhere((account) => account.id == accountId)
-                .groupId ==
-            groupId,
-      );
-
-      expect(provider.getAccountCountForGroup(groupId), 1);
-      expect(
-        provider
-            .getAccountsByGroup(groupId)
-            .map((account) => account.name)
-            .toList(),
-        ['Slack'],
-      );
-
-      final storedAccount = (await db.getAllAccounts()).firstWhere(
-        (account) => account.id == accountId,
-      );
-      expect(storedAccount.groupId, groupId);
-    });
-
     test(
       'deleteMultipleAccounts removes records from memory and database',
       () async {
@@ -174,7 +136,6 @@ void main() {
         );
 
         final data = <String, dynamic>{
-          'groups': [makeGroup(name: 'Work')],
           'accounts': [
             // Duplicate (name + issuer + type) → skipped, existing retained.
             makeAccount(name: 'GitHub', issuer: 'GitHub'),
@@ -183,16 +144,100 @@ void main() {
           ],
         };
 
-        final result = await provider.importData(
-          data,
-          existingGroups: const [],
-        );
+        final result = await provider.importData(data);
 
-        expect(result.groupsAdded, 1);
-        expect(result.groupsSkipped, 0);
         expect(result.accountsAdded, 1);
         expect(result.accountsSkipped, 1);
         expect(provider.accounts.length, 2);
+      },
+    );
+
+    test('renameTag renames tag across all member accounts', () async {
+      await db.createAccount(
+        makeAccount(name: 'GitHub', tags: ['Work', 'Dev']),
+      );
+      await db.createAccount(makeAccount(name: 'AWS', tags: ['Work', 'Cloud']));
+
+      final provider = AccountsProvider();
+      await waitForCondition(
+        () =>
+            provider.accounts.length == 2 &&
+            !provider.isLoading &&
+            !provider.isPreDecrypting,
+      );
+
+      expect(provider.getAccountCountForTag('Work'), 2);
+
+      await provider.renameTag('Work', 'Job');
+
+      expect(provider.getAccountCountForTag('Work'), 0);
+      expect(provider.getAccountCountForTag('Job'), 2);
+
+      final accounts = await db.getAllAccounts();
+      for (final a in accounts) {
+        expect(a.tags.contains('Job'), isTrue);
+        expect(a.tags.contains('Work'), isFalse);
+      }
+    });
+
+    test('deleteTag removes tag across all member accounts', () async {
+      await db.createAccount(
+        makeAccount(name: 'GitHub', tags: ['Work', 'Dev']),
+      );
+
+      final provider = AccountsProvider();
+      await waitForCondition(
+        () =>
+            provider.accounts.length == 1 &&
+            !provider.isLoading &&
+            !provider.isPreDecrypting,
+      );
+
+      await provider.deleteTag('Work');
+
+      expect(provider.getAccountCountForTag('Work'), 0);
+      final stored = (await db.getAllAccounts()).single;
+      expect(stored.tags, ['Dev']);
+    });
+
+    test(
+      'bulkUpdateTags appends or replaces tags on selected accounts',
+      () async {
+        final id1 = await db.createAccount(
+          makeAccount(name: 'GitHub', tags: ['Dev']),
+        );
+        final id2 = await db.createAccount(
+          makeAccount(name: 'AWS', tags: ['Cloud']),
+        );
+
+        final provider = AccountsProvider();
+        await waitForCondition(
+          () =>
+              provider.accounts.length == 2 &&
+              !provider.isLoading &&
+              !provider.isPreDecrypting,
+        );
+
+        // Append tags
+        await provider.bulkUpdateTags([id1, id2], ['VIP']);
+
+        expect(provider.getAccountCountForTag('VIP'), 2);
+
+        final accountsAfterAppend = await db.getAllAccounts();
+        final github = accountsAfterAppend.firstWhere((a) => a.id == id1);
+        final aws = accountsAfterAppend.firstWhere((a) => a.id == id2);
+
+        expect(github.tags, ['Dev', 'VIP']);
+        expect(aws.tags, ['Cloud', 'VIP']);
+
+        // Replace tags
+        await provider.bulkUpdateTags([id1], ['Reassigned'], replace: true);
+
+        final accountsAfterReplace = await db.getAllAccounts();
+        final githubReplaced = accountsAfterReplace.firstWhere(
+          (a) => a.id == id1,
+        );
+        expect(githubReplaced.tags, ['Reassigned']);
       },
     );
   });

@@ -95,8 +95,9 @@ Future<bool> showPinVerificationDialog({
                         ScaffoldMessenger.of(statefulContext).showSnackBar(
                           SnackBar(
                             content: const Text('Incorrect App PIN'),
-                            backgroundColor:
-                                Theme.of(statefulContext).colorScheme.error,
+                            backgroundColor: Theme.of(
+                              statefulContext,
+                            ).colorScheme.error,
                             behavior: SnackBarBehavior.floating,
                             margin: const EdgeInsets.all(8),
                           ),
@@ -141,8 +142,9 @@ Future<bool> showPinVerificationDialog({
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
                         SnackBar(
                           content: const Text('Incorrect App PIN'),
-                          backgroundColor:
-                              Theme.of(dialogContext).colorScheme.error,
+                          backgroundColor: Theme.of(
+                            dialogContext,
+                          ).colorScheme.error,
                           behavior: SnackBarBehavior.floating,
                           margin: const EdgeInsets.all(8),
                         ),

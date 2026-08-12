@@ -3,8 +3,6 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/group_provider.dart';
 
 class AccountInfoCard extends StatelessWidget {
   final bool isEditing;
@@ -15,8 +13,7 @@ class AccountInfoCard extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController issuerController;
   final TextEditingController secretController;
-  final int? selectedGroupId;
-  final ValueChanged<int?> onGroupChanged;
+  final TextEditingController tagsController;
   final VoidCallback onSecretEditTap;
   final VoidCallback onQrScan;
   final String? Function(String?) secretValidator;
@@ -31,8 +28,7 @@ class AccountInfoCard extends StatelessWidget {
     required this.nameController,
     required this.issuerController,
     required this.secretController,
-    required this.selectedGroupId,
-    required this.onGroupChanged,
+    required this.tagsController,
     required this.onSecretEditTap,
     required this.onQrScan,
     required this.secretValidator,
@@ -88,32 +84,14 @@ class AccountInfoCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            Consumer<GroupsProvider>(
-              builder: (context, provider, _) {
-                final groups = provider.groups;
-
-                return DropdownButtonFormField<int?>(
-                  value: selectedGroupId,
-                  decoration: const InputDecoration(
-                    labelText: 'Group',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.folder),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('No Group'),
-                    ),
-                    ...groups.map((group) {
-                      return DropdownMenuItem<int?>(
-                        value: group.id,
-                        child: Text(group.name),
-                      );
-                    }),
-                  ],
-                  onChanged: onGroupChanged,
-                );
-              },
+            TextFormField(
+              controller: tagsController,
+              decoration: const InputDecoration(
+                labelText: 'Tags (Comma separated)',
+                hintText: 'e.g., Work, Crypto, VIP',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.label_outlined),
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -127,45 +105,35 @@ class AccountInfoCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: theme.dividerColor,
-                      ),
+                      border: Border.all(color: theme.dividerColor),
                       borderRadius: BorderRadius.circular(4),
-                      color: theme
-                          .colorScheme
-                          .surfaceContainerHighest
+                      color: theme.colorScheme.surfaceContainerHighest
                           .withValues(alpha: 0.3),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.key,
-                          color:
-                              theme.colorScheme.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Secret Key *',
-                                style: theme.textTheme.bodyMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF',
-                                style: theme.textTheme.bodyLarge
-                                    ?.copyWith(
-                                      letterSpacing: 2,
-                                      color: theme
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  letterSpacing: 2,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           ),
@@ -173,10 +141,7 @@ class AccountInfoCard extends StatelessWidget {
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.lock,
-                              color: theme.colorScheme.primary,
-                            ),
+                            Icon(Icons.lock, color: theme.colorScheme.primary),
                             const SizedBox(height: 2),
                             Text(
                               isAppLockEnabled
@@ -197,8 +162,7 @@ class AccountInfoCard extends StatelessWidget {
             else
               Stack(
                 children: [
-                  if (isLoadingSecret)
-                    const LinearProgressIndicator(),
+                  if (isLoadingSecret) const LinearProgressIndicator(),
                   TextFormField(
                     controller: secretController,
                     decoration: InputDecoration(
@@ -214,16 +178,13 @@ class AccountInfoCard extends StatelessWidget {
                                   )
                                 : null)
                           : IconButton(
-                              icon: const Icon(
-                                Icons.qr_code_scanner,
-                              ),
+                              icon: const Icon(Icons.qr_code_scanner),
                               onPressed: () => onQrScan(),
                               tooltip: 'Scan QR Code',
                             ),
                     ),
                     validator: secretValidator,
-                    textCapitalization:
-                        TextCapitalization.characters,
+                    textCapitalization: TextCapitalization.characters,
                     enabled: !isLoadingSecret,
                   ),
                 ],

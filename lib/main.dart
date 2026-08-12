@@ -12,7 +12,6 @@ import 'package:screen_protector/screen_protector.dart';
 // Providers
 import 'providers/theme_provider.dart';
 import 'providers/account_provider.dart';
-import 'providers/group_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/sync_provider.dart';
 import 'services/otp_service.dart';
@@ -60,8 +59,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         // Settings Provider for managing security and app settings (must be before AccountsProvider)
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        // Groups Provider for managing account groups
-        ChangeNotifierProvider(create: (_) => GroupsProvider()),
         // Accounts Provider for managing authenticator accounts
         ChangeNotifierProvider(create: (_) => AccountsProvider()),
         // Sync Provider for P2P LAN sync state (lazily created when used)
@@ -136,9 +133,7 @@ class _AppInitializerState extends State<_AppInitializer> {
   }
 
   void _loadAppData() {
-    // Load accounts and groups
     context.read<AccountsProvider>().loadAccounts();
-    context.read<GroupsProvider>().loadGroups();
   }
 
   @override
