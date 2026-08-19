@@ -83,8 +83,8 @@ flutter build appbundle --flavor prod --release \
 
 | Flavor | App ID | Display name | Signing |
 |--------|--------|--------------|---------|
-| dev | `in.sreerajp.sreerajp_authenticator.dev` | Sreeraj P Authenticator Dev | Debug keystore (automatic) |
-| prod | `in.sreerajp.sreerajp_authenticator` | Sreeraj P Authenticator | Release keystore (`android/key.properties`) |
+| dev | `in.sreerajp.sreerajp_authenticator.dev` | SreerajP Authenticator Dev | Debug keystore (automatic) |
+| prod | `in.sreerajp.sreerajp_authenticator` | SreerajP Authenticator | Release keystore (`android/key.properties`) |
 
 ---
 

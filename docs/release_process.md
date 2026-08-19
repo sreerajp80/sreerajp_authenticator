@@ -8,7 +8,7 @@ This document describes the step-by-step build, versioning, signing, obfuscation
 
 ## 1. Release Scope
 
-- App: `Sreeraj P Authenticator`
+- App: `SreerajP Authenticator`
 - Current release profile: `internal`
 - Supported tracked release platform:
   - `Android`

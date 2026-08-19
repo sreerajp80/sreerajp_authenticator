@@ -8,7 +8,7 @@ This document governs the security architecture, threat model, sensitive data in
 
 ## 1. Security Scope
 
-- App: `Sreeraj P Authenticator`
+- App: `SreerajP Authenticator`
 - Data sensitivity level: `high`
 - Engineering standard profiles in force:
   - `Core Baseline`

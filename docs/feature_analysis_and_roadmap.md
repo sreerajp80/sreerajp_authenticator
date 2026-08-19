@@ -10,11 +10,11 @@ This document contains a comprehensive competitive analysis and long-term featur
 
 ## 1. Executive Summary
 
-`Sreeraj P Authenticator` is a privacy-first, offline-first Android 2FA application designed to provide zero-cloud, cryptographically secure TOTP/HOTP code generation. It currently features AES-256-GCM local database encryption via [`EncryptionService`](../lib/services/encryption_service.dart), device-side biometric/PIN app lock in [`AuthService`](../lib/services/auth_service.dart), encrypted file backups in [`ExportImportService`](../lib/services/export_import_service.dart), and direct zero-server LAN peer-to-peer device transfers in [`P2PSyncService`](../lib/services/p2p_sync_service.dart).
+`SreerajP Authenticator` is a privacy-first, offline-first Android 2FA application designed to provide zero-cloud, cryptographically secure TOTP/HOTP code generation. It currently features AES-256-GCM local database encryption via [`EncryptionService`](../lib/services/encryption_service.dart), device-side biometric/PIN app lock in [`AuthService`](../lib/services/auth_service.dart), encrypted file backups in [`ExportImportService`](../lib/services/export_import_service.dart), and direct zero-server LAN peer-to-peer device transfers in [`P2PSyncService`](../lib/services/p2p_sync_service.dart).
 
 While mainstream Android authenticator apps (such as *Google Authenticator*, *Microsoft Authenticator*, *Authy*, *Ente Auth*, and *Aegis*) rely heavily on cloud backends, simple search lists, or basic offline backups, they leave critical gaps in offline air-gapped sync, physical threat protection, desktop workflow integration, smart context-awareness, and time-drift resilience.
 
-This document presents a comprehensive feature analysis for `Sreeraj P Authenticator`, proposing **7 revolutionary, industry-first features** non-existent in competing Android 2FA apps, alongside **10 high-impact improvements** for existing core features.
+This document presents a comprehensive feature analysis for `SreerajP Authenticator`, proposing **7 revolutionary, industry-first features** non-existent in competing Android 2FA apps, alongside **10 high-impact improvements** for existing core features.
 
 ---
 
@@ -111,7 +111,7 @@ Users with 30+ 2FA keys must manually scroll or search through a long list every
 
 #### The Innovation
 **Smart Context-Aware Priority Ranking**. The app automatically surfaces relevant accounts at the top of [`HomeScreen`](../lib/screens/home_screen.dart) based on real-time Android context:
-1. **Active App Detector (Accessibility / Usage Stats API):** If the user opens the *AWS Console* or *Binance* app on Android, opening Sreeraj P Authenticator automatically pins AWS or Binance to slot #1.
+1. **Active App Detector (Accessibility / Usage Stats API):** If the user opens the *AWS Console* or *Binance* app on Android, opening SreerajP Authenticator automatically pins AWS or Binance to slot #1.
 2. **Time-of-Day Schedule:** Automatically float corporate accounts (Slack, Jira, VPN) during configurable work hours (e.g., 9:00 AM – 5:00 PM) and personal accounts (Steam, PlayStation, Personal Email) in evenings.
 3. **Geo-Fence Profiles:** Surface enterprise accounts when inside office location coordinates and hide/relegate them when at home.
 
@@ -270,7 +270,7 @@ In addition to new features, existing features in [`lib/services`](../lib/servic
     2. **Google Authenticator** (`otpauth-migration://` Protobuf QR payload)
     3. **Bitwarden Authenticator** (JSON export)
     4. **1Password / 2FA Live / Authy CSV** exports
-  - Allows zero-friction 1-tap switching to Sreeraj P Authenticator from any competing app.
+  - Allows zero-friction 1-tap switching to SreerajP Authenticator from any competing app.
 
 ---
 
@@ -331,6 +331,6 @@ ALTER TABLE accounts ADD COLUMN usage_count INTEGER DEFAULT 0;
 
 ## 7. Conclusion
 
-By implementing these features, **Sreeraj P Authenticator** will surpass existing Android authenticator apps in security, offline capability, physical protection, and user convenience. 
+By implementing these features, **SreerajP Authenticator** will surpass existing Android authenticator apps in security, offline capability, physical protection, and user convenience. 
 
 The combination of **Optical Air-Gap Sync**, **Duress Decoy Vaults**, **Zero-Cloud Desktop Air-Bridge**, and **NTP-Free Time Drift Calibration** establishes a new industry benchmark for offline mobile 2FA authentication applications.

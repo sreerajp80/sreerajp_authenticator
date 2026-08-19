@@ -45,11 +45,11 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            manifestPlaceholders["appName"] = "Sreeraj P Authenticator Dev"
+            manifestPlaceholders["appName"] = "SreerajP Authenticator Dev"
         }
         create("prod") {
             dimension = "environment"
-            manifestPlaceholders["appName"] = "Sreeraj P Authenticator"
+            manifestPlaceholders["appName"] = "SreerajP Authenticator"
         }
     }
 

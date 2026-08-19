@@ -1,4 +1,4 @@
-# Sreeraj P Authenticator
+# SreerajP Authenticator
 
 Flutter authenticator app for generating TOTP and HOTP codes with encrypted local storage, app lock, QR onboarding, grouped account management, and encrypted backup/restore.
 
@@ -170,8 +170,8 @@ The `--dart-define` value matters because the in-app flavor config reads `FLUTTE
 
 | Flavor | Package ID | App Name | Purpose |
 |--------|------------|----------|---------|
-| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | `Sreeraj P Authenticator Dev` | Local development and internal testing |
-| `prod` | `in.sreerajp.sreerajp_authenticator` | `Sreeraj P Authenticator` | Release builds |
+| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | `SreerajP Authenticator Dev` | Local development and internal testing |
+| `prod` | `in.sreerajp.sreerajp_authenticator` | `SreerajP Authenticator` | Release builds |
 
 ## Common Commands
 

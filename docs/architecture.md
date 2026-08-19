@@ -8,7 +8,7 @@ This document describes the technical architecture, layer boundaries, app lifecy
 
 ## 1. Scope
 
-- Product: `Sreeraj P Authenticator`
+- Product: `SreerajP Authenticator`
 - Repository type: `application`
 - Engineering standard profiles in force:
   - `Core Baseline`

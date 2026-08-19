@@ -18,7 +18,7 @@ class AppConfig {
   /// Safe built-in value used when the config file is missing or malformed,
   /// so the app never crashes on a bad config.
   static const AppConfig fallback = AppConfig(
-    appName: 'Sreeraj P Authenticator',
+    appName: 'SreerajP Authenticator',
     description: 'Privacy-first, offline-first TOTP/HOTP authenticator app.',
     version: '2.5.11',
     build: '1',

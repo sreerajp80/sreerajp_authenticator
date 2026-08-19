@@ -17,6 +17,7 @@ import 'add_account_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'settings_screen.dart';
 
+import '../config/app_flavor_config.dart';
 import '../utils/theme.dart';
 import '../widgets/home/home_empty_state.dart';
 import '../widgets/home/home_fab_button.dart';
@@ -255,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen>
                 title: Text(
                   _isSelectionMode
                       ? '${_selectedAccountIds.length} Selected'
-                      : 'Sreeraj P Authenticator',
+                      : AppFlavorConfig.instance.appName,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,

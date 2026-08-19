@@ -1,6 +1,6 @@
 {
-    "name": "sreerajp_authenticator",
-    "short_name": "sreerajp_authenticator",
+    "name": "SreerajP Authenticator",
+    "short_name": "SreerajP Authenticator",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

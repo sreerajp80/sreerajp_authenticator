@@ -9,7 +9,7 @@ void main() {
       expect(config.flavor, AppFlavor.dev);
       expect(config.isDev, isTrue);
       expect(config.isProd, isFalse);
-      expect(config.appName, 'Sreeraj P Authenticator Dev');
+      expect(config.appName, 'SreerajP Authenticator Dev');
       expect(config.environmentName, 'Development');
       expect(config.bannerLabel, 'DEV');
       expect(config.showEnvironmentBanner, isTrue);
@@ -22,7 +22,7 @@ void main() {
       expect(config.flavor, AppFlavor.prod);
       expect(config.isDev, isFalse);
       expect(config.isProd, isTrue);
-      expect(config.appName, 'Sreeraj P Authenticator');
+      expect(config.appName, 'SreerajP Authenticator');
       expect(config.environmentName, 'Production');
       expect(config.bannerLabel, 'PROD');
       expect(config.showEnvironmentBanner, isFalse);
