@@ -106,6 +106,15 @@ flutter build appbundle --flavor prod --release \
 
 ---
 
+## Localization rules
+
+- All user-visible text comes from `lib/l10n/*.arb` via `AppLocalizations` — never a raw string literal in a widget. This applies even though the app ships in a single language.
+- `l10n.yaml` (project root) and `lib/l10n/app_<base>.arb` should be maintained. Run `flutter gen-l10n` after editing any `.arb` file.
+- Every ARB key needs an `@key` description entry.
+- Literals are allowed only for logs, non-UI exception messages, asset paths, route names, and map/JSON keys.
+
+---
+
 ## Code style / naming
 
 - Files: `snake_case.dart`; Classes: `PascalCase`; Variables/methods: `camelCase`; Providers: `camelCase` + `Provider` suffix.
@@ -153,6 +162,13 @@ Every change follows plan-before-changing and log-after-changing:
    project file (other than the plan). A question or ambiguous reply is not approval.
 2. **Log after changing.** After implementing, write a change log to `change_log/` named
    `yyyymmdd_hhMMss_<short-slug>.md` describing what changed and referencing its plan.
+3. **Relative paths & privacy only.** `plans/` and `change_log/` files are committed and may become
+   public on the internet. They MUST use relative repository paths only (never absolute system
+   paths like `C:\...`, `l:\...`, or `file:///...`). They MUST NOT contain any **local system
+   details** — OS user name, computer/host name, home or drive-letter paths, network share names,
+   LAN/internal IP addresses, local server URLs with ports, device serial numbers, personal email
+   addresses — or any secret (API keys, tokens, passwords, keystore passphrases, credentials, PII).
+   Write them as if a stranger will read them; nothing should reveal the machine they came from.
 
 Create `plans/` and `change_log/` if they do not exist.
 

@@ -466,6 +466,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   Widget build(BuildContext context) {
     final isEditing = widget.accountToEdit != null;
     final settingsProvider = context.watch<SettingsProvider>();
+    final accountsProvider = context.watch<AccountsProvider>();
 
     // When editing, always show locked state initially for sensitive fields
     final showSecretLocked = isEditing && !_isSecretUnlocked;
@@ -505,6 +506,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     issuerController: _issuerController,
                     secretController: _secretController,
                     tagsController: _tagsController,
+                    availableTags: accountsProvider.allAvailableTags,
                     onSecretEditTap: _handleSecretEdit,
                     onQrScan: () async {
                       final result = await Navigator.push(

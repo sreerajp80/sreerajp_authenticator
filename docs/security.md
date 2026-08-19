@@ -92,7 +92,7 @@ This document governs the security architecture, threat model, sensitive data in
 ### 5.1 P2P LAN Sync Security Model
 
 Implemented in
-[`lib/services/p2p_sync_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart).
+[`lib/services/p2p_sync_service.dart`](../lib/services/p2p_sync_service.dart).
 Opt-in, user-initiated, foreground-only, same-LAN device-to-device transfer of accounts, groups,
 and a small set of non-sensitive settings. No server, no account, no internet.
 
@@ -196,7 +196,7 @@ and a small set of non-sensitive settings. No server, no account, no internet.
 - Background lock rule: triggered on `AppLifecycleState.paused`
 - Protected-route strategy: app root switches between lock and home based on `SettingsProvider`
 - Lock screen implementation:
-  [`lib/screens/lock_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/lock_screen.dart)
+  [`lib/screens/lock_screen.dart`](../lib/screens/lock_screen.dart)
 
 ---
 
@@ -207,7 +207,7 @@ and a small set of non-sensitive settings. No server, no account, no internet.
 Production Android builds should be compiled with:
 
 ```powershell
---obfuscate --split-debug-info=build/symbols/android-prod-2.4.0+1/
+--obfuscate --split-debug-info=build/symbols/android-prod/
 ```
 
 This is part of the release process and should be applied to any distributable prod build.
@@ -215,11 +215,11 @@ This is part of the release process and should be applied to any distributable p
 ### 8.2 R8 / ProGuard
 
 Android release builds enable minification and resource shrinking in
-[`android/app/build.gradle.kts`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/build.gradle.kts).
+[`android/app/build.gradle.kts`](../android/app/build.gradle.kts).
 
 Current caution:
 
-- [`android/app/proguard-rules.pro`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/proguard-rules.pro)
+- [`android/app/proguard-rules.pro`](../android/app/proguard-rules.pro)
   is minimal and currently disables Java/Kotlin obfuscation with `-dontobfuscate`.
 - Review this file whenever new dependencies are added.
 
@@ -251,7 +251,7 @@ before distribution.
 
 - Logger implementation: `debugPrint`
 - Verbose logging gate:
-  [`lib/config/app_flavor_config.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/config/app_flavor_config.dart)
+  [`lib/config/app_flavor_config.dart`](../lib/config/app_flavor_config.dart)
   via `AppFlavorConfig.enableVerboseLogging`
 - Log level in production: keep logs minimal
 - Redaction strategy: do not log secret-bearing values in the first place
@@ -414,7 +414,7 @@ Permission review rules:
 - User communication trigger: notify users if a shipped build can expose secrets, break lock
   guarantees, or corrupt imported/exported data
 - Patch release process reference:
-  [`docs/release_process.md`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/docs/release_process.md)
+  [`release_process.md`](release_process.md)
 
 ---
 

@@ -13,9 +13,9 @@ This document describes the step-by-step build, versioning, signing, obfuscation
 - Supported tracked release platform:
   - `Android`
 - Repository version source of truth:
-  - [`pubspec.yaml`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/pubspec.yaml)
+  - [`pubspec.yaml`](../pubspec.yaml)
 - Current app version:
-  - `2.4.0+1`
+  - `2.8.2+23`
 
 ---
 
@@ -61,7 +61,7 @@ This document describes the step-by-step build, versioning, signing, obfuscation
 
 Notes:
 
-- Android flavors are defined in [`android/app/build.gradle.kts`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/build.gradle.kts).
+- Android flavors are defined in [`android/app/build.gradle.kts`](../android/app/build.gradle.kts).
 - `prod` has the release app name and base application ID.
 - `dev` adds `.dev` to the application ID and appends `-dev` to the version name.
 
@@ -77,7 +77,7 @@ Production builds should include:
 
 ```powershell
 --obfuscate
---split-debug-info=build/symbols/android-prod-2.4.0+1/
+--split-debug-info=build/symbols/android-prod/
 ```
 
 When the version changes, update the symbol directory to match the current `pubspec.yaml` version.
@@ -85,12 +85,12 @@ When the version changes, update the symbol directory to match the current `pubs
 ### 6.2 Android Shrinking And ProGuard / R8
 
 Current Android release configuration in
-[`android/app/build.gradle.kts`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/build.gradle.kts):
+[`android/app/build.gradle.kts`](../android/app/build.gradle.kts):
 
 - `isMinifyEnabled = true`
 - `isShrinkResources = true`
 - Uses `proguard-android-optimize.txt`
-- Includes [`android/app/proguard-rules.pro`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/app/proguard-rules.pro)
+- Includes [`android/app/proguard-rules.pro`](../android/app/proguard-rules.pro)
 
 Current caution:
 
@@ -109,7 +109,7 @@ debuggable.
 ## 7. Signing And Secret Handling
 
 - Signing config location: local `android/key.properties` file outside source control, based on
-  [`android/key.properties.example`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/android/key.properties.example)
+  [`android/key.properties.example`](../android/key.properties.example)
 - Keystore ownership: `Sreeraj P`
 - Secret rotation process:
   - Replace keystore material in the secure owner-controlled location
@@ -185,7 +185,7 @@ flutter build apk `
   --release `
   --dart-define=FLUTTER_APP_FLAVOR=prod `
   --obfuscate `
-  --split-debug-info=build/symbols/android-prod-2.4.0+1/ `
+  --split-debug-info=build/symbols/android-prod/ `
   --split-per-abi
 
 # App Bundle if Play-style distribution is needed
@@ -194,7 +194,7 @@ flutter build appbundle `
   --release `
   --dart-define=FLUTTER_APP_FLAVOR=prod `
   --obfuscate `
-  --split-debug-info=build/symbols/android-prod-2.4.0+1/
+  --split-debug-info=build/symbols/android-prod/
 
 # Optional size analysis
 flutter build apk `

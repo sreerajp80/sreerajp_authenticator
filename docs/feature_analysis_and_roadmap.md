@@ -10,7 +10,7 @@ This document contains a comprehensive competitive analysis and long-term featur
 
 ## 1. Executive Summary
 
-`Sreeraj P Authenticator` is a privacy-first, offline-first Android 2FA application designed to provide zero-cloud, cryptographically secure TOTP/HOTP code generation. It currently features AES-256-GCM local database encryption via [`EncryptionService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/encryption_service.dart), device-side biometric/PIN app lock in [`AuthService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/auth_service.dart), encrypted file backups in [`ExportImportService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/export_import_service.dart), and direct zero-server LAN peer-to-peer device transfers in [`P2PSyncService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart).
+`Sreeraj P Authenticator` is a privacy-first, offline-first Android 2FA application designed to provide zero-cloud, cryptographically secure TOTP/HOTP code generation. It currently features AES-256-GCM local database encryption via [`EncryptionService`](../lib/services/encryption_service.dart), device-side biometric/PIN app lock in [`AuthService`](../lib/services/auth_service.dart), encrypted file backups in [`ExportImportService`](../lib/services/export_import_service.dart), and direct zero-server LAN peer-to-peer device transfers in [`P2PSyncService`](../lib/services/p2p_sync_service.dart).
 
 While mainstream Android authenticator apps (such as *Google Authenticator*, *Microsoft Authenticator*, *Authy*, *Ente Auth*, and *Aegis*) rely heavily on cloud backends, simple search lists, or basic offline backups, they leave critical gaps in offline air-gapped sync, physical threat protection, desktop workflow integration, smart context-awareness, and time-drift resilience.
 
@@ -20,7 +20,7 @@ This document presents a comprehensive feature analysis for `Sreeraj P Authentic
 
 ## 2. Codebase Architecture Overview
 
-Before introducing new capabilities, the existing codebase architecture in [`lib/`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib) is summarized below:
+Before introducing new capabilities, the existing codebase architecture in [`lib/`](../lib) is summarized below:
 
 ```
 lib/
@@ -50,7 +50,7 @@ The following features represent **groundbreaking innovations** that no current 
 ### Feature 1: Optical Air-Gap Sync (High-Density Animated QR Stream) `[COMPLETED]` ✅
 
 - **Status:** **Completed** ✅
-- **Implementation:** Implemented [`OpticalSyncService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/optical_sync_service.dart) with Fountain Code (LT Matrix) chunking, IEEE 802.3 CRC32 checksum verification, and dynamic out-of-order reconstruction. Built [`OpticalSyncScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/optical_sync_screen.dart) for high-speed animated QR stream transmission (12–15 FPS) and live camera preview decoding. Integrated state handling into [`SyncProvider`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/sync_provider.dart) and added optical sync entry cards to [`SyncScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_screen.dart).
+- **Implementation:** Implemented [`OpticalSyncService`](../lib/services/optical_sync_service.dart) with Fountain Code (LT Matrix) chunking, IEEE 802.3 CRC32 checksum verification, and dynamic out-of-order reconstruction. Built [`OpticalSyncScreen`](../lib/screens/optical_sync_screen.dart) for high-speed animated QR stream transmission (12–15 FPS) and live camera preview decoding. Integrated state handling into [`SyncProvider`](../lib/providers/sync_provider.dart) and added optical sync entry cards to [`SyncScreen`](../lib/screens/sync_screen.dart).
 
 #### Problem in Current Apps
 Traditional 2FA migration between two offline devices requires either a single static QR code (which fails or gets truncated when vault has >15 accounts due to QR code density limits) or an active WiFi/LAN connection (which fails in high-security air-gapped facilities, public Wi-Fi with AP isolation enabled, or cellular-only environments).
@@ -63,7 +63,7 @@ Traditional 2FA migration between two offline devices requires either a single s
 #### Technical Architecture & Implementation
 1. **Fountain Code Chunking:** Split encrypted JSON payload into $N$ fragments of fixed size (e.g., 128 bytes each).
 2. **Metadata Header:** Each frame carries `{index, total_chunks, session_hash, payload_base64}`.
-3. **Flutter Integration:** Extend [`SyncScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_screen.dart) and [`MobileScanner`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/pubspec.yaml#L19) to process continuous frames into a dynamic bitmask buffer until 100% reconstruction is achieved.
+3. **Flutter Integration:** Extend [`SyncScreen`](../lib/screens/sync_screen.dart) and [`MobileScanner`](../pubspec.yaml) to process continuous frames into a dynamic bitmask buffer until 100% reconstruction is achieved.
 
 ---
 
@@ -79,8 +79,8 @@ A **Dual-PIN Security Engine**. The user configures a primary PIN and an optiona
 - **Optional Silent Trigger:** Selecting "Emergency Purge under Duress" immediately zeroes out all real secret keys stored in memory while displaying the decoy screen.
 
 #### Technical Architecture & Implementation
-1. **Database Schema:** Add `is_decoy` flag (INTEGER) to database table in [`DatabaseService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/database_service.dart).
-2. **PIN Verification:** Modify [`AuthService.verifyPin()`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/auth_service.dart) to check hash against `duress_pin_hash`.
+1. **Database Schema:** Add `is_decoy` flag (INTEGER) to database table in [`DatabaseService`](../lib/services/database_service.dart).
+2. **PIN Verification:** Modify [`AuthService.verifyPin()`](../lib/services/auth_service.dart) to check hash against `duress_pin_hash`.
 3. **State Isolation:** `AccountProvider` filters query results based on whether `AuthService.isDuressSession` is `true`.
 
 ---
@@ -98,7 +98,7 @@ A **Zero-Cloud Local Desktop Air-Bridge**. The smartphone acts as a physical har
 - **100% Offline & Serverless:** Communication runs locally via encrypted zero-trust sockets, ensuring keys never leave the phone.
 
 #### Technical Architecture & Implementation
-1. **Local Server:** Extend [`P2PSyncService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart) to support a lightweight WebSocket endpoint bound to localhost/LAN.
+1. **Local Server:** Extend [`P2PSyncService`](../lib/services/p2p_sync_service.dart) to support a lightweight WebSocket endpoint bound to localhost/LAN.
 2. **Handshake & Key Exchange:** Elliptic-curve Diffie-Hellman (ECDH) key exchange established during initial desktop pairing scan.
 3. **Approval Notification:** Flutter local notifications trigger `AuthService.authenticateBiometrics()` before sending signed OTP payload.
 
@@ -110,14 +110,14 @@ A **Zero-Cloud Local Desktop Air-Bridge**. The smartphone acts as a physical har
 Users with 30+ 2FA keys must manually scroll or search through a long list every single time they log into an application.
 
 #### The Innovation
-**Smart Context-Aware Priority Ranking**. The app automatically surfaces relevant accounts at the top of [`HomeScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/home_screen.dart) based on real-time Android context:
+**Smart Context-Aware Priority Ranking**. The app automatically surfaces relevant accounts at the top of [`HomeScreen`](../lib/screens/home_screen.dart) based on real-time Android context:
 1. **Active App Detector (Accessibility / Usage Stats API):** If the user opens the *AWS Console* or *Binance* app on Android, opening Sreeraj P Authenticator automatically pins AWS or Binance to slot #1.
 2. **Time-of-Day Schedule:** Automatically float corporate accounts (Slack, Jira, VPN) during configurable work hours (e.g., 9:00 AM – 5:00 PM) and personal accounts (Steam, PlayStation, Personal Email) in evenings.
 3. **Geo-Fence Profiles:** Surface enterprise accounts when inside office location coordinates and hide/relegate them when at home.
 
 #### Technical Architecture & Implementation
-1. **Metadata Attributes:** Add `schedule_start`, `schedule_end`, `usage_count`, and `last_used_at` columns to `Account` model in [`lib/models/account.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/models/account.dart).
-2. **Smart Sort Algorithm:** Add a `Smart Context` sorting mode in [`AccountProvider`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/account_provider.dart) combining recency, usage frequency, time window matching, and active app package name match.
+1. **Metadata Attributes:** Add `schedule_start`, `schedule_end`, `usage_count`, and `last_used_at` columns to `Account` model in [`lib/models/account.dart`](../lib/models/account.dart).
+2. **Smart Sort Algorithm:** Add a `Smart Context` sorting mode in [`AccountProvider`](../lib/providers/account_provider.dart) combining recency, usage frequency, time window matching, and active app package name match.
 
 ---
 
@@ -131,10 +131,10 @@ TOTP algorithms (RFC 6238) strictly depend on accurate time. If a device clock d
 1. **GNSS / GPS Satellite UTC Epoch:** Extract raw UTC time from hardware GPS receiver sentences without needing internet data or location permission for map tracking.
 2. **Cellular Network Time (NITZ):** Read base station broadcast time signals directly from telephony stack.
 3. **Peer Time-Consensus:** During P2P LAN syncs, compare local hardware timestamp against peer device timestamp to detect skew.
-4. **Auto-Adjust Window:** Automatically applies a dynamic micro-second clock offset ($\Delta t$) inside [`OTPService.generateTOTP()`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/otp_service.dart) without altering system settings.
+4. **Auto-Adjust Window:** Automatically applies a dynamic micro-second clock offset ($\Delta t$) inside [`OTPService.generateTOTP()`](../lib/services/otp_service.dart) without altering system settings.
 
 #### Technical Architecture & Implementation
-1. **Time Offset Storage:** Store `time_offset_ms` inside [`SettingsProvider`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/settings_provider.dart).
+1. **Time Offset Storage:** Store `time_offset_ms` inside [`SettingsProvider`](../lib/providers/settings_provider.dart).
 2. **OTP Generation Adjustment:**
    $$\text{Effective Time} = \text{DateTime.now().millisecondsSinceEpoch} + \Delta t$$
 3. **Automatic Drifting Verification:** If user marks a code as "Failed on Website", automatically test adjacent step windows ($t - 30s, t + 30s$) and propose optimal offset calibration.
@@ -158,7 +158,7 @@ Existing backup solutions require remembering a single master password. If lost,
 
 #### Technical Architecture & Implementation
 1. **Polynomial Secret Sharing:** Implement Galois Field $GF(2^8)$ arithmetic for Shamir share creation.
-2. **Export Interface:** Add "Generate 2-of-3 Recovery Cards" screen to [`BackupRestoreScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/backup_restore_screen.dart).
+2. **Export Interface:** Add "Generate 2-of-3 Recovery Cards" screen to [`BackupRestoreScreen`](../lib/screens/backup_restore_screen.dart).
 
 ---
 
@@ -181,14 +181,14 @@ An **In-App Security Health & Hygiene Radar**:
 
 ## 4. High-Impact Improvements to Existing Features
 
-In addition to new features, existing features in [`lib/services`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services) and [`lib/screens`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens) can be enhanced significantly.
+In addition to new features, existing features in [`lib/services`](../lib/services) and [`lib/screens`](../lib/screens) can be enhanced significantly.
 
 ---
 
 ### Improvement 1: Steam Guard & Non-Standard Algorithm Support `[COMPLETED]` ✅
 
 - **Status:** **Completed** ✅
-- **Implementation:** Extended [`OTPService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/otp_service.dart) to support **Steam Guard** (HMAC-SHA1 5-character lookup `23456789BCDFGHJKMNPQRTVWXY`), **mOTP** (Mobile OTP), and hex-encoded secrets. Added native URI parsing for `steam://` and `motp://` schemas in `OTPService.parseOtpAuthUri()` and [`QrScannerScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/qr_scanner_screen.dart).
+- **Implementation:** Extended [`OTPService`](../lib/services/otp_service.dart) to support **Steam Guard** (HMAC-SHA1 5-character lookup `23456789BCDFGHJKMNPQRTVWXY`), **mOTP** (Mobile OTP), and hex-encoded secrets. Added native URI parsing for `steam://` and `motp://` schemas in `OTPService.parseOtpAuthUri()` and [`QrScannerScreen`](../lib/screens/qr_scanner_screen.dart).
 - **Current Behavior:** Decodes, generates, and formats Steam Guard 5-letter alphanumeric codes and mOTP codes with custom PIN/counter handling seamlessly.
 
 ---
@@ -230,13 +230,13 @@ In addition to new features, existing features in [`lib/services`](file:///l:/An
 ### Improvement 6: Bulk Selection & Batch Actions `[COMPLETED]` ✅
 
 - **Status:** **Completed** ✅
-- **Implementation:** Enabled long-press on [`HomeScreen`](file:///l:/Android/SreerajP_Authenticator/lib/screens/home_screen.dart) to activate Multi-Select Mode with a dynamic selection app bar and batch actions bottom bar. Supported batch operations: bulk reassign tags in [`AccountsProvider.bulkUpdateTags()`](file:///l:/Android/SreerajP_Authenticator/lib/providers/account_provider.dart), bulk export selected accounts to encrypted `.aes` backup files in [`ExportImportService`](file:///l:/Android/SreerajP_Authenticator/lib/services/export_import_service.dart), and bulk delete gated behind biometric/PIN authentication in [`AuthService`](file:///l:/Android/SreerajP_Authenticator/lib/services/auth_service.dart).
+- **Implementation:** Enabled long-press on [`HomeScreen`](../lib/screens/home_screen.dart) to activate Multi-Select Mode with a dynamic selection app bar and batch actions bottom bar. Supported batch operations: bulk reassign tags in [`AccountsProvider.bulkUpdateTags()`](../lib/providers/account_provider.dart), bulk export selected accounts to encrypted `.aes` backup files in [`ExportImportService`](../lib/services/export_import_service.dart), and bulk delete gated behind biometric/PIN authentication in [`AuthService`](../lib/services/auth_service.dart).
 
 ---
 
 ### Improvement 7: Android Keystore StrongBox TEE Hardware Attestation
 
-- **Current State:** Encryption master key is generated via secure random bytes and stored using `FlutterSecureStorage` in [`EncryptionService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/encryption_service.dart#L19-L28).
+- **Current State:** Encryption master key is generated via secure random bytes and stored using `FlutterSecureStorage` in [`EncryptionService`](../lib/services/encryption_service.dart).
 - **Proposed Enhancement:**
   - Upgrade key storage on Android 8.0+ to hardware-backed **Android Keystore with StrongBox Keymaster** integration.
   - Ensures master encryption keys are generated and held inside hardware isolated chips (Titan M / Secure Enclave), preventing key extraction even if operating system root privilege is breached.
@@ -245,7 +245,7 @@ In addition to new features, existing features in [`lib/services`](file:///l:/An
 
 ### Improvement 8: Per-Account Biometric View Lock
 
-- **Current State:** App lock protects entry to the entire app via [`LockScreen`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/lock_screen.dart).
+- **Current State:** App lock protects entry to the entire app via [`LockScreen`](../lib/screens/lock_screen.dart).
 - **Proposed Enhancement:**
   - Add a flag `is_high_security` per account.
   - High-security TOTP codes (e.g. primary email or bank logins) remain masked with blurred placeholders `••••••` on the main list even while app is open, requiring an explicit fingerprint tap to unmask the code.
@@ -254,7 +254,7 @@ In addition to new features, existing features in [`lib/services`](file:///l:/An
 
 ### Improvement 9: Android Clipboard Auto-Sanitizer with Countdown Toast
 
-- **Current State:** Standard clipboard copy in [`AccountTile`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets) uses `Clipboard.setData()`.
+- **Current State:** Standard clipboard copy in [`AccountTile`](../lib/widgets) uses `Clipboard.setData()`.
 - **Proposed Enhancement:**
   - Implement a background timer service that automatically purges copied TOTP text from Android `ClipboardManager` after 30 seconds.
   - Displays a subtle floating overlay toast: *"OTP code cleared from clipboard"*.
@@ -263,7 +263,7 @@ In addition to new features, existing features in [`lib/services`](file:///l:/An
 
 ### Improvement 10: Universal Cross-App Migration Engine
 
-- **Current State:** Implements custom encrypted `.aes` backup import/export in [`ExportImportService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/export_import_service.dart).
+- **Current State:** Implements custom encrypted `.aes` backup import/export in [`ExportImportService`](../lib/services/export_import_service.dart).
 - **Proposed Enhancement:**
   - Build direct UI parser adapters for importing vaults from:
     1. **Aegis Authenticator** (Encrypted/Plain JSON format)
@@ -280,28 +280,28 @@ The table below prioritizes all proposed features based on **Technical Feasibili
 
 | Phase | Feature Name | Type | Complexity | Security / UX Impact | Target File Locations | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | Universal Cross-App Migration Engine | Improvement | Medium | High (Seamless Onboarding) | [`lib/services/export_import_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/export_import_service.dart) | Planned |
-| **Phase 1** | Steam Guard & Non-Standard OTP | Improvement | Low | High (Broader Compatibility) | [`lib/services/otp_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/otp_service.dart) | **Completed** ✅ |
-| **Phase 1** | Offline Bundled Vector Brand Icons | Improvement | Medium | High (Premium Aesthetics) | `assets/icons/brands/`, [`lib/widgets/`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets) | **Completed** ✅ |
-| **Phase 1** | Next-Code Preview & Clipboard Sanitizer | Improvement | Low | Medium (User Convenience) | [`lib/services/otp_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/otp_service.dart) | Planned |
-| **Phase 2** | Duress & Decoy Vault Mode ("Panic PIN") | **Novel** | Medium | Critical (Physical Safety) | [`lib/services/auth_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/auth_service.dart) | Planned |
-| **Phase 2** | Offline Hygiene & Security Audit Radar | **Novel** | Medium | High (Vault Integrity) | [`lib/services/otp_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/otp_service.dart), [`lib/screens/`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens) | Planned |
-| **Phase 2** | Per-Account Biometric View Lock | Improvement | Low | High (Targeted Privacy) | [`lib/models/account.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/models/account.dart), [`lib/widgets/`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets) | Planned |
-| **Phase 2** | Multi-Dimensional Tagging System | Improvement | Medium | High (Organization) | [`lib/models/account.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/models/account.dart), [`lib/providers/`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers) | **Completed** ✅ |
-| **Phase 2** | Bulk Selection & Batch Actions | Improvement | Medium | High (Efficiency & Security) | [`lib/screens/home_screen.dart`](file:///l:/Android/SreerajP_Authenticator/lib/screens/home_screen.dart), [`lib/providers/account_provider.dart`](file:///l:/Android/SreerajP_Authenticator/lib/providers/account_provider.dart) | **Completed** ✅ |
-| **Phase 3** | Optical Air-Gap Sync (Animated QR Stream)| **Novel** | High | Extreme (Air-Gapped Vault Sync) | [`lib/services/optical_sync_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/optical_sync_service.dart), [`lib/screens/optical_sync_screen.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/optical_sync_screen.dart) | **Completed** ✅ |
+| **Phase 1** | Universal Cross-App Migration Engine | Improvement | Medium | High (Seamless Onboarding) | [`lib/services/export_import_service.dart`](../lib/services/export_import_service.dart) | Planned |
+| **Phase 1** | Steam Guard & Non-Standard OTP | Improvement | Low | High (Broader Compatibility) | [`lib/services/otp_service.dart`](../lib/services/otp_service.dart) | **Completed** ✅ |
+| **Phase 1** | Offline Bundled Vector Brand Icons | Improvement | Medium | High (Premium Aesthetics) | `assets/icons/brands/`, [`lib/widgets/`](../lib/widgets) | **Completed** ✅ |
+| **Phase 1** | Next-Code Preview & Clipboard Sanitizer | Improvement | Low | Medium (User Convenience) | [`lib/services/otp_service.dart`](../lib/services/otp_service.dart) | Planned |
+| **Phase 2** | Duress & Decoy Vault Mode ("Panic PIN") | **Novel** | Medium | Critical (Physical Safety) | [`lib/services/auth_service.dart`](../lib/services/auth_service.dart) | Planned |
+| **Phase 2** | Offline Hygiene & Security Audit Radar | **Novel** | Medium | High (Vault Integrity) | [`lib/services/otp_service.dart`](../lib/services/otp_service.dart), [`lib/screens/`](../lib/screens) | Planned |
+| **Phase 2** | Per-Account Biometric View Lock | Improvement | Low | High (Targeted Privacy) | [`lib/models/account.dart`](../lib/models/account.dart), [`lib/widgets/`](../lib/widgets) | Planned |
+| **Phase 2** | Multi-Dimensional Tagging System | Improvement | Medium | High (Organization) | [`lib/models/account.dart`](../lib/models/account.dart), [`lib/providers/`](../lib/providers) | **Completed** ✅ |
+| **Phase 2** | Bulk Selection & Batch Actions | Improvement | Medium | High (Efficiency & Security) | [`lib/screens/home_screen.dart`](../lib/screens/home_screen.dart), [`lib/providers/account_provider.dart`](../lib/providers/account_provider.dart) | **Completed** ✅ |
+| **Phase 3** | Optical Air-Gap Sync (Animated QR Stream)| **Novel** | High | Extreme (Air-Gapped Vault Sync) | [`lib/services/optical_sync_service.dart`](../lib/services/optical_sync_service.dart), [`lib/screens/optical_sync_screen.dart`](../lib/screens/optical_sync_screen.dart) | **Completed** ✅ |
 | **Phase 3** | Zero-Cloud Desktop Air-Bridge | **Novel** | High | Extreme (Desktop Convenience) | `lib/services/p2p_sync_service.dart`, `android/` native | Planned |
-| **Phase 3** | Offline NTP-Free Time-Drift Auto-Calibration| **Novel** | High | High (Clock Resilience) | [`lib/services/otp_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/otp_service.dart) | Planned |
+| **Phase 3** | Offline NTP-Free Time-Drift Auto-Calibration| **Novel** | High | High (Clock Resilience) | [`lib/services/otp_service.dart`](../lib/services/otp_service.dart) | Planned |
 | **Phase 3** | Android Quick Settings Tile Widget | Improvement | Medium | High (Quick Access) | `android/app/src/main/kotlin/` | Planned |
-| **Phase 4** | Shamir's Secret Sharing (2-of-3 Backup) | **Novel** | High | Extreme (Zero-Loss Security) | [`lib/services/export_import_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/export_import_service.dart) | Planned |
-| **Phase 4** | Context-Aware Dynamic Code Surfacing | **Novel** | High | Medium (Smart Automation) | [`lib/providers/account_provider.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/account_provider.dart) | Planned |
-| **Phase 4** | Android Keystore StrongBox Hardware TEE | Improvement | High | Critical (Hardware Security) | [`lib/services/encryption_service.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/encryption_service.dart) | Planned |
+| **Phase 4** | Shamir's Secret Sharing (2-of-3 Backup) | **Novel** | High | Extreme (Zero-Loss Security) | [`lib/services/export_import_service.dart`](../lib/services/export_import_service.dart) | Planned |
+| **Phase 4** | Context-Aware Dynamic Code Surfacing | **Novel** | High | Medium (Smart Automation) | [`lib/providers/account_provider.dart`](../lib/providers/account_provider.dart) | Planned |
+| **Phase 4** | Android Keystore StrongBox Hardware TEE | Improvement | High | Critical (Hardware Security) | [`lib/services/encryption_service.dart`](../lib/services/encryption_service.dart) | Planned |
 
 ---
 
 ## 6. Database Schema Evolution Plan
 
-The SQLite schema version in [`DatabaseService`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/database_service.dart) has evolved from `v1` through `v4`:
+The SQLite schema version in [`DatabaseService`](../lib/services/database_service.dart) has evolved from `v1` through `v4`:
 
 ```sql
 -- Migration Script: v3 -> v4 (Implemented)

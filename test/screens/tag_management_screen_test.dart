@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sreerajp_authenticator/providers/account_provider.dart';
 import 'package:sreerajp_authenticator/screens/tag_management_screen.dart';
+import 'package:sreerajp_authenticator/services/database_service.dart';
 import 'package:sreerajp_authenticator/utils/constants.dart';
 
 import '../providers/provider_test_helpers.dart';
@@ -34,10 +35,13 @@ void main() {
 
   group('TagManagementScreen Widget Tests', () {
     testWidgets('displays empty state when no tags exist', (tester) async {
-      final provider = AccountsProvider();
-      await waitForCondition(
-        () => !provider.isLoading && !provider.isPreDecrypting,
-      );
+      late final AccountsProvider provider;
+      await tester.runAsync(() async {
+        provider = AccountsProvider();
+        await waitForCondition(
+          () => !provider.isLoading && !provider.isPreDecrypting,
+        );
+      });
 
       await tester.pumpWidget(buildTestableWidget(provider));
       await tester.pump();
@@ -49,14 +53,21 @@ void main() {
     });
 
     testWidgets('displays tag list when tags exist', (tester) async {
-      final provider = AccountsProvider();
-      await waitForCondition(
-        () => !provider.isLoading && !provider.isPreDecrypting,
-      );
+      late final AccountsProvider provider;
+      await tester.runAsync(() async {
+        final db = DatabaseService.instance;
+        await db.createAccount(
+          makeAccount(name: 'GitHub', tags: ['Work', 'Dev']),
+        );
 
-      await provider.addAccount(
-        makeAccount(name: 'GitHub', tags: ['Work', 'Dev']),
-      );
+        provider = AccountsProvider();
+        await waitForCondition(
+          () =>
+              !provider.isLoading &&
+              !provider.isPreDecrypting &&
+              provider.accounts.isNotEmpty,
+        );
+      });
 
       await tester.pumpWidget(buildTestableWidget(provider));
       await tester.pump();

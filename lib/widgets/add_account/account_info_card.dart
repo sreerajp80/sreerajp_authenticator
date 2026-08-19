@@ -3,6 +3,7 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'tag_autocomplete_field.dart';
 
 class AccountInfoCard extends StatelessWidget {
   final bool isEditing;
@@ -14,6 +15,7 @@ class AccountInfoCard extends StatelessWidget {
   final TextEditingController issuerController;
   final TextEditingController secretController;
   final TextEditingController tagsController;
+  final List<String> availableTags;
   final VoidCallback onSecretEditTap;
   final VoidCallback onQrScan;
   final String? Function(String?) secretValidator;
@@ -29,6 +31,7 @@ class AccountInfoCard extends StatelessWidget {
     required this.issuerController,
     required this.secretController,
     required this.tagsController,
+    this.availableTags = const [],
     required this.onSecretEditTap,
     required this.onQrScan,
     required this.secretValidator,
@@ -84,14 +87,9 @@ class AccountInfoCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            TextFormField(
+            TagAutocompleteField(
               controller: tagsController,
-              decoration: const InputDecoration(
-                labelText: 'Tags (Comma separated)',
-                hintText: 'e.g., Work, Crypto, VIP',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.label_outlined),
-              ),
+              availableTags: availableTags,
             ),
 
             const SizedBox(height: 16),

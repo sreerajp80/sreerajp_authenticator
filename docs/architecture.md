@@ -90,7 +90,7 @@ lib/
 
 ## 5. App Initialization Sequence
 
-Documented from [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart).
+Documented from [`lib/main.dart`](../lib/main.dart).
 
 | Step | Code / Call | Notes |
 |------|-------------|-------|
@@ -104,15 +104,15 @@ Documented from [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_au
 Deferred initialization:
 
 - `SettingsProvider` loads persisted settings lazily after `runApp`.
-- Database opening is lazy in [`lib/services/database_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/database_service.dart).
-- Encryption-key bootstrap is lazy in [`lib/services/encryption_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/encryption_service.dart).
+- Database opening is lazy in [`lib/services/database_service.dart`](../lib/services/database_service.dart).
+- Encryption-key bootstrap is lazy in [`lib/services/encryption_service.dart`](../lib/services/encryption_service.dart).
 - Accounts and groups load only after settings initialization and only when the app is not locked.
 
 ---
 
 ## 6. App Lifecycle Behavior
 
-Primary lifecycle handling is implemented in [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart) and supported by `SettingsProvider`.
+Primary lifecycle handling is implemented in [`lib/main.dart`](../lib/main.dart) and supported by `SettingsProvider`.
 
 | Lifecycle State | App Behavior |
 |----------------|--------------|
@@ -186,7 +186,7 @@ This app intentionally omits a repository layer.
 Current state:
 
 - No centralized `FlutterError.onError` or `PlatformDispatcher.instance.onError` handler is set in
-  [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart).
+  [`lib/main.dart`](../lib/main.dart).
 - There is no custom domain exception hierarchy yet.
 - Services primarily communicate failure through `bool`, `null`, `debugPrint`, or generic
   `Exception` values.
@@ -258,7 +258,7 @@ Migration history:
 
 - Navigation approach: `Navigator 1.0`
 - Route definition location: route-level screens are pushed directly from widgets; app root is in
-  [`lib/main.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/main.dart)
+  [`lib/main.dart`](../lib/main.dart)
 - Protected-route strategy: `_AppRoot` switches between `LockScreen` and `HomeScreen` based on
   `SettingsProvider`
 - Deep-link support: `no`
@@ -279,19 +279,19 @@ Migration history:
 - Network client: `none` (no HTTP/internet client)
 - Offline behavior: `offline-first`
 - P2P LAN sync: a `dart:io` `ServerSocket`/`Socket` engine
-  ([`lib/services/p2p_sync_service.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/p2p_sync_service.dart))
+  ([`lib/services/p2p_sync_service.dart`](../lib/services/p2p_sync_service.dart))
   for opt-in, same-LAN, device-to-device account transfer. The host binds a **random
   OS-assigned port** and displays its IPv4 + port + a per-session pairing code, both as a scannable
   QR (`spauth://sync?…`) and as text; the client connects either by scanning the QR
-  ([`lib/screens/sync_qr_scanner_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_qr_scanner_screen.dart))
+  ([`lib/screens/sync_qr_scanner_screen.dart`](../lib/screens/sync_qr_scanner_screen.dart))
   or by typing the details in. Security is at the payload layer (PBKDF2-derived AES-256-GCM keyed
   by the out-of-band pairing code — the QR is out-of-band too, never on the wire), not the transport.
   State is driven by
-  [`lib/providers/sync_provider.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/sync_provider.dart)
+  [`lib/providers/sync_provider.dart`](../lib/providers/sync_provider.dart)
   and the UI by
-  [`lib/screens/sync_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/sync_screen.dart)
+  [`lib/screens/sync_screen.dart`](../lib/screens/sync_screen.dart)
   with the host's tabbed send UI in
-  [`lib/screens/send_to_device_screen.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/send_to_device_screen.dart).
+  [`lib/screens/send_to_device_screen.dart`](../lib/screens/send_to_device_screen.dart).
   The host holds the connection open after a peer authenticates and the **sender chooses what to
   share**: a Full Sync (all accounts, groups, and the syncable settings — theme, auto-lock, and sync
   idle timeout — via `SettingsProvider.syncableSettingsSnapshot`) to a fresh device, or a selective
@@ -325,16 +325,16 @@ Migration history:
 - Additional runners: iOS and Windows runners are present, but Android is the primary documented
   release target today
 - Obfuscation: should be enabled explicitly for production release builds with
-  `--obfuscate --split-debug-info=build/symbols/android-prod-2.4.0+1/` for the current Android prod release
+  `--obfuscate --split-debug-info=build/symbols/android-prod/` for the current Android prod release
 
 ---
 
 ## 16. UI System
 
 - Theme source of truth:
-  [`lib/utils/theme.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/utils/theme.dart)
+  [`lib/utils/theme.dart`](../lib/utils/theme.dart)
 - Design tokens location: colors, spacing, and themed component styles currently live in
-  [`lib/utils/theme.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/utils/theme.dart)
+  [`lib/utils/theme.dart`](../lib/utils/theme.dart)
 - Shared widget strategy: reusable components live under `lib/widgets/`
 - Accessibility expectations:
   - Minimum touch target: 48 x 48 dp on mobile
@@ -350,7 +350,7 @@ Migration history:
 - Log file location: none
 - Log rotation policy: none
 - Verbose logging gate:
-  [`lib/config/app_flavor_config.dart`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/config/app_flavor_config.dart)
+  [`lib/config/app_flavor_config.dart`](../lib/config/app_flavor_config.dart)
   via `AppFlavorConfig.enableVerboseLogging`
 - Sensitive data policy: secrets, keys, recovery data, and decrypted payloads must never be logged
 
@@ -422,7 +422,7 @@ test/
   Mitigation: Keep failures local, show safe UI errors, and add global error capture if crash
   reporting or fatal-state handling is introduced.
 - Risk: Release-only hardening and offline verification still depend on manual checklist discipline.
-  Mitigation: Follow [`docs/release_process.md`](/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/docs/release_process.md)
+  Mitigation: Follow [`release_process.md`](release_process.md)
   for production builds and add automation over time.
 
 ---

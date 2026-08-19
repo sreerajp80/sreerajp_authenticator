@@ -237,7 +237,7 @@ server or internet involved in any of them.
   (`mailto:` link).
 - **Dev vs Prod build flavors**: a small "DEV"/"PROD" banner is shown on
   screen so it's obvious which build is running.
-- **Config-driven About info**: the app name, description (canonical: *"Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption."*), version (`2.7.11`), build number (`20`), and the About screen's "Developer" list (Author, Email, License,
+- **Config-driven About info**: the app name, description (canonical: *"Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption."*), version (`2.8.2`), build number (`23`), and the About screen's "Developer" list (Author, Email, License,
   AI tools used, IDE used) are not hardcoded in Dart — they're read at
   runtime from `assets/config/app_config.json` by
   `lib/services/config_service.dart`. If that file is missing or invalid,
