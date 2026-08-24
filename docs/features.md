@@ -1,11 +1,10 @@
-# SreerajP Authenticator — Feature Reference
+# Feature Reference — SreerajP Authenticator
 
 This file is a full list of what this app is and what it can do today. It is
 meant to be given to an LLM (or a person) as ground truth, so they can check
 "does this app already have X" before adding a new feature to another app.
 
-Keep this file in sync when features change. If you add, remove, or change a
-feature, update this file in the same change.
+[Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [architecture.md](architecture.md)
 
 ---
 

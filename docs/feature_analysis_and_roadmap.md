@@ -24,19 +24,23 @@ Before introducing new capabilities, the existing codebase architecture in [`lib
 
 ```
 lib/
-├── config/              # App flavor configuration (dev vs prod)
-├── models/              # Data models: Account (TOTP/HOTP) and Group
-├── providers/           # State management via Provider (Account, Group, Sync, Settings)
-├── screens/             # UI routes (Home, Lock, Security, Backup, P2P Sync, QR Scan)
+├── config/              # App flavor configuration and AppConfig
+├── models/              # Data models: Account (with multi-tagging and brand icon integration)
+├── providers/           # State management via Provider (AccountProvider, SettingsProvider, ThemeProvider)
+├── screens/             # UI routes (Home, Lock, Security, Backup, Sync, Appearance, Help, Tag Management)
 ├── services/            # Core business logic:
 │   ├── auth_service.dart          # Local Authentication, App PIN, Biometrics, Recovery Key
-│   ├── database_service.dart      # SQLite database initialization & migrations
+│   ├── brand_icon_service.dart    # Offline vector brand icon mapping
+│   ├── config_service.dart        # Dynamic app_config.json loader
+│   ├── database_service.dart      # SQLite database initialization & migrations (schema v4)
+│   ├── device_state_service.dart  # Native platform method channel queries
 │   ├── encryption_service.dart    # AES-256-GCM & PBKDF2 cryptography
 │   ├── export_import_service.dart # Password-protected .aes file backup & restore
 │   ├── migration_service.dart     # Legacy XOR/AES-CBC secret migration
-│   ├── otp_service.dart           # RFC 4226 (HOTP) & RFC 6238 (TOTP) code generation
+│   ├── optical_sync_service.dart  # Animated QR stream air-gap encoder & decoder
+│   ├── otp_service.dart           # TOTP, HOTP, Steam Guard, Blizzard, YubiKey, mOTP engines
 │   └── p2p_sync_service.dart      # Encrypted socket LAN transfer with out-of-band PIN/QR
-└── widgets/             # Reusable UI widgets (AccountTile, CountdownRing, SearchBar)
+└── widgets/             # Reusable UI widgets organized by feature (account_tile, add_account, home)
 ```
 
 ---

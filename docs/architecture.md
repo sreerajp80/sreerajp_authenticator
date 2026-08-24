@@ -79,10 +79,10 @@ lib/
 | Path | Responsibility |
 |------|----------------|
 | `lib/config/` | Flavor parsing and app-environment metadata |
-| `lib/models/` | Account and group data models and mapping |
-| `lib/providers/` | App state, lock policy, filtering, and theme state |
+| `lib/models/` | Account data model and mapping with multi-tag support |
+| `lib/providers/` | App state, lock policy, filtering, sort order, and theme state |
 | `lib/screens/` | Route-level UI and user flows |
-| `lib/services/` | OTP, crypto, auth, migration, backup/import, and database logic |
+| `lib/services/` | OTP, crypto, auth, migration, backup/import, brand icons, and database logic |
 | `lib/widgets/` | Reusable UI pieces shared by screens |
 | `lib/utils/` | Constants, theme definitions, and shared helper content |
 
@@ -106,7 +106,7 @@ Deferred initialization:
 - `SettingsProvider` loads persisted settings lazily after `runApp`.
 - Database opening is lazy in [`lib/services/database_service.dart`](../lib/services/database_service.dart).
 - Encryption-key bootstrap is lazy in [`lib/services/encryption_service.dart`](../lib/services/encryption_service.dart).
-- Accounts and groups load only after settings initialization and only when the app is not locked.
+- Accounts load only after settings initialization and only when the app is not locked.
 
 ---
 
@@ -134,7 +134,7 @@ Primary lifecycle handling is implemented in [`lib/main.dart`](../lib/main.dart)
   for display). `INTERNET` is also present in debug/profile manifests for tooling. The app has no
   app-owned backend and makes no internet/HTTP requests.
 - **Offline data sources**:
-  - `sqflite` for accounts and groups
+  - `sqflite` for encrypted accounts and tags
   - `SharedPreferences` for non-secret settings
   - `flutter_secure_storage` for keys, PIN hashes, and recovery material
   - Temporary files for export/share flows
@@ -154,12 +154,12 @@ Implications:
 
 - Primary pattern: `Provider`
 - Why this pattern was chosen:
-  - The app has a small number of app-wide state domains: settings, accounts, groups, and theme.
+  - The app has a small number of app-wide state domains: settings, accounts, and theme.
   - `ChangeNotifier`-based providers are sufficient and keep the app wiring simple.
 - State boundaries:
   - Widgets own: form inputs, visual expansion state, loading indicators, and local interaction state
-  - Providers own: lock state, theme mode, account/group collections, filtering, sort, and import state
-  - Services own: OTP generation, encryption, persistence, migrations, authentication, and backup logic
+  - Providers own: lock state, theme mode, account collections, tag filtering, sort, and import state
+  - Services own: OTP generation, encryption, persistence, migrations, authentication, brand icons, and backup logic
 
 ---
 
@@ -207,7 +207,7 @@ Current state:
 
 ### Current Schema Version
 
-SQLite schema version: `2`
+SQLite schema version: `4`
 
 Migration history:
 
@@ -215,27 +215,26 @@ Migration history:
 |---------|---------------|
 | 1 | Initial schema with `accounts` and `groups` tables |
 | 2 | Added `groups.icon` and `groups.createdAt` |
+| 3 | Added `accounts.tags` text column |
+| 4 | Migrated group membership to account tags and dropped legacy `groups` table |
 
 ### Core Models Or Entities
 
 | Type | Purpose | Mutable? | Notes |
 |------|---------|----------|-------|
-| `Account` | Stores OTP account metadata and the encrypted secret | `Yes` | Supports TOTP and HOTP, issuer, algorithm, digits, period, grouping, and ordering |
-| `Group` | Stores UI grouping metadata for accounts | `Yes` | Includes name, description, color, icon, sort order, and optional timestamp |
+| `Account` | Stores OTP account metadata and the encrypted secret | `Yes` | Supports TOTP, HOTP, Steam Guard, Blizzard, YubiKey, mOTP, issuer, algorithm, digits, period, multi-tagging, and ordering |
 
 ### Serialization Strategy
 
 - JSON models: `yes`
 - Database models: `yes`
-- Separate domain entities from transport models: `no`; the same `Account` and `Group` models are
-  used for DB mapping and backup/import JSON
+- Separate domain entities from transport models: `no`; the `Account` model is used for DB mapping and backup/import JSON
 
 ### Database Indexes
 
 | Table | Indexed Columns | Reason |
 |-------|----------------|--------|
 | `accounts` | none explicit | Current queries are simple and use sort order plus created timestamp |
-| `groups` | none explicit | Current queries are simple and use sort order plus name |
 
 ---
 
@@ -245,8 +244,7 @@ Migration history:
 - App-root dependencies:
   - `ThemeProvider`
   - `SettingsProvider`
-  - `GroupsProvider`
-  - `AccountsProvider`
+  - `AccountProvider`
 - Test replacement strategy:
   - Platform-channel mocks for `flutter_secure_storage`
   - In-memory or test-path `sqflite` databases
@@ -380,7 +378,7 @@ test/
 
 - RFC-based HOTP/TOTP generation and parsing
 - Encryption round-trips and legacy format decryption
-- SQLite schema migration from version 1 to 2
+- SQLite schema migration from version 1 to 4
 - App lock, recovery-key, and lockout behavior
 - Encrypted backup/import flows and duplicate-handling logic
 - Root routing behavior when the app is locked vs unlocked

@@ -30,6 +30,7 @@ Read it before making any change. See the docs table below for full detail.
 | `docs/architecture.md` | Changing structure, screens, state, services, models, database schema |
 | `docs/security.md` | Touching permissions, biometrics, encryption, storage, logging, screen protection |
 | `docs/release_process.md` | Building a release, versioning (`pubspec.yaml`), keystore signing, obfuscation |
+| `docs/features.md` | Understanding existing capabilities, algorithms, and supported formats |
 | `docs/workflow_rules.md` | Proposing changes, approval workflow, writing plans and change logs |
 | `docs/dependencies.md` | Adding or evaluating external packages and dependency constraints |
 | `docs/project_structure.md` | Navigating directory trees and path responsibility boundaries |
@@ -54,7 +55,7 @@ Read it before making any change. See the docs table below for full detail.
 - Layout: Tier 1 layer-first under `lib/` (`config/`, `models/`, `providers/`, `screens/`, `services/`, `utils/`, `widgets/`, `main.dart`). Do not restructure without instruction.
 - Layer boundaries: Widgets must not execute raw SQL, manage encryption keys, or handle file paths directly. Services must not depend on `BuildContext` or navigation routes.
 - Dependency direction: `screens → providers → services → database/secure_storage → models`.
-- Models are immutable data classes (`Account`, `Group`). Never mutate model properties in place.
+- Models are immutable data classes (`Account` with tag-based organization). Never mutate model properties in place.
 
 ---
 

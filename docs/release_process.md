@@ -15,7 +15,7 @@ This document describes the step-by-step build, versioning, signing, obfuscation
 - Repository version source of truth:
   - [`pubspec.yaml`](../pubspec.yaml)
 - Current app version:
-  - `2.8.2+23`
+  - `2.9.2+26`
 
 ---
 
