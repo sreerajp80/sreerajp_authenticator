@@ -1,4 +1,8 @@
+import java.io.File
+import java.io.FileInputStream
+import java.time.LocalDate
 import java.util.Properties
+import org.gradle.api.GradleException
 
 plugins {
     id("com.android.application")
@@ -12,6 +16,65 @@ val keystorePropertiesFile = rootProject.file("key.properties")
 
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    FileInputStream(localPropertiesFile).use(localProperties::load)
+}
+
+val flutterSdkPath = localProperties.getProperty("flutter.sdk")
+    ?: System.getenv("FLUTTER_ROOT")
+    ?: throw GradleException(
+        "Flutter SDK path not found. Set flutter.sdk in android\\local.properties or FLUTTER_ROOT."
+    )
+
+val isWindowsHost = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
+val dartExecutable = File(
+    flutterSdkPath,
+    if (isWindowsHost) "bin\\dart.bat" else "bin/dart",
+)
+val projectRootDir = rootProject.projectDir.parentFile
+
+val generateBuildMetadata = tasks.register("generateBuildMetadata") {
+    group = "build setup"
+    description = "Generates About-screen build metadata before Android builds."
+
+    inputs.file(projectRootDir.resolve("pubspec.yaml"))
+    inputs.file(projectRootDir.resolve("tool/generate_app_version.dart"))
+    inputs.file(projectRootDir.resolve("tool/generate_build_date.dart"))
+    inputs.property("metadataBuildDate", LocalDate.now().toString())
+    outputs.file(projectRootDir.resolve("lib/utils/app_version.g.dart"))
+    outputs.file(projectRootDir.resolve("lib/utils/build_date.g.dart"))
+
+    doLast {
+        if (!dartExecutable.exists()) {
+            throw GradleException(
+                "Could not find Dart executable at ${dartExecutable.absolutePath}. " +
+                    "Check android\\local.properties flutter.sdk or FLUTTER_ROOT."
+            )
+        }
+
+        project.exec {
+            workingDir = projectRootDir
+            commandLine(dartExecutable.absolutePath, "run", "tool/generate_app_version.dart")
+        }
+        project.exec {
+            workingDir = projectRootDir
+            commandLine(dartExecutable.absolutePath, "run", "tool/generate_build_date.dart")
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn(generateBuildMetadata)
+}
+
+tasks.matching { task ->
+    task.name.startsWith("compileFlutterBuild")
+}.configureEach {
+    dependsOn(generateBuildMetadata)
 }
 
 android {

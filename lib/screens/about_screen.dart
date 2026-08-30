@@ -10,6 +10,7 @@ import '../config/app_config.dart';
 import '../config/app_flavor_config.dart';
 import '../providers/settings_provider.dart';
 import '../services/config_service.dart';
+import '../utils/build_date.g.dart';
 import '../utils/constants.dart';
 
 class AboutScreen extends StatefulWidget {
@@ -200,6 +201,13 @@ class _AboutScreenState extends State<AboutScreen> {
                                   _packageInfo?.packageName ??
                                       AppFlavorConfig.instance.appName,
                                 ),
+                              ),
+                              const Chip(
+                                avatar: Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(kBuildDate),
                               ),
                             ],
                           ),
