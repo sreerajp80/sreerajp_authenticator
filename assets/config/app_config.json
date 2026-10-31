@@ -1,13 +1,39 @@
 {
-  "appName": "SreerajP Authenticator",
-  "description": "Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption.",
-  "version": "2.9.3",
-  "build": "27",
+  "appName": {
+    "en": "Sreeraj P Authenticator",
+    "ml": "ശ്രീരാജ് പി പ്രമാണീകാരി",
+    "sa": "श्रीराज पी प्रमाणीकारकः"
+  },
+  "description": {
+    "en": "Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption.",
+    "ml": "സ്വകാര്യതയ്ക്ക് മുൻഗണന നൽകി ഓഫ്‌ലൈനായി പ്രവർത്തിക്കുന്ന TOTP/HOTP പ്രാമാണീകരണ ആപ്പ്; AES-256-GCM എൻക്രിപ്ഷനോടെ സുരക്ഷിതമായ നിലവറ.",
+    "sa": "गोपनीयताप्रधानम् अन्तर्जालं विना कार्यक्षमं TOTP/HOTP प्रमाणीकरणसाधनम्, AES-256-GCM गूढलेखनेन सुरक्षितकोशयुक्तम्।"
+  },
+  "version": "2.10.1",
+  "build": "29",
   "details": {
-    "Author": "Sreeraj P",
-    "Email": "sreerajp@zohomail.in",
-    "License": "All libraries used are open source (MIT License).",
-    "AI used": "Anthropic Claude, Gemini",
-    "IDE used": "VS Code / Android Studio"
+    "author": {
+      "en": "Sreeraj P",
+      "ml": "ശ്രീരാജ് പി",
+      "sa": "श्रीराज पी"
+    },
+    "email": "sreerajp@zohomail.in",
+    "website": "https://github.com/sreerajp80/sreerajp_authenticator",
+    "privacyPolicy": "https://github.com/sreerajp80/sreerajp_authenticator/blob/main/PRIVACY.md",
+    "license": {
+      "en": "MIT License. All libraries used are open source.",
+      "ml": "MIT ലൈസൻസ്. ഉപയോഗിച്ച എല്ലാ ലൈബ്രറികളും ഓപ്പൺ സോഴ്സ് ആണ്.",
+      "sa": "MIT अनुज्ञापत्रम्। प्रयुक्ताः सर्वे तन्त्रांशग्रन्थाः मुक्तस्रोतसः।"
+    },
+    "aiUsed": {
+      "en": "Anthropic Claude, Gemini",
+      "ml": "Anthropic Claude, Gemini",
+      "sa": "Anthropic Claude, Gemini"
+    },
+    "ideUsed": {
+      "en": "VS Code / Android Studio",
+      "ml": "VS Code / Android Studio",
+      "sa": "VS Code / Android Studio"
+    }
   }
 }

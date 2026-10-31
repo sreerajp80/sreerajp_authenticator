@@ -1,6 +1,6 @@
 # Fix Optical Air-Gap Stream Back Navigation Bug
 
-**Status:** Approved & Implemented
+**Status:** completed
 
 ## Problem
 When pressing back from the Optical Air-Gap Stream screen, it displays the same screen with "Sync to another device" heading added above it. Two back buttons and two headings appear. Pressing back again goes to the settings screen.

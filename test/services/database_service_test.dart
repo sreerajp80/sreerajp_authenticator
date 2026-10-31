@@ -21,6 +21,47 @@ void main() {
     DatabaseService.testDbPath = null;
   });
 
+  // ─── HOTP counter ──────────────────────────────────────────────────────────
+
+  group('setHotpCounter', () {
+    Account make(String type, int? counter) => Account(
+      name: type,
+      secret: 'JBSWY3DPEHPK3PXP',
+      type: type,
+      counter: counter,
+      digits: 6,
+      period: 30,
+      algorithm: 'SHA1',
+    );
+
+    Future<int?> stored(int id) async =>
+        (await db.getAllAccounts()).firstWhere((a) => a.id == id).counter;
+
+    test('moves an HOTP counter', () async {
+      final id = await db.createAccount(make('hotp', 4));
+      expect(await db.setHotpCounter(id, 4, 5), 1);
+      expect(await stored(id), 5);
+    });
+
+    test('a null counter counts as 0', () async {
+      final id = await db.createAccount(make('hotp', null));
+      expect(await db.setHotpCounter(id, 0, 1), 1);
+      expect(await stored(id), 1);
+    });
+
+    test('a stale expected value changes nothing', () async {
+      final id = await db.createAccount(make('hotp', 4));
+      expect(await db.setHotpCounter(id, 3, 4), 0);
+      expect(await stored(id), 4);
+    });
+
+    test('never changes an account that is not HOTP', () async {
+      final id = await db.createAccount(make('totp', 1234));
+      expect(await db.setHotpCounter(id, 1234, 1235), 0);
+      expect(await stored(id), 1234);
+    });
+  });
+
   // ─── Account CRUD ──────────────────────────────────────────────────────────
 
   group('Account CRUD', () {

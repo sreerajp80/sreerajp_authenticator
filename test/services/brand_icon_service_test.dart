@@ -16,43 +16,40 @@ void main() {
       expect(BrandIconService.normalizeKey('Binance.US'), 'binance');
     });
 
-    test(
-      'getBrandIconPath returns correct brand SVG asset for exact and partial issuer matches',
-      () {
-        expect(
-          BrandIconService.getBrandIconPath('Google', 'user@gmail.com'),
-          'assets/icons/brands/google.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('GitHub', 'sreerajp'),
-          'assets/icons/brands/github.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('AWS', 'root'),
-          'assets/icons/brands/aws.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('Binance', 'crypto'),
-          'assets/icons/brands/binance.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('Discord', 'user'),
-          'assets/icons/brands/discord.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('ProtonMail', 'user@proton.me'),
-          'assets/icons/brands/proton.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('Nintendo', 'player'),
-          'assets/icons/brands/nintendo.svg',
-        );
-        expect(
-          BrandIconService.getBrandIconPath('Steam', 'gamer'),
-          'assets/icons/brands/steam.svg',
-        );
-      },
-    );
+    test('getBrandIconPath returns correct brand SVG asset for exact and partial issuer matches', () {
+      expect(
+        BrandIconService.getBrandIconPath('Google', 'user@gmail.com'),
+        'assets/icons/brands/google.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('GitHub', 'sreerajp'),
+        'assets/icons/brands/github.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('AWS', 'root'),
+        'assets/icons/brands/aws.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('Binance', 'crypto'),
+        'assets/icons/brands/binance.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('Discord', 'user'),
+        'assets/icons/brands/discord.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('ProtonMail', 'user@proton.me'),
+        'assets/icons/brands/proton.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('Nintendo', 'player'),
+        'assets/icons/brands/nintendo.svg',
+      );
+      expect(
+        BrandIconService.getBrandIconPath('Steam', 'gamer'),
+        'assets/icons/brands/steam.svg',
+      );
+    });
 
     test('getBrandIconPath matches from account name when issuer is null', () {
       expect(

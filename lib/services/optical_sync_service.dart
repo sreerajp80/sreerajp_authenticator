@@ -1,23 +1,113 @@
 // File Path: sreerajp_authenticator/lib/services/optical_sync_service.dart
 // Author: Sreeraj P
 // Description: Optical Air-Gap Sync engine powered by a Fountain Code (LT Matrix)
-//   chunking algorithm and IEEE 802.3 CRC32 verification. Encodes payload into an
-//   animated QR stream (12-15 FPS) and reconstructs out-of-order fragments offline.
+//   chunking algorithm and IEEE 802.3 CRC32 verification. The payload is sealed
+//   with AES-256-GCM (key from a one-time transfer code via PBKDF2) before it is
+//   chunked, so the animated QR stream (10-15 FPS) carries only ciphertext.
+//   Never logs the code, keys or payloads.
 
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart' as enc;
 
+import '../utils/constants.dart';
 import 'p2p_sync_service.dart';
 
+/// Why an optical sync step failed. The UI turns the code into localized
+/// text (services hold no UI text).
+enum OpticalSyncErrorCode {
+  invalidFrame,
+  unsupportedVersion,
+  corruptedChunk,
+  checksumMismatch,
+  emptyPayload,
+  incomplete,
+  integrityFailed,
+  wrongTransferCode,
+}
+
 /// Exception thrown when optical sync frame processing or reconstruction fails.
+/// [code] is what the UI shows (localized); [message] is English detail for
+/// logs and tests only.
 class OpticalSyncException implements Exception {
+  final OpticalSyncErrorCode code;
   final String message;
-  const OpticalSyncException(this.message);
+  const OpticalSyncException(this.code, this.message);
 
   @override
   String toString() => message;
+}
+
+/// AES-256-GCM seal / open for the optical stream. The key is a PBKDF2 stretch
+/// of the one-time transfer code (same settings as Wi-Fi sync).
+///
+/// Sealed layout: salt (16) | nonce (12) | ciphertext + GCM tag (16).
+class OpticalSyncCrypto {
+  static int get _headerSize =>
+      AppConstants.saltSize + AppConstants.gcmNonceSize;
+
+  /// New one-time transfer code (~59 bits), shown on the receiving device.
+  static String generateTransferCode() => P2pSyncService.generatePairingCode(
+    length: AppConstants.opticalTransferCodeLength,
+  );
+
+  /// Display form, e.g. ABCD-EFGH-JKMN.
+  static String formatTransferCode(String code) =>
+      P2pSyncService.formatPairingCode(
+        code,
+        group: AppConstants.opticalTransferCodeGroup,
+      );
+
+  /// Normalized code when [input] is a well-formed transfer code, else null.
+  static String? parseTransferCode(String input) {
+    final code = P2pSyncService.normalizeCode(input);
+    return code.length == AppConstants.opticalTransferCodeLength ? code : null;
+  }
+
+  /// Encrypt [payloadJson] with a key from [code]. Fresh salt and nonce.
+  static Uint8List seal(String payloadJson, String code) {
+    final salt = P2pSyncService.randomBytes(AppConstants.saltSize);
+    final key = P2pSyncService.deriveKey(code, salt);
+    final iv = enc.IV.fromSecureRandom(AppConstants.gcmNonceSize);
+    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
+    final ct = encrypter.encryptBytes(utf8.encode(payloadJson), iv: iv).bytes;
+    return Uint8List.fromList([...salt, ...iv.bytes, ...ct]);
+  }
+
+  /// Decrypt [sealed] with a key from [code]. A wrong code or any changed byte
+  /// fails the GCM tag check and throws [OpticalSyncErrorCode.wrongTransferCode].
+  static String open(Uint8List sealed, String code) {
+    if (sealed.length <= _headerSize) {
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.invalidFrame,
+        'Sealed payload too short',
+      );
+    }
+    final salt = sealed.sublist(0, AppConstants.saltSize);
+    final iv = enc.IV(sealed.sublist(AppConstants.saltSize, _headerSize));
+    final ct = enc.Encrypted(sealed.sublist(_headerSize));
+    final key = P2pSyncService.deriveKey(code, salt);
+    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
+    final List<int> plain;
+    try {
+      plain = encrypter.decryptBytes(ct, iv: iv);
+    } catch (_) {
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.wrongTransferCode,
+        'Decryption failed; check the transfer code',
+      );
+    }
+    try {
+      return utf8.decode(plain);
+    } on FormatException {
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.integrityFailed,
+        'Decrypted payload is not valid text',
+      );
+    }
+  }
 }
 
 /// CRC32 checksum helper (IEEE 802.3 polynomial).
@@ -86,16 +176,25 @@ class OpticalSyncFrame {
     try {
       decoded = jsonDecode(raw.trim());
     } catch (_) {
-      throw const OpticalSyncException('Not a valid optical sync frame');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.invalidFrame,
+        'Not a valid optical sync frame',
+      );
     }
 
     if (decoded is! Map<String, dynamic>) {
-      throw const OpticalSyncException('Malformed optical sync frame payload');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.invalidFrame,
+        'Malformed optical sync frame payload',
+      );
     }
 
     final version = decoded['v'] as int?;
-    if (version == null || version != 1) {
+    // Version 1 frames were plaintext; they are refused so plain secrets can
+    // never be imported.
+    if (version == null || version != AppConstants.opticalFrameVersion) {
       throw const OpticalSyncException(
+        OpticalSyncErrorCode.unsupportedVersion,
         'Unsupported optical sync frame version',
       );
     }
@@ -115,7 +214,10 @@ class OpticalSyncFrame {
         crc32 == null ||
         rawIndices == null ||
         payloadBase64 == null) {
-      throw const OpticalSyncException('Missing fields in optical sync frame');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.invalidFrame,
+        'Missing fields in optical sync frame',
+      );
     }
 
     final indices = rawIndices.cast<int>();
@@ -123,12 +225,18 @@ class OpticalSyncFrame {
     try {
       chunkData = base64.decode(payloadBase64);
     } catch (_) {
-      throw const OpticalSyncException('Corrupted chunk payload encoding');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.corruptedChunk,
+        'Corrupted chunk payload encoding',
+      );
     }
 
     final computedCrc = Crc32.compute(chunkData);
     if (computedCrc != crc32) {
-      throw const OpticalSyncException('Frame CRC32 checksum mismatch');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.checksumMismatch,
+        'Frame CRC32 checksum mismatch',
+      );
     }
 
     return OpticalSyncFrame(
@@ -144,26 +252,32 @@ class OpticalSyncFrame {
   }
 }
 
-/// Transmitter Fountain Code encoder. Splits JSON payload into fixed size
-/// chunks (128 bytes) and emits an infinite stream of systematic + parity frames.
+/// Transmitter Fountain Code encoder. Splits the sealed payload (see
+/// [OpticalSyncCrypto.seal]) into fixed size chunks (128 bytes) and emits an
+/// infinite stream of systematic + parity frames.
 class OpticalSyncEncoder {
   static const int defaultChunkSize = 128;
 
-  final String payloadJson;
   final int chunkSize;
   late final Uint8List _payloadBytes;
   late final int _totalChunks;
   late final String _sessionHash;
   late final List<Uint8List> _originalChunks;
 
-  OpticalSyncEncoder(this.payloadJson, {this.chunkSize = defaultChunkSize}) {
-    _payloadBytes = Uint8List.fromList(utf8.encode(payloadJson));
+  OpticalSyncEncoder(
+    Uint8List sealedPayload, {
+    this.chunkSize = defaultChunkSize,
+  }) {
+    _payloadBytes = Uint8List.fromList(sealedPayload);
     _totalChunks = (_payloadBytes.length / chunkSize).ceil();
     if (_totalChunks == 0) {
-      throw const OpticalSyncException('Payload cannot be empty');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.emptyPayload,
+        'Payload cannot be empty',
+      );
     }
 
-    // Compute session hash: first 8 hex characters of SHA-256
+    // Session hash: first 8 hex characters of SHA-256 of the ciphertext
     final hashBytes = sha256.convert(_payloadBytes).bytes;
     _sessionHash = hashBytes
         .sublist(0, 4)
@@ -194,7 +308,7 @@ class OpticalSyncEncoder {
       final chunk = _originalChunks[frameIndex];
       final crc = Crc32.compute(chunk);
       return OpticalSyncFrame(
-        version: 1,
+        version: AppConstants.opticalFrameVersion,
         sessionHash: _sessionHash,
         frameIndex: frameIndex,
         totalChunks: _totalChunks,
@@ -222,7 +336,7 @@ class OpticalSyncEncoder {
 
       final crc = Crc32.compute(parityChunk);
       return OpticalSyncFrame(
-        version: 1,
+        version: AppConstants.opticalFrameVersion,
         sessionHash: _sessionHash,
         frameIndex: frameIndex,
         totalChunks: _totalChunks,
@@ -367,25 +481,35 @@ class OpticalSyncDecoder {
     }
   }
 
-  /// Finalize reconstruction and return decoded JSON vault string.
-  /// Validates SHA-256 session hash against original payload.
-  String getReconstructedPayload() {
+  /// Finalize reconstruction and return the sealed payload bytes.
+  /// Validates the SHA-256 session hash against the reassembled bytes. Open the
+  /// result with [OpticalSyncCrypto.open], or use [getReconstructedPayload].
+  Uint8List getReconstructedSealed() {
     if (!isComplete) {
-      throw const OpticalSyncException('Reconstruction incomplete');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.incomplete,
+        'Reconstruction incomplete',
+      );
     }
 
     final totalBytes = BytesBuilder();
     for (var i = 0; i < _totalChunks; i++) {
       final chunk = _solvedChunks[i];
       if (chunk == null) {
-        throw const OpticalSyncException('Missing chunk in reconstruction');
+        throw const OpticalSyncException(
+          OpticalSyncErrorCode.incomplete,
+          'Missing chunk in reconstruction',
+        );
       }
       totalBytes.add(chunk);
     }
 
     final fullBytes = Uint8List.fromList(totalBytes.takeBytes());
     if (fullBytes.length < _payloadLength) {
-      throw const OpticalSyncException('Reconstructed payload truncated');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.incomplete,
+        'Reconstructed payload truncated',
+      );
     }
 
     final payloadBytes = fullBytes.sublist(0, _payloadLength);
@@ -398,13 +522,21 @@ class OpticalSyncDecoder {
         .join();
 
     if (checkHash != _activeSessionHash) {
-      throw const OpticalSyncException('Session hash integrity check failed');
+      throw const OpticalSyncException(
+        OpticalSyncErrorCode.integrityFailed,
+        'Session hash integrity check failed',
+      );
     }
 
-    final jsonStr = utf8.decode(payloadBytes, allowMalformed: false);
-    // Validate schema
-    P2pSyncService.validateAndParse(jsonStr);
+    return payloadBytes;
+  }
 
+  /// Reassemble, decrypt with [code], and validate the schema. Returns the
+  /// payload JSON. Runs PBKDF2, so the UI isolate should instead call
+  /// [getReconstructedSealed] and run [OpticalSyncCrypto.open] in an isolate.
+  String getReconstructedPayload(String code) {
+    final jsonStr = OpticalSyncCrypto.open(getReconstructedSealed(), code);
+    P2pSyncService.validateAndParse(jsonStr);
     return jsonStr;
   }
 }

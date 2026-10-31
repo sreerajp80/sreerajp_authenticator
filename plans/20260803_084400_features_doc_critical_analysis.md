@@ -1,9 +1,9 @@
 # Implementation Plan: Critical Analysis & Enhancement of docs/features.md
 
-**Status:** Proposed
+**Status:** dropped
 
 ## Target File
-- [docs/features.md](file:///l:/Android/SreerajP_Authenticator/docs/features.md)
+- [docs/features.md](../docs/features.md)
 
 ## Problem / Goal
 Perform a critical analysis of `docs/features.md` to ensure:

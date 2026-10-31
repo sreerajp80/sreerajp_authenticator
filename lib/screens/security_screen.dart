@@ -4,12 +4,21 @@
 // Last Modified: 2026 May 27
 // Description: Screen for configuring app PIN, phone lock quick unlock, and adaptive authentication
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
+import '../providers/account_provider.dart';
+import '../providers/locale_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/sync_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
+import '../services/clipboard_service.dart';
+import '../utils/constants.dart';
+import '../utils/screen_protection.dart';
+import '../widgets/pin_verification_dialog.dart';
 
 enum _UnlockMethodChoice { pin, phoneLock }
 
@@ -22,6 +31,9 @@ class SecurityScreen extends StatefulWidget {
 
 class _SecurityScreenState extends State<SecurityScreen> {
   final _authService = AuthService();
+
+  /// Localized strings. Read only while the screen is mounted.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
   bool _isPhoneLockAvailable = false;
   bool _isCheckingPhoneLock = true;
   bool _isLoading = false;
@@ -59,13 +71,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
           if (!pinSet || !mounted) return;
         } else {
           if (!_isPhoneLockAvailable) {
-            _showMessage(
-              'Phone Screen Lock is not available on this device',
-              isError: true,
-            );
+            _showMessage(_l10n.errorPhoneLockUnavailable, isError: true);
             return;
           }
-          final result = await _authService.authenticateWithPhoneLock();
+          final result = await _authService.authenticateWithPhoneLock(
+            reason: _l10n.descAuthReasonPhoneLock,
+          );
           if (!mounted) return;
           if (!result.isSuccess) {
             _showMessage(_mapQuickUnlockError(result), isError: true);
@@ -88,17 +99,17 @@ class _SecurityScreenState extends State<SecurityScreen> {
       if (!mounted) return;
       _showMessage(
         provider.hasPinSet
-            ? 'App lock enabled with App PIN'
-            : 'App lock enabled with Phone Screen Lock',
+            ? _l10n.descAppLockEnabledPin
+            : _l10n.descAppLockEnabledPhone,
       );
     } else {
       final confirmed = await _showConfirmDialog(
-        'Disable App Lock',
-        'Disabling app lock removes your App PIN, quick unlock preference, and recovery key.',
+        _l10n.titleDisableAppLock,
+        _l10n.descDisableAppLock,
       );
       if (confirmed && mounted) {
         await provider.setAppLockEnabled(false);
-        _showMessage('App lock disabled');
+        _showMessage(_l10n.descAppLockDisabled);
       }
     }
   }
@@ -107,15 +118,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
     return showDialog<_UnlockMethodChoice>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Choose Unlock Method'),
-        content: const Text(
-          'Pick how you want to unlock the app. App PIN is more secure; '
-          'Phone Screen Lock is more convenient.',
-        ),
+        title: Text(_l10n.titleChooseUnlockMethod),
+        content: Text(_l10n.descChooseUnlockMethod),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(_l10n.actionCancel),
           ),
           TextButton(
             onPressed: _isPhoneLockAvailable
@@ -124,12 +132,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     _UnlockMethodChoice.phoneLock,
                   )
                 : null,
-            child: const Text('Phone Screen Lock'),
+            child: Text(_l10n.actionPhoneLock),
           ),
           ElevatedButton(
             onPressed: () =>
                 Navigator.pop(dialogContext, _UnlockMethodChoice.pin),
-            child: const Text('App PIN'),
+            child: Text(_l10n.actionAppPin),
           ),
         ],
       ),
@@ -152,22 +160,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
         setState(() => _isLoading = false);
         await _showRecoveryKeyDialog(recoveryKey);
       }
-      if (mounted) _showMessage('App PIN enabled');
+      if (mounted) _showMessage(_l10n.descAppPinEnabled);
     } else {
       if (!provider.phoneLockQuickUnlockEnabled) {
-        _showMessage(
-          'Enable Phone Screen Lock first, or disable App Lock instead.',
-          isError: true,
-        );
+        _showMessage(_l10n.errorEnablePhoneLockFirst, isError: true);
         return;
       }
       final confirmed = await _showConfirmDialog(
-        'Remove App PIN',
-        'Your App PIN and recovery key will be deleted. You will unlock the app with Phone Screen Lock only.',
+        _l10n.titleRemoveAppPin,
+        _l10n.descRemoveAppPin,
       );
       if (!confirmed || !mounted) return;
       await provider.setAppLockPin(null);
-      _showMessage('App PIN removed');
+      _showMessage(_l10n.descAppPinRemoved);
     }
   }
 
@@ -177,26 +182,25 @@ class _SecurityScreenState extends State<SecurityScreen> {
   ) async {
     if (!value) {
       if (!provider.hasPinSet) {
-        _showMessage(
-          'Set an App PIN first, or disable App Lock instead.',
-          isError: true,
-        );
+        _showMessage(_l10n.errorSetAppPinFirst, isError: true);
         return;
       }
       await provider.setPhoneLockQuickUnlockEnabled(false);
-      _showMessage('Phone Screen Lock quick unlock disabled');
+      _showMessage(_l10n.descQuickUnlockDisabled);
       return;
     }
 
-    final result = await _authService.authenticateWithPhoneLock();
+    final result = await _authService.authenticateWithPhoneLock(
+      reason: _l10n.descAuthReasonPhoneLock,
+    );
     if (!mounted) return;
 
     if (result.isSuccess) {
       await provider.setPhoneLockQuickUnlockEnabled(true);
       _showMessage(
         provider.hasPinSet
-            ? 'Phone Screen Lock quick unlock enabled'
-            : 'Phone Screen Lock enabled',
+            ? _l10n.descQuickUnlockEnabled
+            : _l10n.descPhoneLockEnabled,
       );
       return;
     }
@@ -207,15 +211,15 @@ class _SecurityScreenState extends State<SecurityScreen> {
   String _mapQuickUnlockError(LocalAuthResult result) {
     switch (result.outcome) {
       case LocalAuthOutcome.notAvailable:
-        return 'Phone Screen Lock is not available on this device';
+        return _l10n.errorPhoneLockUnavailable;
       case LocalAuthOutcome.lockedOut:
-        return 'Phone Screen Lock is temporarily locked out';
+        return _l10n.errorPhoneLockLockedOut;
       case LocalAuthOutcome.canceled:
-        return 'Phone Screen Lock was canceled';
+        return _l10n.errorPhoneLockCanceled;
       case LocalAuthOutcome.failure:
-        return 'Phone Screen Lock verification failed';
+        return _l10n.errorPhoneLockFailed;
       case LocalAuthOutcome.error:
-        return 'Unable to verify Phone Screen Lock';
+        return _l10n.errorPhoneLockUnverified;
       case LocalAuthOutcome.success:
         return '';
     }
@@ -223,11 +227,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
   Future<void> _handleAutoLockTimeoutChange(SettingsProvider provider) async {
     final timeouts = {
-      'Immediately': 0,
-      '30 seconds': 30,
-      '1 minute': 60,
-      '5 minutes': 300,
-      '10 minutes': 600,
+      for (final seconds in const [0, 30, 60, 300, 600])
+        _getAutoLockTimeoutText(seconds): seconds,
     };
 
     final selected = await showDialog<int>(
@@ -235,7 +236,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
       builder: (context) {
         final currentTimeout = provider.autoLockTimeout;
         return SimpleDialog(
-          title: const Text('Auto-lock timeout'),
+          title: Text(_l10n.titleAutoLockTimeout),
           children: timeouts.entries.map((entry) {
             final isSelected = entry.value == currentTimeout;
             return ListTile(
@@ -261,7 +262,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
   }
 
   Future<void> _handleChangePIN(SettingsProvider provider) async {
-    final currentPin = await _showPinInputDialog('Enter Current App PIN');
+    final currentPin = await _showPinInputDialog(_l10n.titleCurrentPin);
     if (currentPin == null || !mounted) return;
 
     setState(() => _isLoading = true);
@@ -274,7 +275,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     }
 
     if (!verified) {
-      if (mounted) _showMessage('Incorrect App PIN', isError: true);
+      if (mounted) _showMessage(_l10n.errorPinIncorrect, isError: true);
       return;
     }
 
@@ -291,7 +292,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
     if (mounted) {
       await _showRecoveryKeyDialog(recoveryKey);
-      _showMessage('App PIN changed successfully');
+      _showMessage(_l10n.descAppPinChanged);
     }
   }
 
@@ -310,13 +311,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(isInitialSetup ? 'Set App PIN' : 'Change App PIN'),
+              title: Text(
+                isInitialSetup ? _l10n.titleSetAppPin : _l10n.titleChangeAppPin,
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'App PIN is required for app protection and all secret access.',
-                  ),
+                  Text(_l10n.descPinRequiredForProtection),
                   const SizedBox(height: 16),
                   TextField(
                     controller: pinController,
@@ -324,9 +325,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Enter App PIN (4-6 digits)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: _l10n.labelNewPin,
+                      helperText: _l10n.descPinDigitsHint,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -335,9 +337,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     obscureText: true,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm App PIN',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: _l10n.labelConfirmPin,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -347,7 +349,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   onPressed: isSaving
                       ? null
                       : () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
+                  child: Text(_l10n.actionCancel),
                 ),
                 ElevatedButton(
                   onPressed: isSaving
@@ -356,12 +358,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           if (pinController.text.length < 4) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: const Text(
-                                  'App PIN must be at least 4 digits',
-                                ),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
+                                content: Text(_l10n.errorPinTooShort),
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .error,
                               ),
                             );
                             return;
@@ -369,10 +369,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           if (pinController.text != confirmController.text) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: const Text('App PINs do not match'),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
+                                content: Text(_l10n.errorPinMismatch),
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .error,
                               ),
                             );
                             return;
@@ -395,7 +395,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           height: 22,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save App PIN'),
+                      : Text(_l10n.actionSavePin),
                 ),
               ],
             );
@@ -420,19 +420,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
           keyboardType: TextInputType.number,
           maxLength: 6,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'App PIN',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: _l10n.labelAppPin,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(_l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('OK'),
+            child: Text(_l10n.actionOk),
           ),
         ],
       ),
@@ -444,13 +444,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Recovery Key'),
+        title: Text(_l10n.titleRecoveryKey),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Save this recovery key in a safe place. It is the only way to regain access if you forget your App PIN.',
-              style: TextStyle(fontSize: 13),
+            Text(
+              _l10n.descRecoveryKeySave,
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 16),
             Container(
@@ -459,9 +459,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outline.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.outline
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: SelectableText(
@@ -478,15 +477,16 @@ class _SecurityScreenState extends State<SecurityScreen> {
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: recoveryKey));
+                ClipboardService.copySecret(
+                  recoveryKey,
+                  clearAfter: AppConstants.clipboardClearLong,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Recovery key copied to clipboard'),
-                  ),
+                  SnackBar(content: Text(_l10n.descRecoveryKeyCopied)),
                 );
               },
               icon: const Icon(Icons.copy, size: 18),
-              label: const Text('Copy'),
+              label: Text(_l10n.actionCopy),
             ),
             const SizedBox(height: 12),
             Row(
@@ -497,10 +497,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   color: Theme.of(context).colorScheme.error,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'This key will NOT be shown again.',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    _l10n.descRecoveryKeyOnce,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -510,7 +513,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('I\'ve saved it'),
+            child: Text(_l10n.actionSavedIt),
           ),
         ],
       ),
@@ -518,7 +521,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
   }
 
   Future<void> _handleResetRecoveryKey(SettingsProvider provider) async {
-    final currentPin = await _showPinInputDialog('Enter Current App PIN');
+    final currentPin = await _showPinInputDialog(_l10n.titleCurrentPin);
     if (currentPin == null || !mounted) return;
 
     setState(() => _isLoading = true);
@@ -535,13 +538,148 @@ class _SecurityScreenState extends State<SecurityScreen> {
     }
 
     if (!verified) {
-      if (mounted) _showMessage('Incorrect App PIN', isError: true);
+      if (mounted) _showMessage(_l10n.errorPinIncorrect, isError: true);
       return;
     }
 
     if (mounted) {
       await _showRecoveryKeyDialog(recoveryKey);
     }
+  }
+
+  Future<void> _handleBlockScreenshotsToggle(
+    bool value,
+    SettingsProvider settingsProvider,
+  ) async {
+    if (!value) {
+      final confirmed = await _showConfirmDialog(
+        _l10n.titleAllowScreenshots,
+        _l10n.descAllowScreenshotsWarning,
+      );
+      if (!confirmed) return;
+    }
+    try {
+      await settingsProvider.setBlockScreenshots(value);
+    } catch (_) {
+      _showMessage(_l10n.errorBlockScreenshotsFailed, isError: true);
+    }
+  }
+
+  /// App PIN if one is set, otherwise the phone lock. With neither, there is
+  /// nothing to check, so the warning needs a ticked box instead.
+  Future<void> _handleDeleteAllData(SettingsProvider settingsProvider) async {
+    final usePin =
+        settingsProvider.hasPinSet && settingsProvider.isAppLockEnabled;
+    final usePhoneLock =
+        !usePin && await _authService.isPhoneLockQuickUnlockAvailable();
+    if (!mounted) return;
+
+    final confirmed = await _showDeleteAllWarning(
+      requireTick: !usePin && !usePhoneLock,
+    );
+    if (!confirmed || !mounted) return;
+
+    // The phone-lock prompt must not lock the app halfway through.
+    settingsProvider.setBackupInProgress(true);
+    try {
+      if (usePin) {
+        final verified = await showPinVerificationDialog(
+          context: context,
+          purpose: _l10n.descPinPurposeDeleteAllData,
+          settingsProvider: settingsProvider,
+          authService: _authService,
+        );
+        if (!verified || !mounted) return;
+      } else if (usePhoneLock) {
+        final result = await _authService.authenticateWithPhoneLock(
+          reason: _l10n.descAuthReasonDeleteAllData,
+        );
+        if (!mounted) return;
+        if (result.outcome == LocalAuthOutcome.notAvailable) {
+          // The phone reported a lock, but it has none to check.
+          final ticked = await _showDeleteAllWarning(requireTick: true);
+          if (!ticked || !mounted) return;
+        } else if (!result.isSuccess) {
+          _showMessage(_mapQuickUnlockError(result), isError: true);
+          return;
+        }
+      }
+      await _deleteAllData(settingsProvider);
+    } finally {
+      settingsProvider.setBackupInProgress(false);
+    }
+  }
+
+  Future<void> _deleteAllData(SettingsProvider settingsProvider) async {
+    final accounts = context.read<AccountsProvider>();
+    final theme = context.read<ThemeProvider>();
+    final locales = context.read<LocaleProvider>();
+    final sync = context.read<SyncProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final deletedMessage = _l10n.descAllDataDeleted;
+
+    setState(() => _isLoading = true);
+    await sync.reset();
+    await ClipboardService.clearPendingSecret();
+    final success = await settingsProvider.deleteAllData();
+    await accounts.reloadAfterDataDelete();
+    await theme.reload();
+    locales.reload();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      navigator.popUntil((route) => route.isFirst);
+      messenger.showSnackBar(SnackBar(content: Text(deletedMessage)));
+    } else {
+      _showMessage(_l10n.errorDeleteAllDataFailed, isError: true);
+    }
+  }
+
+  Future<bool> _showDeleteAllWarning({required bool requireTick}) async {
+    var ticked = false;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(_l10n.titleDeleteAllData),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_l10n.descDeleteAllDataWarning),
+                if (requireTick)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(_l10n.descDeleteAllDataUnderstand),
+                    value: ticked,
+                    onChanged: (value) =>
+                        setDialogState(() => ticked = value ?? false),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(_l10n.actionCancel),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              onPressed: requireTick && !ticked
+                  ? null
+                  : () => Navigator.pop(dialogContext, true),
+              child: Text(_l10n.actionDeleteAll),
+            ),
+          ],
+        ),
+      ),
+    );
+    return result ?? false;
   }
 
   Future<bool> _showConfirmDialog(String title, String message) async {
@@ -553,11 +691,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(_l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm'),
+            child: Text(_l10n.actionConfirm),
           ),
         ],
       ),
@@ -576,10 +714,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
   }
 
   String _getAutoLockTimeoutText(int seconds) {
-    if (seconds == 0) return 'Immediately';
-    if (seconds < 60) return '$seconds seconds';
-    final minutes = seconds ~/ 60;
-    return '$minutes minute${minutes > 1 ? 's' : ''}';
+    if (seconds == 0) return _l10n.labelLockImmediately;
+    if (seconds < 60) return _l10n.labelSecondsCount(seconds);
+    return _l10n.labelMinutesCount(seconds ~/ 60);
   }
 
   @override
@@ -597,7 +734,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Security')),
+          appBar: AppBar(title: Text(_l10n.titleSecurity)),
           body: (_isCheckingPhoneLock || _isLoading)
               ? const Center(child: CircularProgressIndicator())
               : ListView(
@@ -605,7 +742,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text(
-                        'APP LOCK',
+                        _l10n.titleAppLockSection.toUpperCase(),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -621,10 +758,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       child: Column(
                         children: [
                           SwitchListTile(
-                            title: const Text('Enable App Lock'),
-                            subtitle: const Text(
-                              'Protect the app with your App PIN and optional Phone Screen Lock quick unlock',
-                            ),
+                            title: Text(_l10n.labelEnableAppLock),
+                            subtitle: Text(_l10n.descEnableAppLock),
                             value: settingsProvider.isAppLockEnabled,
                             onChanged: (value) =>
                                 _handleAppLockToggle(value, settingsProvider),
@@ -632,7 +767,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           if (settingsProvider.isAppLockEnabled) ...[
                             const Divider(height: 1),
                             ListTile(
-                              title: const Text('Auto-lock timeout'),
+                              title: Text(_l10n.titleAutoLockTimeout),
                               subtitle: Text(
                                 _getAutoLockTimeoutText(
                                   settingsProvider.autoLockTimeout,
@@ -652,7 +787,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                         child: Text(
-                          'APP PIN',
+                          _l10n.titleAppPinSection.toUpperCase(),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -668,11 +803,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         child: Column(
                           children: [
                             SwitchListTile(
-                              title: const Text('Use App PIN'),
+                              title: Text(_l10n.labelUseAppPin),
                               subtitle: Text(
                                 settingsProvider.hasPinSet
-                                    ? 'App PIN is set'
-                                    : 'Set a 4-6 digit PIN for app protection',
+                                    ? _l10n.descAppPinIsSet
+                                    : _l10n.descSetPinHint,
                               ),
                               value: settingsProvider.hasPinSet,
                               onChanged: (value) => _handleUseAppPinToggle(
@@ -683,17 +818,15 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             if (settingsProvider.hasPinSet) ...[
                               const Divider(height: 1),
                               ListTile(
-                                title: const Text('Change App PIN'),
-                                subtitle: const Text('Update your App PIN'),
+                                title: Text(_l10n.titleChangeAppPin),
+                                subtitle: Text(_l10n.descUpdateAppPin),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () => _handleChangePIN(settingsProvider),
                               ),
                               const Divider(height: 1),
                               ListTile(
-                                title: const Text('Reset Recovery Key'),
-                                subtitle: const Text(
-                                  'Generate a new recovery key for your App PIN',
-                                ),
+                                title: Text(_l10n.labelResetRecoveryKey),
+                                subtitle: Text(_l10n.descResetRecoveryKey),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () =>
                                     _handleResetRecoveryKey(settingsProvider),
@@ -706,7 +839,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                         child: Text(
-                          'PHONE SCREEN LOCK',
+                          _l10n.titlePhoneLockSection.toUpperCase(),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -720,13 +853,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           vertical: 8,
                         ),
                         child: SwitchListTile(
-                          title: const Text('Use Phone Screen Lock'),
+                          title: Text(_l10n.labelUsePhoneLock),
                           subtitle: Text(
                             !_isPhoneLockAvailable
-                                ? 'Phone Screen Lock is not available on this device'
+                                ? _l10n.errorPhoneLockUnavailable
                                 : settingsProvider.hasPinSet
-                                ? 'Optional quick unlock for opening the app'
-                                : 'Unlock the app with your Phone Screen Lock',
+                                ? _l10n.descPhoneLockOptional
+                                : _l10n.descPhoneLockOnly,
                           ),
                           value: settingsProvider.phoneLockQuickUnlockEnabled,
                           onChanged: _isPhoneLockAvailable
@@ -742,7 +875,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: Text(
-                            'LOCKDOWN',
+                            _l10n.titleLockdownSection.toUpperCase(),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -756,10 +889,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             vertical: 8,
                           ),
                           child: SwitchListTile(
-                            title: const Text('Lockdown Mode'),
-                            subtitle: const Text(
-                              'Disable quick unlock and require your App PIN until you turn this off',
-                            ),
+                            title: Text(_l10n.labelLockdownMode),
+                            subtitle: Text(_l10n.descLockdownMode),
                             value: settingsProvider.lockdownEnabled,
                             onChanged: (value) =>
                                 settingsProvider.setLockdownEnabled(value),
@@ -767,6 +898,65 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         ),
                       ],
                     ],
+                    if (isScreenProtectionSupported) ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          _l10n.titleScreenPrivacySection.toUpperCase(),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: SwitchListTile(
+                          title: Text(_l10n.labelBlockScreenshots),
+                          subtitle: Text(_l10n.descBlockScreenshots),
+                          value: settingsProvider.blockScreenshots,
+                          onChanged: (value) => _handleBlockScreenshotsToggle(
+                            value,
+                            settingsProvider,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        _l10n.titleDataSection.toUpperCase(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.delete_forever,
+                          color: theme.colorScheme.error,
+                        ),
+                        title: Text(
+                          _l10n.labelDeleteAllData,
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                        subtitle: Text(_l10n.descDeleteAllDataEntry),
+                        onTap: () => _handleDeleteAllData(settingsProvider),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     Card(
                       margin: const EdgeInsets.all(16),
@@ -786,8 +976,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                 Expanded(
                                   child: Text(
                                     settingsProvider.hasPinSet
-                                        ? 'Phone Screen Lock is optional quick unlock. App PIN is required for revealing secrets.'
-                                        : 'Phone Screen Lock is your only unlock method. Set an App PIN for stronger protection.',
+                                        ? _l10n.descInfoPhoneOptional
+                                        : _l10n.descInfoPhoneOnly,
                                     style: theme.textTheme.bodySmall,
                                   ),
                                 ),
@@ -795,20 +985,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Phone Screen Lock may use fingerprint, face, pattern, PIN, or password depending on your device.',
+                              _l10n.descInfoPhoneLockTypes,
                               style: theme.textTheme.bodySmall,
                             ),
-                            if (settingsProvider
-                                .needsMandatoryPinMigrationSync) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                'Finish your one-time App PIN setup from the lock screen before using the app normally.',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.error,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                       ),

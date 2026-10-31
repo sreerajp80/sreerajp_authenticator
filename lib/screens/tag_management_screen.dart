@@ -2,9 +2,13 @@
 // Author: Sreeraj P
 // Description: Screen for managing tags (viewing member counts, renaming tags across accounts, deleting tags)
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../providers/account_provider.dart';
+import '../utils/app_logger.dart';
 import '../utils/theme.dart';
 
 class TagManagementScreen extends StatefulWidget {
@@ -30,6 +34,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
     AccountsProvider provider,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: oldTag);
     final formKey = GlobalKey<FormState>();
 
@@ -37,23 +42,23 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Rename Tag'),
+          title: Text(l10n.titleRenameTag),
           content: Form(
             key: formKey,
             child: TextFormField(
               controller: controller,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Tag Name',
-                hintText: 'e.g. Work, Personal',
+              decoration: InputDecoration(
+                labelText: l10n.labelTagName,
+                hintText: l10n.descTagNameExample,
                 prefixText: '#',
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a tag name';
+                  return l10n.errorTagNameEmpty;
                 }
                 if (value.trim().toLowerCase() == oldTag.toLowerCase()) {
-                  return 'New tag name must be different';
+                  return l10n.errorTagNameSame;
                 }
                 return null;
               },
@@ -62,7 +67,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(l10n.actionCancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -70,7 +75,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                   Navigator.pop(dialogContext, controller.text.trim());
                 }
               },
-              child: const Text('Rename'),
+              child: Text(l10n.actionRename),
             ),
           ],
         );
@@ -82,14 +87,15 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
         await provider.renameTag(oldTag, newTag);
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Renamed #$oldTag to #$newTag'),
+            content: Text(l10n.descTagRenamed(oldTag, newTag)),
             duration: const Duration(seconds: 2),
           ),
         );
       } catch (e) {
+        AppLogger.error('Failed to rename tag', e);
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Failed to rename tag: $e'),
+            content: Text(l10n.errorRenameTagFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -104,20 +110,21 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
     AccountsProvider provider,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Tag'),
+          title: Text(l10n.titleDeleteTag),
           content: Text(
             memberCount > 0
-                ? 'Are you sure you want to remove tag "#$tag" from $memberCount account(s)?'
-                : 'Delete unused tag "#$tag"?',
+                ? l10n.descDeleteTagUsed(tag, memberCount)
+                : l10n.descDeleteTagUnused(tag),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.actionCancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -125,7 +132,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Delete'),
+              child: Text(l10n.actionDelete),
             ),
           ],
         );
@@ -137,14 +144,15 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
         await provider.deleteTag(tag);
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Deleted tag #$tag'),
+            content: Text(l10n.descTagDeleted(tag)),
             duration: const Duration(seconds: 2),
           ),
         );
       } catch (e) {
+        AppLogger.error('Failed to delete tag', e);
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Failed to delete tag: $e'),
+            content: Text(l10n.errorDeleteTagFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -156,9 +164,10 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Tags'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.titleManageTags), centerTitle: true),
       body: Consumer<AccountsProvider>(
         builder: (context, provider, _) {
           final allTags = provider.allAvailableTags;
@@ -176,10 +185,11 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                   controller: _searchController,
                   onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
-                    hintText: 'Search tags...',
+                    hintText: l10n.labelSearchTags,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
+                            tooltip: l10n.tooltipClearSearch,
                             icon: const Icon(Icons.clear),
                             onPressed: () {
                               _searchController.clear();
@@ -223,23 +233,27 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSummaryStat(
-                        context,
-                        label: 'Total Tags',
-                        value: '${allTags.length}',
-                        icon: Icons.label_outlined,
+                      Flexible(
+                        child: _buildSummaryStat(
+                          context,
+                          label: l10n.labelTotalTags,
+                          value: '${allTags.length}',
+                          icon: Icons.label_outlined,
+                        ),
                       ),
                       Container(
                         height: 28,
                         width: 1,
                         color: isDark ? Colors.white24 : Colors.black12,
                       ),
-                      _buildSummaryStat(
-                        context,
-                        label: 'Accounts Tagged',
-                        value:
-                            '${provider.accounts.where((a) => a.tags.isNotEmpty).length}',
-                        icon: Icons.shield_outlined,
+                      Flexible(
+                        child: _buildSummaryStat(
+                          context,
+                          label: l10n.labelAccountsTagged,
+                          value:
+                              '${provider.accounts.where((a) => a.tags.isNotEmpty).length}',
+                          icon: Icons.shield_outlined,
+                        ),
                       ),
                     ],
                   ),
@@ -265,8 +279,8 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                             const SizedBox(height: 12),
                             Text(
                               allTags.isEmpty
-                                  ? 'No tags found'
-                                  : 'No matching tags',
+                                  ? l10n.emptyNoTagsFound
+                                  : l10n.emptyNoMatchingTags,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: isDark
                                     ? Colors.grey.shade400
@@ -276,8 +290,8 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                             const SizedBox(height: 4),
                             Text(
                               allTags.isEmpty
-                                  ? 'Tags added to accounts will appear here'
-                                  : 'Try a different search query',
+                                  ? l10n.emptyTagsAppearHere
+                                  : l10n.emptyTryDifferentQuery,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? Colors.grey.shade500
@@ -338,7 +352,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                                 ),
                               ),
                               subtitle: Text(
-                                '$count account${count == 1 ? '' : 's'}',
+                                l10n.labelAccountCount(count),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -354,7 +368,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                                       Icons.edit_outlined,
                                       size: 20,
                                     ),
-                                    tooltip: 'Rename tag',
+                                    tooltip: l10n.tooltipRenameTag,
                                     onPressed: () => _showRenameDialog(
                                       context,
                                       tag,
@@ -367,7 +381,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                                       size: 20,
                                       color: Colors.redAccent,
                                     ),
-                                    tooltip: 'Delete tag',
+                                    tooltip: l10n.tooltipDeleteTag,
                                     onPressed: () => _showDeleteDialog(
                                       context,
                                       tag,
@@ -397,27 +411,34 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
   }) {
     final theme = Theme.of(context);
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 18, color: theme.colorScheme.primary),
         const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: theme.brightness == Brightness.dark
-                    ? Colors.grey.shade400
-                    : Colors.grey.shade600,
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-            ),
-          ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.grey.shade400
+                      : const Color(0xFF4B5563),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

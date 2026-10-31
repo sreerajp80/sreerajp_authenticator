@@ -1,12 +1,12 @@
 # Plan: Fix Home Screen Reorder Deprecation Warning
 
-**Status:** Approved
+**Status:** completed
 
 ## Context & Objective
-The IDE analysis surfaced a Flutter deprecation warning in [`lib/screens/home_screen.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/home_screen.dart#L442):
+The IDE analysis surfaced a Flutter deprecation warning in [`lib/screens/home_screen.dart`](../lib/screens/home_screen.dart#L442):
 `'onReorder' is deprecated and shouldn't be used. Use the onReorderItem callback instead.`
 
-We will update [`lib/screens/home_screen.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/home_screen.dart) to replace `onReorder` with `onReorderItem` (or update `onReorderItem` callback signature).
+We will update [`lib/screens/home_screen.dart`](../lib/screens/home_screen.dart) to replace `onReorder` with `onReorderItem` (or update `onReorderItem` callback signature).
 
 ---
 

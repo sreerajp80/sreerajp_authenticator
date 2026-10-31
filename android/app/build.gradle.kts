@@ -2,12 +2,14 @@ import java.io.File
 import java.io.FileInputStream
 import java.time.LocalDate
 import java.util.Properties
+import javax.inject.Inject
 import org.gradle.api.GradleException
+import org.gradle.process.ExecOperations
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // Kotlin is compiled by AGP itself (android.builtInKotlin=true in gradle.properties).
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -37,16 +39,21 @@ val dartExecutable = File(
 )
 val projectRootDir = rootProject.projectDir.parentFile
 
+// Gradle 9 removed project.exec; ExecOperations is the supported replacement.
+interface InjectedExecOps {
+    @get:Inject val execOps: ExecOperations
+}
+
 val generateBuildMetadata = tasks.register("generateBuildMetadata") {
     group = "build setup"
     description = "Generates About-screen build metadata before Android builds."
 
     inputs.file(projectRootDir.resolve("pubspec.yaml"))
-    inputs.file(projectRootDir.resolve("tool/generate_app_version.dart"))
     inputs.file(projectRootDir.resolve("tool/generate_build_date.dart"))
     inputs.property("metadataBuildDate", LocalDate.now().toString())
-    outputs.file(projectRootDir.resolve("lib/utils/app_version.g.dart"))
     outputs.file(projectRootDir.resolve("lib/utils/build_date.g.dart"))
+
+    val injected = project.objects.newInstance<InjectedExecOps>()
 
     doLast {
         if (!dartExecutable.exists()) {
@@ -56,11 +63,7 @@ val generateBuildMetadata = tasks.register("generateBuildMetadata") {
             )
         }
 
-        project.exec {
-            workingDir = projectRootDir
-            commandLine(dartExecutable.absolutePath, "run", "tool/generate_app_version.dart")
-        }
-        project.exec {
+        injected.execOps.exec {
             workingDir = projectRootDir
             commandLine(dartExecutable.absolutePath, "run", "tool/generate_build_date.dart")
         }
@@ -79,25 +82,22 @@ tasks.matching { task ->
 
 android {
     namespace = "in.sreerajp.sreerajp_authenticator"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler 13 needs 37; Flutter's default is still 36.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
     flavorDimensions += "environment"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "in.sreerajp.sreerajp_authenticator"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // minSdk 29 (Android 10) is recorded in docs/PROJECT_PROFILE.md §3.
+        minSdk = 29
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -108,11 +108,17 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            manifestPlaceholders["appName"] = "SreerajP Authenticator Dev"
         }
         create("prod") {
             dimension = "environment"
-            manifestPlaceholders["appName"] = "SreerajP Authenticator"
+        }
+    }
+
+    // Keep every language in the App Bundle: the in-app language picker needs
+    // them even when the device language is English (engineering standard §8.1).
+    bundle {
+        language {
+            enableSplit = false
         }
     }
 
@@ -179,6 +185,12 @@ afterEvaluate {
                 }
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17) // match compileOptions in android { }
     }
 }
 

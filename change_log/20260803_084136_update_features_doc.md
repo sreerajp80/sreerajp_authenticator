@@ -1,9 +1,9 @@
 # Change Log: Update docs/features.md Feature Reference & Inclusive App Description
 
-**Plan:** [plans/20260803_083619_update_features_doc.md](file:///l:/Android/SreerajP_Authenticator/plans/20260803_083619_update_features_doc.md)
+**Plan:** [plans/20260803_083619_update_features_doc.md](../plans/20260803_083619_update_features_doc.md)
 
 ## Summary of Changes
-Updated [docs/features.md](file:///l:/Android/SreerajP_Authenticator/docs/features.md) to ensure all features are thoroughly documented and aligned with the implementation in `lib/`:
+Updated [docs/features.md](../docs/features.md) to ensure all features are thoroughly documented and aligned with the implementation in `lib/`:
 
 1. **App Description**: Highlighted the canonical description from `assets/config/app_config.json` (*"Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption."*) in Section 1 and Section 7.
 2. **Account Description Field**: Documented the optional account `description` / notes field in Section 3 (Account Management).

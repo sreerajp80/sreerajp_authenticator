@@ -1,9 +1,9 @@
 # Plan: Update docs/features.md with Inclusive Description & Complete Feature List
 
-**Status:** Proposed / Pending Approval
+**Status:** completed
 
 ## Files to change
-- [docs/features.md](file:///l:/Android/SreerajP_Authenticator/docs/features.md)
+- [docs/features.md](../docs/features.md)
 
 ## Issue
 `docs/features.md` was missing key implementation details present in the codebase:

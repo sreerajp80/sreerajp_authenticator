@@ -7,11 +7,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:pointycastle/export.dart';
 
@@ -19,6 +19,32 @@ import '../models/account.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'encryption_service.dart';
+import 'p2p_sync_service.dart';
+
+/// The backup password is wrong or the file is damaged. The UI shows a
+/// localized message for it.
+class BackupPasswordException implements Exception {
+  const BackupPasswordException();
+
+  @override
+  String toString() => 'Invalid password or corrupted file';
+}
+
+/// The backup file is above [AppConstants.backupMaxFileBytes]. It was not read.
+class BackupFileTooLargeException implements Exception {
+  const BackupFileTooLargeException();
+
+  @override
+  String toString() => 'Backup file is too large';
+}
+
+/// The backup opened, but its content is malformed or above the import limits.
+class BackupContentException implements Exception {
+  const BackupContentException();
+
+  @override
+  String toString() => 'Backup content is not valid';
+}
 
 class ExportImportService {
   final _encryptionService = EncryptionService();
@@ -40,7 +66,7 @@ class ExportImportService {
         }),
       );
 
-      // Step 2: Convert to JSON (groups array is empty for format compatibility)
+      // Step 2: Convert to JSON
       final jsonData = _dataToJson(decryptedAccounts);
 
       // Step 3: Encrypt with user password
@@ -54,11 +80,7 @@ class ExportImportService {
       await file.writeAsString(encryptedData);
 
       final xFile = XFile(file.path);
-      final params = ShareParams(
-        files: [xFile],
-        subject: 'Authenticator Encrypted Backup',
-        text: 'Encrypted backup created on ${DateTime.now().toIso8601String()}',
-      );
+      final params = ShareParams(files: [xFile]);
       final result = await SharePlus.instance.share(params);
 
       return result.status == ShareResultStatus.success;
@@ -73,35 +95,61 @@ class ExportImportService {
   }
 
   // Import accounts from encrypted file.
-  // Returns parsed backup data map (with 'accounts' key),
-  // or null if import failed. Secrets are plaintext — the caller is
-  // responsible for encrypting with the device key.
+  // Returns parsed backup data map (with 'accounts' key), or null if the user
+  // cancelled the file picker. Throws [BackupPasswordException],
+  // [BackupFileTooLargeException] or [BackupContentException] on failure.
+  // Secrets are plaintext — the caller is responsible for encrypting with the
+  // device key.
   Future<Map<String, dynamic>?> importAccountsEncrypted(String password) async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['aes'],
-      );
+    final picked = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: ['aes'],
+    );
 
-      if (result == null || result.files.isEmpty) {
-        return null;
-      }
-
-      final file = File(result.files.single.path!);
-      final encryptedData = await file.readAsString();
-
-      // Step 1: Decrypt with user password
-      final jsonData = _decryptData(encryptedData, password);
-      if (jsonData == null) {
-        throw Exception('Invalid password or corrupted file');
-      }
-
-      // Step 2: Parse accounts
-      return _parseBackupJson(jsonData);
-    } catch (e) {
-      AppLogger.error('Failed to import encrypted backup', e);
+    if (picked == null) {
       return null;
     }
+
+    final path = picked.path;
+    if (path == null) {
+      throw const BackupPasswordException();
+    }
+
+    return readBackupFile(File(path), password);
+  }
+
+  /// Check the size of [file], then read, decrypt and validate it.
+  @visibleForTesting
+  Future<Map<String, dynamic>> readBackupFile(
+    File file,
+    String password,
+  ) async {
+    final String encryptedData;
+    try {
+      if (await file.length() > AppConstants.backupMaxFileBytes) {
+        throw const BackupFileTooLargeException();
+      }
+      encryptedData = await file.readAsString();
+    } on BackupFileTooLargeException {
+      rethrow;
+    } catch (e) {
+      // Not readable as text, so it is not a backup made by this app.
+      AppLogger.error('Failed to read backup file', e);
+      throw const BackupPasswordException();
+    }
+
+    // Step 1: Decrypt with user password
+    final jsonData = _decryptData(encryptedData, password);
+    if (jsonData == null) {
+      throw const BackupPasswordException();
+    }
+
+    // Step 2: Parse accounts
+    final parsed = _parseBackupJson(jsonData);
+    if (parsed == null) {
+      throw const BackupContentException();
+    }
+    return parsed;
   }
 
   String _dataToJson(List<Account> accounts) {
@@ -109,25 +157,17 @@ class ExportImportService {
       'version': AppConstants.backupVersion,
       'created': DateTime.now().toIso8601String(),
       'accounts': accounts.map((account) => account.toMap()).toList(),
-      // 'groups' kept as empty list for backward-compatible format readers.
-      'groups': <Map<String, dynamic>>[],
     };
 
     return jsonEncode(backup);
   }
 
   /// Parse backup JSON into a map with an 'accounts' list.
-  /// The legacy 'groups' key is accepted but ignored.
+  /// The same limits as Wi-Fi sync apply (account count, field length).
   Map<String, dynamic>? _parseBackupJson(String jsonData) {
     try {
-      final Map<String, dynamic> backup = jsonDecode(jsonData);
-      final List<dynamic> accountsJson = backup['accounts'] ?? [];
-
-      return {
-        'accounts': accountsJson
-            .map((json) => Account.fromMap(json as Map<String, dynamic>))
-            .toList(),
-      };
+      final parsed = P2pSyncService.validateAndParse(jsonData);
+      return {'accounts': parsed['accounts'] ?? <Account>[]};
     } catch (e) {
       AppLogger.error('Failed to parse backup JSON', e);
       return null;
@@ -163,63 +203,29 @@ class ExportImportService {
     return 'v3:$saltB64:${iv.base64}:${encrypted.base64}';
   }
 
-  // Supports all backup formats:
-  //   "v3:<salt>:<nonce>:<ciphertext>"  → PBKDF2 + AES-256-GCM (current)
-  //   "v2:<nonce>:<ciphertext>"         → SHA-256 key + AES-256-GCM (legacy)
-  //   "<iv>:<ciphertext>"               → SHA-256 key + AES-256-CTR/SIC (legacy)
+  // Reads the v3 format. Any other format returns null.
   String? _decryptData(String encryptedData, String password) {
     try {
-      if (encryptedData.startsWith('v3:')) {
-        final rest = encryptedData.substring(3);
-        final parts = rest.split(':');
-        if (parts.length != 3) return null;
+      if (!encryptedData.startsWith('v3:')) return null;
 
-        final salt = base64Decode(parts[0]);
-        final iv = encrypt.IV.fromBase64(parts[1]);
-        final encrypted = encrypt.Encrypted.fromBase64(parts[2]);
+      final rest = encryptedData.substring(3);
+      final parts = rest.split(':');
+      if (parts.length != 3) return null;
 
-        final keyBytes = _deriveKey(password, Uint8List.fromList(salt));
-        final key = encrypt.Key(keyBytes);
-        final encrypter = encrypt.Encrypter(
-          encrypt.AES(key, mode: encrypt.AESMode.gcm),
-        );
-        return encrypter.decrypt(encrypted, iv: iv);
-      } else if (encryptedData.startsWith('v2:')) {
-        final legacyKey = encrypt.Key.fromUtf8(_legacyPadPassword(password));
-        final rest = encryptedData.substring(3);
-        final parts = rest.split(':');
-        if (parts.length != 2) return null;
+      final salt = base64Decode(parts[0]);
+      final iv = encrypt.IV.fromBase64(parts[1]);
+      final encrypted = encrypt.Encrypted.fromBase64(parts[2]);
 
-        final iv = encrypt.IV.fromBase64(parts[0]);
-        final encrypted = encrypt.Encrypted.fromBase64(parts[1]);
-        final encrypter = encrypt.Encrypter(
-          encrypt.AES(legacyKey, mode: encrypt.AESMode.gcm),
-        );
-        return encrypter.decrypt(encrypted, iv: iv);
-      } else {
-        // Legacy CTR/SIC backup
-        final legacyKey = encrypt.Key.fromUtf8(_legacyPadPassword(password));
-        final parts = encryptedData.split(':');
-        if (parts.length != 2) return null;
-
-        final iv = encrypt.IV.fromBase64(parts[0]);
-        final encrypted = encrypt.Encrypted.fromBase64(parts[1]);
-        final encrypter = encrypt.Encrypter(
-          encrypt.AES(legacyKey, mode: encrypt.AESMode.sic),
-        );
-        return encrypter.decrypt(encrypted, iv: iv);
-      }
+      final keyBytes = _deriveKey(password, Uint8List.fromList(salt));
+      final key = encrypt.Key(keyBytes);
+      final encrypter = encrypt.Encrypter(
+        encrypt.AES(key, mode: encrypt.AESMode.gcm),
+      );
+      return encrypter.decrypt(encrypted, iv: iv);
     } catch (e) {
       AppLogger.error('Failed to decrypt backup payload', e);
       return null;
     }
-  }
-
-  // Kept only for decrypting old v2 and legacy backups.
-  String _legacyPadPassword(String password) {
-    final bytes = utf8.encode(password);
-    final hash = sha256.convert(bytes);
-    return hash.toString().substring(0, AppConstants.aesKeySize);
   }
 
   @visibleForTesting

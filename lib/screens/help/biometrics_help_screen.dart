@@ -2,8 +2,11 @@
 // Author: Sreeraj P
 // Description: User-facing guide for biometric authentication, device lock, PIN fallback, and auto-lock
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../../providers/settings_provider.dart';
 
 class BiometricsHelpScreen extends StatelessWidget {
@@ -13,6 +16,10 @@ class BiometricsHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        final appName = context.read<AppConfig>().appName.resolve(
+          Localizations.localeOf(context).languageCode,
+        );
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,58 +29,44 @@ class BiometricsHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Biometric & App Lock')),
+          appBar: AppBar(title: Text(l10n.helpLock01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'SreerajP Authenticator can guard your 2FA tokens behind your phone\'s biometric sensors (fingerprint / face unlock) or your device screen lock PIN.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpLock02(appName)),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.fingerprint_outlined,
-                title: 'How App Lock Works',
+                title: l10n.helpLock03,
                 children: [
                   _Bullet(
-                    'When enabled under Settings -> Security Settings, the app requires authentication whenever you open it or return from the background.',
+                    l10n.helpLock04(
+                      l10n.titleSettings,
+                      l10n.titleSecuritySettings,
+                    ),
                   ),
-                  _Bullet(
-                    'Decrypted OTP secrets are kept in volatile memory only while the app is active and unlocked.',
-                  ),
+                  _Bullet(l10n.helpLock05),
                 ],
               ),
 
               _Section(
                 icon: Icons.lock_clock_outlined,
-                title: 'Automatic Inactivity Lock',
-                children: [
-                  _Bullet(
-                    'Whenever you minimize the app, switch to another application, or lock your phone screen, the app immediately locks.',
-                  ),
-                  _Bullet(
-                    'Decrypted OTP seeds are purged from memory to prevent memory-dump attacks or unauthorized physical access.',
-                  ),
-                ],
+                title: l10n.helpLock06,
+                children: [_Bullet(l10n.helpLock07), _Bullet(l10n.helpLock08)],
               ),
 
               _Section(
                 icon: Icons.password_outlined,
-                title: 'Fallback & Device PIN',
+                title: l10n.helpLock09,
                 children: [
-                  _Bullet(
-                    'If biometric recognition fails (e.g. wet fingers or low lighting), you can authenticate with your device screen lock PIN, pattern, or password.',
-                  ),
-                  _Bullet(
-                    'Authentication is processed by the secure Android OS system framework. SreerajP Authenticator never sees or stores your biometric data or device passcode.',
-                  ),
+                  _Bullet(l10n.helpLock10),
+                  _Bullet(l10n.helpLock11(appName)),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: Ensure you have a secure screen lock configured in your Android System Settings for maximum biometric security.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpLock12),
             ],
           ),
         );

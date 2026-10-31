@@ -4,7 +4,7 @@
 // Last Modified: 2025 September 25
 // Description: A provider to manage and persist theme settings (light, dark, system) using SharedPreferences.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
@@ -23,6 +23,9 @@ class ThemeProvider extends ChangeNotifier {
     _themeMode = ThemeMode.values[themeIndex];
     notifyListeners();
   }
+
+  /// Read the saved theme again, after all app data was deleted.
+  Future<void> reload() => _loadTheme();
 
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;

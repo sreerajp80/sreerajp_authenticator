@@ -6,13 +6,16 @@
 
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../models/account.dart';
 import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
 import 'qr_scanner_screen.dart';
+import 'security_screen.dart';
 import '../services/auth_service.dart';
 import '../utils/app_logger.dart';
 import '../widgets/pin_verification_dialog.dart';
@@ -129,6 +132,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   Future<void> _handleSecretEdit() async {
     final settingsProvider = context.read<SettingsProvider>();
+    final l10n = AppLocalizations.of(context);
 
     // Check if app lock is enabled
     if (!settingsProvider.isAppLockEnabled) {
@@ -136,22 +140,22 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       await showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('App Lock Required'),
-          content: const Text(
-            'To edit the secret key, please enable app lock from Security settings first.',
-          ),
+          title: Text(l10n.titleAppLockRequired),
+          content: Text(l10n.descAppLockRequiredSecret),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('OK'),
+              child: Text(l10n.actionOk),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
-                // Navigate to security settings
-                Navigator.pushNamed(context, '/security');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SecurityScreen()),
+                );
               },
-              child: const Text('Go to Security'),
+              child: Text(l10n.actionOpenSecurity),
             ),
           ],
         ),
@@ -163,7 +167,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
     final verified = await showPinVerificationDialog(
       context: context,
-      purpose: 'view and edit secret key',
+      purpose: l10n.descPinPurposeViewSecret,
       settingsProvider: settingsProvider,
       authService: _authService,
     );
@@ -180,9 +184,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       // Show success feedback
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Secret key unlocked'),
-          duration: Duration(seconds: 1),
+        SnackBar(
+          content: Text(l10n.descSecretUnlocked),
+          duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -194,6 +198,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   Future<void> _handleAdvancedEdit() async {
     final settingsProvider = context.read<SettingsProvider>();
+    final l10n = AppLocalizations.of(context);
 
     // Check if app lock is enabled
     if (!settingsProvider.isAppLockEnabled) {
@@ -201,22 +206,22 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       await showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('App Lock Required'),
-          content: const Text(
-            'To edit advanced options, please enable app lock from Security settings first.',
-          ),
+          title: Text(l10n.titleAppLockRequired),
+          content: Text(l10n.descAppLockRequiredAdvanced),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('OK'),
+              child: Text(l10n.actionOk),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
-                // Navigate to security settings
-                Navigator.pushNamed(context, '/security');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SecurityScreen()),
+                );
               },
-              child: const Text('Go to Security'),
+              child: Text(l10n.actionOpenSecurity),
             ),
           ],
         ),
@@ -228,7 +233,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
     final verified = await showPinVerificationDialog(
       context: context,
-      purpose: 'view and edit advanced options',
+      purpose: l10n.descPinPurposeAdvanced,
       settingsProvider: settingsProvider,
       authService: _authService,
     );
@@ -243,9 +248,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       // Show success feedback
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Advanced settings unlocked'),
-          duration: Duration(seconds: 1),
+        SnackBar(
+          content: Text(l10n.descAdvancedUnlocked),
+          duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -266,6 +271,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   Future<void> _saveAccount() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
 
     final settingsProvider = context.read<SettingsProvider>();
 
@@ -289,14 +295,12 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         await showDialog(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: const Text('App Lock Required'),
-            content: const Text(
-              'To save changes to sensitive fields (secret key or advanced options), please enable app lock from Security settings first.',
-            ),
+            title: Text(l10n.titleAppLockRequired),
+            content: Text(l10n.descAppLockRequiredSave),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('OK'),
+                child: Text(l10n.actionOk),
               ),
             ],
           ),
@@ -307,13 +311,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       // If app lock is enabled and sensitive fields changed, require PIN
       if ((secretChanged || advancedChanged) &&
           settingsProvider.isAppLockEnabled) {
-        final changes = <String>[];
-        if (secretChanged) changes.add('secret key');
-        if (advancedChanged) changes.add('advanced settings');
-
         final verified = await showPinVerificationDialog(
           context: context,
-          purpose: 'save changes to ${changes.join(' and ')}',
+          purpose: l10n.descPinPurposeSaveChanges,
           settingsProvider: settingsProvider,
           authService: _authService,
         );
@@ -384,9 +384,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         }
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account updated successfully')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.descAccountUpdated)));
       } else {
         // ADDING new account
         final tagsList = _tagsController.text
@@ -413,9 +412,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         await provider.addAccount(account);
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account added successfully')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.descAccountAdded)));
       }
 
       // Navigate back after showing message
@@ -423,10 +421,12 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
+      // Log the cause; show the user a friendly message, never raw error text.
+      AppLogger.error('Failed to save account', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving account: $e'),
+            content: Text(l10n.errorSaveAccountFailed),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -444,19 +444,20 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       return null;
     }
 
+    final l10n = AppLocalizations.of(context);
     if (value == null || value.isEmpty) {
-      return 'Secret key is required';
+      return l10n.errorSecretRequired;
     }
 
     final cleaned = value.replaceAll(' ', '').replaceAll('=', '').toUpperCase();
     final base32Regex = RegExp(r'^[A-Z2-7]+$');
 
     if (!base32Regex.hasMatch(cleaned)) {
-      return 'Invalid secret key. Must be Base32 encoded';
+      return l10n.errorSecretNotBase32;
     }
 
     if (cleaned.length < 16) {
-      return 'Secret key is too short';
+      return l10n.errorSecretTooShort;
     }
 
     return null;
@@ -465,6 +466,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.accountToEdit != null;
+    final l10n = AppLocalizations.of(context);
     final settingsProvider = context.watch<SettingsProvider>();
     final accountsProvider = context.watch<AccountsProvider>();
 
@@ -474,7 +476,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Account' : 'Add Account'),
+        title: Text(isEditing ? l10n.titleEditAccount : l10n.titleAddAccount),
         actions: [
           if (!isEditing)
             IconButton(
@@ -485,7 +487,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   MaterialPageRoute(builder: (_) => const QrScannerScreen()),
                 );
               },
-              tooltip: 'Scan QR Code',
+              tooltip: l10n.tooltipScanQr,
             ),
         ],
       ),
@@ -560,7 +562,11 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   ElevatedButton.icon(
                     onPressed: _saveAccount,
                     icon: const Icon(Icons.save),
-                    label: Text(isEditing ? 'Update Account' : 'Add Account'),
+                    label: Text(
+                      isEditing
+                          ? l10n.actionUpdateAccount
+                          : l10n.actionAddAccount,
+                    ),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(

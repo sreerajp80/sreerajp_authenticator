@@ -2,8 +2,11 @@
 // Author: Sreeraj P
 // Description: User-facing guide for getting started, adding 2FA accounts, QR scanning, and manual setup
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../../providers/settings_provider.dart';
 
 class GettingStartedHelpScreen extends StatelessWidget {
@@ -13,6 +16,10 @@ class GettingStartedHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        final appName = context.read<AppConfig>().appName.resolve(
+          Localizations.localeOf(context).languageCode,
+        );
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,70 +29,46 @@ class GettingStartedHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Getting Started')),
+          appBar: AppBar(title: Text(l10n.helpStart01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'SreerajP Authenticator generates two-factor authentication (2FA) codes to secure your online accounts. All codes are generated locally on your device without an internet connection.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpStart02(appName)),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.qr_code_scanner_outlined,
-                title: 'Adding an Account via QR Code',
+                title: l10n.helpStart03,
                 children: [
-                  _Bullet(
-                    'On your service provider (e.g., Google, GitHub, Amazon), navigate to Security or 2FA settings and choose "Set up Authenticator App".',
-                  ),
-                  _Bullet(
-                    'In SreerajP Authenticator, tap the "+" floating action button on the home screen and select "Scan QR Code".',
-                  ),
-                  _Bullet(
-                    'Point your camera at the QR code displayed on your computer or secondary screen. The account will be verified and added instantly.',
-                  ),
+                  _Bullet(l10n.helpStart04),
+                  _Bullet(l10n.helpStart05(appName, l10n.labelQrScanner)),
+                  _Bullet(l10n.helpStart06),
                 ],
               ),
 
               _Section(
                 icon: Icons.edit_note_outlined,
-                title: 'Adding an Account Manually',
+                title: l10n.helpStart07,
                 children: [
-                  _Bullet(
-                    'If you cannot scan a QR code, choose "Enter Key Manually" from the add account menu.',
-                  ),
-                  _Bullet(
-                    'Enter the Account Name (e.g., your email or username) and Issuer (e.g., GitHub, Google).',
-                  ),
-                  _Bullet(
-                    'Paste the Secret Key (Base32 format) provided by your service.',
-                  ),
-                  _Bullet(
-                    'Under Advanced Settings, you can configure the algorithm (SHA1, SHA256, SHA512), digits (6 or 8), interval (30s), or HOTP counter if needed.',
-                  ),
+                  _Bullet(l10n.helpStart08(l10n.labelManualEntry)),
+                  _Bullet(l10n.helpStart09),
+                  _Bullet(l10n.helpStart10),
+                  _Bullet(l10n.helpStart11),
                 ],
               ),
 
               _Section(
                 icon: Icons.copy_outlined,
-                title: 'Using Your 2FA Codes',
+                title: l10n.helpStart12,
                 children: [
-                  _Bullet(
-                    'Time-based (TOTP) codes refresh automatically every 30 seconds. The circular countdown ring shows remaining validity.',
-                  ),
-                  _Bullet(
-                    'Tap any account tile to copy the active 6-digit code directly to your clipboard.',
-                  ),
-                  _Bullet(
-                    'Paste the code into the login screen of your website or service to complete sign-in.',
-                  ),
+                  _Bullet(l10n.helpStart13),
+                  _Bullet(l10n.helpStart14),
+                  _Bullet(l10n.helpStart15),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: Always save backup recovery codes provided by your online services in a secure location in case you lose access to your phone.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpStart16),
             ],
           ),
         );

@@ -1,6 +1,6 @@
-# Dependencies — SreerajP Authenticator
+# Dependencies — Sreeraj P Authenticator
 
-This document lists the approved baseline dependencies, package responsibilities, and explicit prohibited dependencies for SreerajP Authenticator.
+This document lists the approved baseline dependencies, package responsibilities, and explicit prohibited dependencies for Sreeraj P Authenticator.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md)
 
@@ -12,8 +12,10 @@ All external packages must fit the offline-first security posture of the app. Th
 
 | Package | Purpose / Responsibility |
 |---------|--------------------------|
+| `material_ui` | Standalone Material widgets; import `package:material_ui/material_ui.dart`, never `package:flutter/material.dart` (engineering standard §6.1). `cupertino_ui` provides the Cupertino localizations used by the Sanskrit fallback delegate |
+| `flutter_localizations` (SDK) & `intl` | Generated `AppLocalizations`, `GlobalWidgetsLocalizations`, locale-aware formatting (engineering standard §8) |
 | `base32` | Base32 decoding and encoding for OTP secrets |
-| `mobile_scanner` | QR code scanning via camera |
+| `flutter_zxing` & `camera` | QR decoding (MIT, zxing-cpp, runs on the device) and camera frames. Do not bring back `mobile_scanner`: it uses closed-source Google ML Kit, which sends data to Google |
 | `qr_flutter` | Rendering QR codes for account export |
 | `sqflite` | Local SQLite database for encrypted account and group data |
 | `shared_preferences` | Non-sensitive key-value preferences (e.g. theme, lock timeout) |
@@ -26,7 +28,7 @@ All external packages must fit the offline-first security posture of the app. Th
 | `file_picker` & `share_plus` | Encrypted backup import and export file handling |
 | `permission_handler` | Camera and storage permission management |
 | `url_launcher` | Opening external license or documentation links |
-| `flutter_slidable`, `flutter_animate`, `shimmer`, `animations`, `flutter_svg` | UI enhancements and animations |
+| `flutter_slidable`, `flutter_animate`, `flutter_svg` | UI enhancements and animations |
 
 ---
 

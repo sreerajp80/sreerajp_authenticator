@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,11 +20,10 @@ void main() {
   });
 
   group('SettingsProvider', () {
-    test('legacy phone-lock-only users keep phone-lock-only mode', () async {
+    test('phone-lock-only users keep phone-lock-only mode', () async {
       SharedPreferences.setMockInitialValues({
         'app_lock_enabled': true,
-        'require_authentication': true,
-        'lock_type': 'device_lock',
+        'phone_lock_quick_unlock_enabled': true,
       });
 
       final provider = SettingsProvider();
@@ -33,9 +32,8 @@ void main() {
       expect(provider.isAppLockEnabled, isTrue);
       expect(provider.hasPinSet, isFalse);
       expect(provider.phoneLockQuickUnlockEnabled, isTrue);
-      expect(provider.needsMandatoryPinMigrationSync, isFalse);
       expect(provider.isLocked, isTrue);
-      expect(provider.unlockInstructionText, 'Use your Phone Screen Lock');
+      expect(provider.unlockInstruction, UnlockInstruction.phoneLockOnly);
     });
 
     test('does not enable app lock with no unlock method', () async {
@@ -149,7 +147,7 @@ void main() {
 
         expect(provider.pinRequiredReason, PinRequiredReason.idleTimeout);
         expect(provider.requiresAppPinForUnlock, isTrue);
-        expect(provider.unlockInstructionText, 'Enter your App PIN');
+        expect(provider.unlockInstruction, UnlockInstruction.pinOnly);
       },
     );
 
@@ -172,10 +170,7 @@ void main() {
 
         expect(provider.pinRequiredReason, PinRequiredReason.none);
         expect(provider.canUsePhoneLockQuickUnlock, isTrue);
-        expect(
-          provider.unlockInstructionText,
-          'Use your Phone Screen Lock or enter your App PIN',
-        );
+        expect(provider.unlockInstruction, UnlockInstruction.phoneLockOrPin);
       },
     );
 
@@ -316,13 +311,11 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
 
       expect(provider.isAppLockEnabled, isFalse);
-      expect(provider.requireAuthentication, isFalse);
       expect(provider.phoneLockQuickUnlockEnabled, isFalse);
       expect(provider.hasPinSet, isFalse);
       expect(provider.isLocked, isFalse);
       expect(provider.lockdownEnabled, isFalse);
       expect(prefs.getBool('app_lock_enabled'), isFalse);
-      expect(prefs.getBool('require_authentication'), isFalse);
       expect(prefs.getBool('phone_lock_quick_unlock_enabled'), isFalse);
     });
 

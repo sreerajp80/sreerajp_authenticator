@@ -2,8 +2,10 @@
 // Author: Sreeraj P
 // Description: User-facing guide for time synchronization, clock drift, and HOTP counters
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../providers/settings_provider.dart';
 
 class TimeSyncHelpScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class TimeSyncHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,64 +25,41 @@ class TimeSyncHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Time Sync & Code Drift')),
+          appBar: AppBar(title: Text(l10n.helpTime01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'TOTP codes depend on precise device time. If your phone clock is even a few seconds ahead or behind, your generated codes will be rejected by websites.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpTime02),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.access_time_outlined,
-                title: 'How TOTP Time Works',
-                children: [
-                  _Bullet(
-                    'Time-based one-time passwords calculate a numeric code by hashing your secret key together with the current Unix epoch timestamp divided into 30-second steps.',
-                  ),
-                  _Bullet(
-                    'Both your phone and the server must agree on the current time in UTC (Coordinated Universal Time). Time zone changes do not affect UTC.',
-                  ),
-                ],
+                title: l10n.helpTime03,
+                children: [_Bullet(l10n.helpTime04), _Bullet(l10n.helpTime05)],
               ),
 
               _Section(
                 icon: Icons.sync_problem_outlined,
-                title: 'Fixing Invalid or Rejected Codes',
+                title: l10n.helpTime06,
                 children: [
-                  _Bullet(
-                    'Open your Android System Settings and go to System -> Date & Time.',
-                  ),
-                  _Bullet(
-                    'Turn ON "Set time automatically" and "Set time zone automatically" (or use network-provided time).',
-                  ),
-                  _Bullet(
-                    'If already enabled, toggle it OFF and back ON to force an immediate NTP network time sync with your cellular carrier.',
-                  ),
+                  _Bullet(l10n.helpTime07),
+                  _Bullet(l10n.helpTime08),
+                  _Bullet(l10n.helpTime09),
                 ],
               ),
 
               _Section(
                 icon: Icons.pin_outlined,
-                title: 'Understanding HOTP Counter Codes',
+                title: l10n.helpTime10,
                 children: [
-                  _Bullet(
-                    'HOTP codes are event-based rather than time-based. They advance only when you manually generate a code.',
-                  ),
-                  _Bullet(
-                    'If you tap the refresh button multiple times without logging in, your phone counter and the server counter may get out of sync.',
-                  ),
-                  _Bullet(
-                    'Most servers allow a small lookahead window of 10 to 20 codes. Try generating and entering the next consecutive code.',
-                  ),
+                  _Bullet(l10n.helpTime11),
+                  _Bullet(l10n.helpTime12),
+                  _Bullet(l10n.helpTime13),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: 99% of invalid code issues are caused by manual device clock offsets. Automatic network time solves this permanently.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpTime14),
             ],
           ),
         );

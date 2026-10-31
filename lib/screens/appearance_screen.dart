@@ -2,8 +2,11 @@
 // Author: Sreeraj P
 // Description: Appearance preferences hub reached from Settings -> Appearance with auto-lock monitoring
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../providers/settings_provider.dart';
 import '../providers/theme_provider.dart';
 import 'theme_mode_settings_screen.dart';
@@ -16,6 +19,10 @@ class AppearanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = context.watch<ThemeProvider>();
+    final l10n = AppLocalizations.of(context);
+    final appName = context.read<AppConfig>().appName.resolve(
+      Localizations.localeOf(context).languageCode,
+    );
 
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
@@ -28,19 +35,22 @@ class AppearanceScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Appearance')),
+          appBar: AppBar(title: Text(l10n.titleAppearance)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
               _buildAppearanceCard(
                 context: context,
                 icon: Icons.brightness_6_outlined,
-                title: 'Theme Mode',
-                subtitle: _getThemeModeSubtitle(themeProvider.themeMode),
+                title: l10n.titleThemeMode,
+                subtitle: _getThemeModeSubtitle(l10n, themeProvider.themeMode),
                 onTap: () => _push(context, const ThemeModeSettingsScreen()),
               ),
               const SizedBox(height: 24),
-              _buildSectionLabel(context, 'THEME INFORMATION'),
+              _buildSectionLabel(
+                context,
+                l10n.titleThemeInformation.toUpperCase(),
+              ),
               const SizedBox(height: 12),
               Card(
                 margin: EdgeInsets.zero,
@@ -68,16 +78,16 @@ class AppearanceScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Visual Design System',
-                              style: TextStyle(
+                            Text(
+                              l10n.titleVisualDesign,
+                              style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'SreerajP Authenticator uses an offline-first 3D neumorphic theme with vibrant token countdown rings and high-contrast accessibility.',
+                              l10n.descVisualDesign(appName),
                               style: TextStyle(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 fontSize: 13,
@@ -179,14 +189,14 @@ class AppearanceScreen extends StatelessWidget {
     );
   }
 
-  String _getThemeModeSubtitle(ThemeMode mode) {
+  String _getThemeModeSubtitle(AppLocalizations l10n, ThemeMode mode) {
     switch (mode) {
       case ThemeMode.system:
-        return 'System default (follows OS settings)';
+        return l10n.descThemeSummarySystem;
       case ThemeMode.light:
-        return 'Light theme';
+        return l10n.descThemeSummaryLight;
       case ThemeMode.dark:
-        return 'Dark theme';
+        return l10n.descThemeSummaryDark;
     }
   }
 }

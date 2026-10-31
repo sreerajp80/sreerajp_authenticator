@@ -1,7 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../utils/theme.dart';
+
+/// Keyboard route to the same options a long press opens.
+class _OpenAddOptionsIntent extends Intent {
+  const _OpenAddOptionsIntent();
+}
 
 class HomeFabButton extends StatefulWidget {
   final VoidCallback onQrScan;
@@ -21,6 +28,7 @@ class HomeFabButton extends StatefulWidget {
 
 class _HomeFabButtonState extends State<HomeFabButton> {
   bool _isButtonPressed = false;
+  bool _isFocused = false;
   final GlobalKey _fabKey = GlobalKey();
 
   void _showAddAccountOptions() {
@@ -35,6 +43,7 @@ class _HomeFabButtonState extends State<HomeFabButton> {
     final size = renderBox.size;
 
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     showMenu<String>(
       context: context,
@@ -72,13 +81,13 @@ class _HomeFabButtonState extends State<HomeFabButton> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'QR Scanner',
+                      l10n.labelQrScanner,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
-                      'Scan QR code',
+                      l10n.descScanQrCode,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -114,13 +123,13 @@ class _HomeFabButtonState extends State<HomeFabButton> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Manual Entry',
+                      l10n.labelManualEntry,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
-                      'Enter details manually',
+                      l10n.descEnterDetailsManually,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -147,117 +156,165 @@ class _HomeFabButtonState extends State<HomeFabButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return ScaleTransition(
       scale: widget.fabAnimation,
-      child: GestureDetector(
-        key: _fabKey,
-        onTapDown: (_) {
-          setState(() => _isButtonPressed = true);
-          HapticFeedback.lightImpact();
-        },
-        onTapUp: (_) {
-          setState(() => _isButtonPressed = false);
-          if (mounted) {
-            widget.onQrScan();
-          }
-        },
-        onTapCancel: () {
-          setState(() => _isButtonPressed = false);
-        },
-        onLongPress: _showAddAccountOptions,
-        child:
-            AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
-                  curve: Curves.easeInOut,
-                  child: Container(
-                    height: 56,
-                    width: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.5)
-                              : AppTheme.mintGreen.withValues(alpha: 0.4),
-                          offset: Offset(0, _isButtonPressed ? 2 : 5),
-                          blurRadius: _isButtonPressed ? 3 : 10,
-                          spreadRadius: _isButtonPressed ? 0 : 1,
-                        ),
-                        BoxShadow(
-                          color: AppTheme.mintGreen.withValues(alpha: 0.3),
-                          offset: Offset(0, _isButtonPressed ? 1 : 2),
-                          blurRadius: _isButtonPressed ? 2 : 4,
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: _isButtonPressed
-                                ? [
-                                    Color.fromARGB(
-                                      (AppTheme.mintGreen.a * 255.0).round() &
-                                          0xff,
-                                      (AppTheme.mintGreen.r * 255.0 * 0.9)
-                                              .round() &
-                                          0xff,
-                                      (AppTheme.mintGreen.g * 255.0 * 0.9)
-                                              .round() &
-                                          0xff,
-                                      (AppTheme.mintGreen.b * 255.0 * 0.9)
-                                              .round() &
-                                          0xff,
-                                    ),
-                                    AppTheme.sageGreen,
-                                  ]
-                                : [AppTheme.mintGreen, AppTheme.sageGreen],
-                          ),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 100),
-                          transform: Matrix4.identity()
-                            ..setTranslationRaw(
-                              0.0,
-                              _isButtonPressed ? 1.0 : 0.0,
-                              0.0,
-                            ),
-                          child: Center(
-                            child: Icon(
-                              Icons.add,
-                              color: Colors.white,
-                              size: 28,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  offset: const Offset(0, 1),
-                                  blurRadius: 2,
+      child: Tooltip(
+        message: l10n.tooltipAddAccount,
+        excludeFromSemantics: true,
+        // A touch long press opens the options, not this tooltip.
+        triggerMode: TooltipTriggerMode.manual,
+        child: Semantics(
+          button: true,
+          label: l10n.tooltipAddAccount,
+          onTapHint: l10n.tooltipScanQr,
+          onLongPressHint: l10n.tooltipAddOptions,
+          child: FocusableActionDetector(
+            onShowFocusHighlight: (focused) =>
+                setState(() => _isFocused = focused),
+            shortcuts: const {
+              SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                  _OpenAddOptionsIntent(),
+            },
+            actions: {
+              ActivateIntent: CallbackAction<ActivateIntent>(
+                onInvoke: (_) {
+                  widget.onQrScan();
+                  return null;
+                },
+              ),
+              _OpenAddOptionsIntent: CallbackAction<_OpenAddOptionsIntent>(
+                onInvoke: (_) {
+                  _showAddAccountOptions();
+                  return null;
+                },
+              ),
+            },
+            child: GestureDetector(
+              key: _fabKey,
+              onTapDown: (_) {
+                setState(() => _isButtonPressed = true);
+                HapticFeedback.lightImpact();
+              },
+              onTapUp: (_) {
+                setState(() => _isButtonPressed = false);
+              },
+              onTap: widget.onQrScan,
+              onSecondaryTap: _showAddAccountOptions,
+              onTapCancel: () {
+                setState(() => _isButtonPressed = false);
+              },
+              onLongPress: _showAddAccountOptions,
+              child:
+                  AnimatedContainer(
+                        duration: const Duration(milliseconds: 100),
+                        curve: Curves.easeInOut,
+                        child: Container(
+                          height: 56,
+                          width: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: _isFocused
+                                ? Border.all(
+                                    color: theme.colorScheme.onSurface,
+                                    width: 3,
+                                  )
+                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.5)
+                                    : AppTheme.mintGreen.withValues(alpha: 0.4),
+                                offset: Offset(0, _isButtonPressed ? 2 : 5),
+                                blurRadius: _isButtonPressed ? 3 : 10,
+                                spreadRadius: _isButtonPressed ? 0 : 1,
+                              ),
+                              BoxShadow(
+                                color: AppTheme.mintGreen.withValues(
+                                  alpha: 0.3,
                                 ),
-                              ],
+                                offset: Offset(0, _isButtonPressed ? 1 : 2),
+                                blurRadius: _isButtonPressed ? 2 : 4,
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: _isButtonPressed
+                                      ? [
+                                          Color.fromARGB(
+                                            (AppTheme.mintGreen.a * 255.0)
+                                                    .round() &
+                                                0xff,
+                                            (AppTheme.mintGreen.r * 255.0 * 0.9)
+                                                    .round() &
+                                                0xff,
+                                            (AppTheme.mintGreen.g * 255.0 * 0.9)
+                                                    .round() &
+                                                0xff,
+                                            (AppTheme.mintGreen.b * 255.0 * 0.9)
+                                                    .round() &
+                                                0xff,
+                                          ),
+                                          AppTheme.sageGreen,
+                                        ]
+                                      : [
+                                          AppTheme.mintGreen,
+                                          AppTheme.sageGreen,
+                                        ],
+                                ),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 100),
+                                transform: Matrix4.identity()
+                                  ..setTranslationRaw(
+                                    0.0,
+                                    _isButtonPressed ? 1.0 : 0.0,
+                                    0.0,
+                                  ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 28,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        offset: const Offset(0, 1),
+                                        blurRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                )
-                .animate()
-                .scale(
-                  begin: const Offset(0.9, 0.9),
-                  end: const Offset(1.0, 1.0),
-                  duration: 400.ms,
-                  curve: Curves.elasticOut,
-                )
-                .fadeIn(duration: 300.ms),
+                      )
+                      .animate()
+                      .scale(
+                        begin: const Offset(0.9, 0.9),
+                        end: const Offset(1.0, 1.0),
+                        duration: 400.ms,
+                        curve: Curves.elasticOut,
+                      )
+                      .fadeIn(duration: 300.ms),
+            ),
+          ),
+        ),
       ),
     );
   }

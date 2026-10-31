@@ -1,6 +1,6 @@
 # Plan: Remove Groups Feature & Migrate to Tags
 
-**Status:** Approved — implementing
+**Status:** completed
 
 **Plan file:** `plans/20260801_204900_remove-groups-migrate-tags.md`
 **Related change log:** `change_log/20260801_205000_remove-groups-migrate-tags.md`

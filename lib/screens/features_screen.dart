@@ -1,9 +1,12 @@
 // File Path: sreerajp_authenticator/lib/screens/features_screen.dart
 // Author: Sreeraj P
-// Description: Showcase screen listing all features and capabilities of SreerajP Authenticator with auto-lock monitoring
+// Description: Showcase screen listing all features and capabilities of Sreeraj P Authenticator with auto-lock monitoring
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../providers/settings_provider.dart';
 
 class _AppFeature {
@@ -34,235 +37,217 @@ class _FeatureCategory {
   });
 }
 
-/// Comprehensive features catalog for SreerajP Authenticator.
+/// Comprehensive features catalog for Sreeraj P Authenticator.
 class FeaturesScreen extends StatelessWidget {
   const FeaturesScreen({super.key});
 
-  static const List<_FeatureCategory> _categories = [
+  static List<_FeatureCategory> _categories(AppLocalizations l10n) => [
     _FeatureCategory(
-      name: 'Core 2FA & OTP Tools',
-      subtitle: 'Standards-compliant code generation and scanning',
+      name: l10n.descFeatures01,
+      subtitle: l10n.descFeatures02,
       icon: Icons.key_outlined,
       features: [
         _AppFeature(
-          title: 'TOTP Time-Based Codes',
-          description:
-              'Generate secure time-based one-time passwords compliant with RFC 6238. Supports custom periods (30s, 60s), 6 or 8 digits, and SHA-1, SHA-256, or SHA-512 algorithms.',
+          title: l10n.descFeatures03,
+          description: l10n.descFeatures04,
           icon: Icons.timer_outlined,
           highlights: [
-            'RFC 6238 Standard',
-            'SHA-1/256/512',
-            'Custom Intervals',
-            'Live Ring Timer',
+            l10n.descFeatures05,
+            l10n.descFeatures06,
+            l10n.descFeatures07,
+            l10n.descFeatures08,
           ],
         ),
         _AppFeature(
-          title: 'HOTP Counter-Based Codes',
-          description:
-              'Generate counter-based one-time passwords compliant with RFC 4226. Increment your event counter and produce fresh tokens on demand with one tap.',
+          title: l10n.descFeatures09,
+          description: l10n.descFeatures10,
           icon: Icons.pin_outlined,
           highlights: [
-            'RFC 4226 Standard',
-            'Manual Counter Increment',
-            'Instant Refresh',
+            l10n.descFeatures11,
+            l10n.descFeatures12,
+            l10n.descFeatures13,
           ],
         ),
         _AppFeature(
-          title: 'Instant QR Code Scanner',
-          description:
-              'Easily onboard accounts by pointing your camera at standard 2FA QR codes (otpauth://). Equipped with flashlight toggle and instant validation.',
+          title: l10n.descFeatures14,
+          description: l10n.descFeatures15,
           icon: Icons.qr_code_scanner_outlined,
           highlights: [
-            'Fast Detection',
-            'Flashlight Support',
-            'Safe Input Validation',
+            l10n.descFeatures16,
+            l10n.descFeatures17,
+            l10n.descFeatures18,
           ],
         ),
         _AppFeature(
-          title: 'Brand Detection & Custom Icons',
-          description:
-              'Automatically detects popular services (Google, GitHub, Microsoft, AWS, Discord, and 100+ others) and displays high-definition brand logos or colorful initials.',
+          title: l10n.descFeatures19,
+          description: l10n.descFeatures20,
           icon: Icons.branding_watermark_outlined,
           highlights: [
-            '100+ Built-in Brands',
-            'Colorful Fallback Avatars',
-            'Automatic Match',
+            l10n.descFeatures21,
+            l10n.descFeatures22,
+            l10n.descFeatures23,
           ],
         ),
         _AppFeature(
-          title: 'Quick Copy & Token Countdown',
-          description:
-              'Tap any code to instantly copy it to your clipboard with haptic feedback. Visual circular timer indicators clearly show remaining token validity.',
+          title: l10n.descFeatures24,
+          description: l10n.descFeatures25,
           icon: Icons.copy_outlined,
           highlights: [
-            'One-Tap Copy',
-            'Haptic Feedback',
-            'Smooth Progress Ring',
+            l10n.descFeatures26,
+            l10n.descFeatures27,
+            l10n.descFeatures28,
           ],
         ),
       ],
     ),
     _FeatureCategory(
-      name: 'Vault Security & Privacy',
-      subtitle: 'Hardware-backed encryption, biometrics, and zero tracking',
+      name: l10n.descFeatures29,
+      subtitle: l10n.descFeatures30,
       icon: Icons.security_outlined,
       features: [
         _AppFeature(
-          title: 'AES-256-GCM Vault Encryption',
-          description:
-              'All account secrets and seed keys are encrypted at rest with military-grade AES-256-GCM. The master device key is safeguarded in the hardware-backed Android Keystore.',
+          title: l10n.descFeatures31,
+          description: l10n.descFeatures32,
           icon: Icons.enhanced_encryption_outlined,
           highlights: [
-            'AES-256-GCM',
-            'Hardware Keystore',
-            'Zero Plaintext at Rest',
+            l10n.descFeatures33,
+            l10n.descFeatures34,
+            l10n.descFeatures35,
           ],
         ),
         _AppFeature(
-          title: 'Biometric & Screen App Lock',
-          description:
-              'Lock the authenticator behind your fingerprint, face authentication, or device screen lock PIN/passcode. Keeps your sensitive tokens secure from unauthorized access.',
+          title: l10n.descFeatures36,
+          description: l10n.descFeatures37,
           icon: Icons.fingerprint_outlined,
           highlights: [
-            'Fingerprint / Face ID',
-            'Device PIN Fallback',
-            'Instant Unlock',
+            l10n.descFeatures38,
+            l10n.descFeatures39,
+            l10n.descFeatures40,
           ],
         ),
         _AppFeature(
-          title: 'Automatic Inactivity Lock',
-          description:
-              'Automatically locks the vault and clears decrypted OTP seeds from memory whenever you switch apps, minimize the app, or let the device sleep.',
+          title: l10n.descFeatures41,
+          description: l10n.descFeatures42,
           icon: Icons.lock_clock_outlined,
           highlights: [
-            'Background Auto-Lock',
-            'Memory Cleanup',
-            'Configurable Timeout',
+            l10n.descFeatures43,
+            l10n.descFeatures44,
+            l10n.descFeatures45,
           ],
         ),
         _AppFeature(
-          title: 'Screenshot Guard (FLAG_SECURE)',
-          description:
-              'Blocks screen captures, screen recording tools, and Android recent apps switcher thumbnails to prevent visual eavesdropping and credential leakage.',
+          title: l10n.descFeatures46,
+          description: l10n.descFeatures47,
           icon: Icons.screenshot_outlined,
           highlights: [
-            'Hardware FLAG_SECURE',
-            'No Recents Preview',
-            'Anti-Screen Capture',
+            l10n.descFeatures48,
+            l10n.descFeatures49,
+            l10n.descFeatures50,
           ],
         ),
         _AppFeature(
-          title: '100% Offline & Zero Telemetry',
-          description:
-              'Operates fully on-device without any internet backends, cloud logins, third-party analytics, crash beacons, or tracking SDKs.',
+          title: l10n.descFeatures51,
+          description: l10n.descFeatures52,
           icon: Icons.wifi_off_outlined,
           highlights: [
-            'Fully Offline',
-            'No Analytics',
-            'No Cloud Accounts',
-            'Zero Data Leakage',
+            l10n.descFeatures53,
+            l10n.descFeatures54,
+            l10n.descFeatures55,
+            l10n.descFeatures56,
           ],
         ),
       ],
     ),
     _FeatureCategory(
-      name: 'Organization & Productivity',
-      subtitle: 'Categorize, search, and manage your two-factor accounts',
+      name: l10n.descFeatures57,
+      subtitle: l10n.descFeatures58,
       icon: Icons.label_outlined,
       features: [
         _AppFeature(
-          title: 'Multi-Tag Labeling System',
-          description:
-              'Assign multiple tags (Work, Personal, Finance, Crypto, Social) to any account. Filter your account list by tag with a single tap on the filter bar.',
+          title: l10n.descFeatures59,
+          description: l10n.descFeatures60,
           icon: Icons.local_offer_outlined,
           highlights: [
-            'Multiple Tags per Account',
-            'Color-Coded Chips',
-            'One-Tap Filtering',
+            l10n.descFeatures61,
+            l10n.descFeatures62,
+            l10n.descFeatures63,
           ],
         ),
         _AppFeature(
-          title: 'Interactive Tag Cloud',
-          description:
-              'Visual tag cloud interface showing all active tags and account distributions. Tap any tag bubble to instantly isolate matching accounts.',
+          title: l10n.descFeatures64,
+          description: l10n.descFeatures65,
           icon: Icons.bubble_chart_outlined,
           highlights: [
-            'Visual Tag Explorer',
-            'Account Counts',
-            'Fast Navigation',
+            l10n.descFeatures66,
+            l10n.descFeatures67,
+            l10n.descFeatures68,
           ],
         ),
         _AppFeature(
-          title: 'Instant Live Search',
-          description:
-              'Quickly locate any token by typing account names, usernames, issuer services, or assigned tags with real-time matching.',
+          title: l10n.descFeatures69,
+          description: l10n.descFeatures70,
           icon: Icons.search_outlined,
           highlights: [
-            'Real-Time Search',
-            'Matches Names & Tags',
-            'Instant Results',
+            l10n.descFeatures71,
+            l10n.descFeatures72,
+            l10n.descFeatures73,
           ],
         ),
         _AppFeature(
-          title: 'Account Ordering & Editing',
-          description:
-              'Reorder your accounts as you prefer, update account labels and issuers, or modify algorithm parameters whenever required.',
+          title: l10n.descFeatures74,
+          description: l10n.descFeatures75,
           icon: Icons.edit_note_outlined,
           highlights: [
-            'Drag-and-Drop Order',
-            'Edit Metadata',
-            'Batch Management',
+            l10n.descFeatures76,
+            l10n.descFeatures77,
+            l10n.descFeatures78,
           ],
         ),
       ],
     ),
     _FeatureCategory(
-      name: 'Sync, Air-Gap & Backups',
-      subtitle: 'Transfer accounts securely and export encrypted backups',
+      name: l10n.descFeatures79,
+      subtitle: l10n.descFeatures80,
       icon: Icons.sync_alt_outlined,
       features: [
         _AppFeature(
-          title: 'Direct Local P2P Wi-Fi Sync',
-          description:
-              'Wirelessly transfer accounts between two devices on your local Wi-Fi network. Protected with an out-of-band QR pairing handshake and end-to-end encryption with zero internet.',
+          title: l10n.descFeatures81,
+          description: l10n.descFeatures82,
           icon: Icons.wifi_tethering_outlined,
           highlights: [
-            'Local Wi-Fi Only',
-            'End-to-End Encrypted',
-            'No Cloud Middleman',
+            l10n.descFeatures83,
+            l10n.descFeatures84,
+            l10n.descFeatures85,
           ],
         ),
         _AppFeature(
-          title: 'Optical Air-Gap Sync',
-          description:
-              'Transfer accounts to completely air-gapped or offline devices using an animated sequence of high-density QR codes without using Wi-Fi or Bluetooth.',
+          title: l10n.descFeatures86,
+          description: l10n.descFeatures87,
           icon: Icons.qr_code_2_outlined,
           highlights: [
-            '100% Air-Gapped',
-            'Animated QR Stream',
-            'Zero Network Required',
+            l10n.descFeatures88,
+            l10n.descFeatures89,
+            l10n.descFeatures90,
           ],
         ),
         _AppFeature(
-          title: 'Password-Protected Encrypted Backups',
-          description:
-              'Export your complete account vault into an encrypted backup file secured by PBKDF2 key derivation and your chosen password.',
+          title: l10n.descFeatures91,
+          description: l10n.descFeatures92,
           icon: Icons.backup_outlined,
           highlights: [
-            'AES-256 Encrypted',
-            'Password Protected',
-            'Portable File Export',
+            l10n.descFeatures93,
+            l10n.descFeatures94,
+            l10n.descFeatures95,
           ],
         ),
         _AppFeature(
-          title: 'Safe Conflict Resolution & Import',
-          description:
-              'Import backups or receive sync bundles safely. Existing accounts are preserved and new accounts are merged seamlessly without overwriting existing data.',
+          title: l10n.descFeatures96,
+          description: l10n.descFeatures97,
           icon: Icons.merge_type_outlined,
           highlights: [
-            'Add-Only Merging',
-            'Duplicate Protection',
-            'Import Statistics',
+            l10n.descFeatures98,
+            l10n.descFeatures99,
+            l10n.descFeatures100,
           ],
         ),
       ],
@@ -273,6 +258,7 @@ class FeaturesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -282,13 +268,13 @@ class FeaturesScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Features')),
+          appBar: AppBar(title: Text(l10n.descFeatures101)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
               _buildHeaderCard(context),
               const SizedBox(height: 20),
-              for (final category in _categories) ...[
+              for (final category in _categories(l10n)) ...[
                 _buildCategoryHeader(context, category),
                 const SizedBox(height: 10),
                 _buildCategoryCard(context, category),
@@ -303,6 +289,10 @@ class FeaturesScreen extends StatelessWidget {
 
   Widget _buildHeaderCard(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final appName = context.read<AppConfig>().appName.resolve(
+      Localizations.localeOf(context).languageCode,
+    );
     final isDark = theme.brightness == Brightness.dark;
 
     return Card(
@@ -357,14 +347,14 @@ class FeaturesScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'SreerajP Authenticator Features',
+                    l10n.descFeatures102(appName),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Explore every security safeguard, OTP tool, and vault capability designed for you.',
+                    l10n.descFeatures103,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.35,
@@ -390,12 +380,14 @@ class FeaturesScreen extends StatelessWidget {
             children: [
               Icon(category.icon, size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
-              Text(
-                category.name.toUpperCase(),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
+              Flexible(
+                child: Text(
+                  category.name.toUpperCase(),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ),
             ],

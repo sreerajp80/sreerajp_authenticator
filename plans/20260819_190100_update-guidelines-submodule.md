@@ -1,6 +1,6 @@
 # Plan: Update Guidelines Submodule
 
-**Status:** Completed
+**Status:** completed
 
 ## Goal
 Update the `docs/guidelines` Git submodule to the latest commit on `origin/master` (`2b381be`) and synchronize `docs/GUIDELINES_MANIFEST.md` with the updated manifest from the submodule.

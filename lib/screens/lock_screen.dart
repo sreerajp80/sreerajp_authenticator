@@ -6,13 +6,18 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../services/auth_service.dart';
+import '../services/clipboard_service.dart';
+import '../utils/constants.dart';
 
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -28,7 +33,6 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   String _pinFieldError = '';
   bool _isAuthenticating = false;
   bool _isVerifyingPin = false;
-  bool _isPinSetupFlowActive = false;
   bool _unlockOptionsReady = false;
   bool _fallbackToPinUi = false;
   int _lockoutSeconds = 0;
@@ -53,7 +57,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      _refreshUnlockOptions(autoTrigger: !_isPinSetupFlowActive);
+      _refreshUnlockOptions();
     }
   }
 
@@ -61,9 +65,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
     final settingsProvider = context.read<SettingsProvider>();
     await settingsProvider.reevaluateUnlockPolicy(notify: false);
 
-    final showQuickUnlock =
-        settingsProvider.canUsePhoneLockQuickUnlock ||
-        settingsProvider.needsMandatoryPinMigrationSync;
+    final showQuickUnlock = settingsProvider.canUsePhoneLockQuickUnlock;
 
     if (!mounted) return;
 
@@ -81,6 +83,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
   Future<void> _authenticateWithPhoneLock() async {
     final settingsProvider = context.read<SettingsProvider>();
+    final l10n = AppLocalizations.of(context);
     if (_isAuthenticating) return;
 
     setState(() {
@@ -89,21 +92,12 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       _pinFieldError = '';
     });
 
-    final result = await _authService.authenticateWithPhoneLock();
+    final result = await _authService.authenticateWithPhoneLock(
+      reason: l10n.descAuthReasonPhoneLock,
+    );
     if (!mounted) return;
 
     if (result.isSuccess) {
-      if (settingsProvider.needsMandatoryPinMigrationSync) {
-        setState(() {
-          _isAuthenticating = false;
-          _isPinSetupFlowActive = true;
-        });
-        await _showMandatoryPinSetup(settingsProvider);
-        if (!mounted) return;
-        setState(() => _isPinSetupFlowActive = false);
-        return;
-      }
-
       await settingsProvider.handleQuickUnlockResult(result);
       if (!mounted) return;
       await _unlockApp();
@@ -116,31 +110,63 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
     setState(() {
       _isAuthenticating = false;
       _fallbackToPinUi = settingsProvider.hasPinSet;
-      _errorMessage = _mapQuickUnlockError(settingsProvider, result);
+      _errorMessage = _mapQuickUnlockError(l10n, settingsProvider, result);
     });
   }
 
   String _mapQuickUnlockError(
+    AppLocalizations l10n,
     SettingsProvider settingsProvider,
     LocalAuthResult result,
   ) {
     if (settingsProvider.pinRequiredReason != PinRequiredReason.none) {
-      return settingsProvider.pinRequiredMessage;
+      return _pinRequiredText(l10n, settingsProvider.pinRequiredReason);
     }
 
     switch (result.outcome) {
       case LocalAuthOutcome.failure:
-        return 'Phone Screen Lock failed';
+        return l10n.errorPhoneLockFailed;
       case LocalAuthOutcome.canceled:
-        return 'Phone Screen Lock was canceled';
+        return l10n.errorPhoneLockCanceled;
       case LocalAuthOutcome.lockedOut:
-        return 'Phone Screen Lock is temporarily locked out';
+        return l10n.errorPhoneLockLockedOut;
       case LocalAuthOutcome.notAvailable:
-        return 'Phone Screen Lock is not available on this device';
+        return l10n.errorPhoneLockUnavailable;
       case LocalAuthOutcome.error:
-        return 'Unable to verify Phone Screen Lock';
+        return l10n.errorPhoneLockUnverified;
       case LocalAuthOutcome.success:
         return '';
+    }
+  }
+
+  /// Why the app PIN is needed now (`SettingsProvider.pinRequiredReason`).
+  String _pinRequiredText(AppLocalizations l10n, PinRequiredReason reason) {
+    switch (reason) {
+      case PinRequiredReason.idleTimeout:
+        return l10n.descPinRequiredIdle;
+      case PinRequiredReason.reboot:
+        return l10n.descPinRequiredReboot;
+      case PinRequiredReason.quickUnlockFailures:
+        return l10n.descPinRequiredFailures;
+      case PinRequiredReason.lockdown:
+        return l10n.descPinRequiredLockdown;
+      case PinRequiredReason.none:
+        return '';
+    }
+  }
+
+  /// The unlock instruction (`SettingsProvider.unlockInstruction`).
+  String _unlockInstructionText(
+    AppLocalizations l10n,
+    UnlockInstruction instruction,
+  ) {
+    switch (instruction) {
+      case UnlockInstruction.phoneLockOnly:
+        return l10n.descUnlockPhoneOnly;
+      case UnlockInstruction.phoneLockOrPin:
+        return l10n.descUnlockPhoneOrPin;
+      case UnlockInstruction.pinOnly:
+        return l10n.descUnlockPinOnly;
     }
   }
 
@@ -168,9 +194,10 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
     if (_lockoutSeconds > 0 || _isVerifyingPin) return;
 
     final settingsProvider = context.read<SettingsProvider>();
+    final l10n = AppLocalizations.of(context);
 
     if (_pinController.text.isEmpty) {
-      setState(() => _pinFieldError = 'Please enter your App PIN');
+      setState(() => _pinFieldError = l10n.errorPinEmpty);
       return;
     }
 
@@ -180,8 +207,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
     if (existingLockout > 0) {
       setState(() {
         _isVerifyingPin = false;
-        _pinFieldError =
-            'Too many failed attempts. Try again in $existingLockout seconds.';
+        _pinFieldError = l10n.errorPinLockedOut(existingLockout);
       });
       _startLockoutCountdown(existingLockout);
       _pinController.clear();
@@ -204,8 +230,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       if (lockout > 0) {
         setState(() {
           _isVerifyingPin = false;
-          _pinFieldError =
-              'Too many failed attempts. Try again in $lockout seconds.';
+          _pinFieldError = l10n.errorPinLockedOut(lockout);
         });
         _startLockoutCountdown(lockout);
       } else {
@@ -213,8 +238,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
         setState(() {
           _isVerifyingPin = false;
           _pinFieldError = remaining > 0
-              ? 'Incorrect App PIN. $remaining attempt${remaining == 1 ? '' : 's'} remaining'
-              : 'Incorrect App PIN';
+              ? l10n.errorPinIncorrectRemaining(remaining)
+              : l10n.errorPinIncorrect;
         });
       }
       _pinController.clear();
@@ -223,6 +248,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
   Future<void> _handleForgotPin() async {
     final settingsProvider = context.read<SettingsProvider>();
+    final l10n = AppLocalizations.of(context);
 
     final hasKey = await settingsProvider.hasRecoveryKey();
     if (!hasKey) {
@@ -230,14 +256,12 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('No Recovery Key'),
-          content: const Text(
-            'No recovery key was set up for this App PIN. Unfortunately, there is no way to recover access without it.\n\nYou can reinstall the app, but all accounts will be lost.',
-          ),
+          title: Text(l10n.titleNoRecoveryKey),
+          content: Text(l10n.descNoRecoveryKey),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(l10n.actionOk),
             ),
           ],
         ),
@@ -252,13 +276,13 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Enter Recovery Key'),
+        title: Text(l10n.titleEnterRecoveryKey),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Enter the recovery key you saved when setting up your App PIN.',
-              style: TextStyle(fontSize: 13),
+            Text(
+              l10n.descEnterRecoveryKey,
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -269,8 +293,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                 fontFamily: 'monospace',
                 letterSpacing: 1.5,
               ),
-              decoration: const InputDecoration(
-                labelText: 'Recovery Key',
+              decoration: InputDecoration(
+                labelText: l10n.labelRecoveryKey,
                 hintText: 'XXXX-XXXX-XXXX-XXXX',
                 border: OutlineInputBorder(),
               ),
@@ -280,7 +304,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -295,16 +319,16 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                 } else {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(
-                      content: const Text('Invalid recovery key'),
-                      backgroundColor: Theme.of(
-                        dialogContext,
-                      ).colorScheme.error,
+                      content: Text(l10n.errorRecoveryKeyInvalid),
+                      backgroundColor: Theme.of(dialogContext)
+                          .colorScheme
+                          .error,
                     ),
                   );
                 }
               }
             },
-            child: const Text('Recover'),
+            child: Text(l10n.actionRecover),
           ),
         ],
       ),
@@ -314,118 +338,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
     await _showNewPinSetup(settingsProvider);
   }
 
-  Future<void> _showMandatoryPinSetup(SettingsProvider provider) async {
-    final pinController = TextEditingController();
-    final confirmController = TextEditingController();
-
-    final pinSet = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        bool isSaving = false;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Set Up App PIN'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Create your App PIN to finish securing the app. App PIN is always required for secret access.',
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: pinController,
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'New App PIN (4-6 digits)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: confirmController,
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm App PIN',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          if (pinController.text.length < 4) {
-                            ScaffoldMessenger.of(dialogContext).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  'App PIN must be at least 4 digits',
-                                ),
-                                backgroundColor: Theme.of(
-                                  dialogContext,
-                                ).colorScheme.error,
-                              ),
-                            );
-                            return;
-                          }
-                          if (pinController.text != confirmController.text) {
-                            ScaffoldMessenger.of(dialogContext).showSnackBar(
-                              SnackBar(
-                                content: const Text('App PINs do not match'),
-                                backgroundColor: Theme.of(
-                                  dialogContext,
-                                ).colorScheme.error,
-                              ),
-                            );
-                            return;
-                          }
-                          setDialogState(() => isSaving = true);
-                          try {
-                            await provider.setAppLockPin(pinController.text);
-                            final recoveryKey = await provider
-                                .generateRecoveryKey();
-                            if (dialogContext.mounted) {
-                              Navigator.pop(dialogContext, true);
-                            }
-                            if (mounted) {
-                              await _showRecoveryKeyInfo(recoveryKey);
-                            }
-                          } catch (_) {
-                            if (dialogContext.mounted) {
-                              setDialogState(() => isSaving = false);
-                            }
-                          }
-                        },
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Save App PIN'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (pinSet == true && mounted) {
-      await _refreshUnlockOptions(autoTrigger: false);
-      await _unlockApp();
-    }
-  }
-
   Future<void> _showNewPinSetup(SettingsProvider provider) async {
+    final l10n = AppLocalizations.of(context);
     final pinController2 = TextEditingController();
     final confirmController = TextEditingController();
 
@@ -437,13 +351,11 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Set New App PIN'),
+              title: Text(l10n.titleSetNewPin),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Your old App PIN has been cleared. Please set a new App PIN.',
-                  ),
+                  Text(l10n.descSetNewPin),
                   const SizedBox(height: 16),
                   TextField(
                     controller: pinController2,
@@ -451,9 +363,10 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'New App PIN (4-6 digits)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.labelNewPin,
+                      helperText: l10n.descPinDigitsHint,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -462,9 +375,9 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                     obscureText: true,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm App PIN',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.labelConfirmPin,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -477,12 +390,10 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                           if (pinController2.text.length < 4) {
                             ScaffoldMessenger.of(dialogContext).showSnackBar(
                               SnackBar(
-                                content: const Text(
-                                  'App PIN must be at least 4 digits',
-                                ),
-                                backgroundColor: Theme.of(
-                                  dialogContext,
-                                ).colorScheme.error,
+                                content: Text(l10n.errorPinTooShort),
+                                backgroundColor: Theme.of(dialogContext)
+                                    .colorScheme
+                                    .error,
                               ),
                             );
                             return;
@@ -490,10 +401,10 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                           if (pinController2.text != confirmController.text) {
                             ScaffoldMessenger.of(dialogContext).showSnackBar(
                               SnackBar(
-                                content: const Text('App PINs do not match'),
-                                backgroundColor: Theme.of(
-                                  dialogContext,
-                                ).colorScheme.error,
+                                content: Text(l10n.errorPinMismatch),
+                                backgroundColor: Theme.of(dialogContext)
+                                    .colorScheme
+                                    .error,
                               ),
                             );
                             return;
@@ -521,7 +432,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                           height: 22,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save App PIN'),
+                      : Text(l10n.actionSavePin),
                 ),
               ],
             );
@@ -536,18 +447,16 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _showRecoveryKeyInfo(String recoveryKey) async {
+    final l10n = AppLocalizations.of(context);
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Recovery Key'),
+        title: Text(l10n.titleRecoveryKey),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Save this recovery key in a safe place. It is the only way to regain access if you forget your App PIN.',
-              style: TextStyle(fontSize: 13),
-            ),
+            Text(l10n.descRecoveryKeySave, style: TextStyle(fontSize: 13)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -555,9 +464,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outline.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.outline
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: SelectableText(
@@ -574,15 +482,16 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: recoveryKey));
+                ClipboardService.copySecret(
+                  recoveryKey,
+                  clearAfter: AppConstants.clipboardClearLong,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Recovery key copied to clipboard'),
-                  ),
+                  SnackBar(content: Text(l10n.descRecoveryKeyCopied)),
                 );
               },
               icon: const Icon(Icons.copy, size: 18),
-              label: const Text('Copy'),
+              label: Text(l10n.actionCopy),
             ),
             const SizedBox(height: 12),
             Row(
@@ -593,10 +502,13 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                   color: Theme.of(context).colorScheme.error,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'This key will NOT be shown again.',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    l10n.descRecoveryKeyOnce,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -606,7 +518,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('I\'ve saved it'),
+            child: Text(l10n.actionSavedIt),
           ),
         ],
       ),
@@ -625,6 +537,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final settingsProvider = context.watch<SettingsProvider>();
+    final l10n = AppLocalizations.of(context);
 
     final boxDecoration = BoxDecoration(
       gradient: LinearGradient(
@@ -647,9 +560,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
       );
     }
 
-    final eligiblePhoneFirst =
-        settingsProvider.canUsePhoneLockQuickUnlock ||
-        settingsProvider.needsMandatoryPinMigrationSync;
+    final eligiblePhoneFirst = settingsProvider.canUsePhoneLockQuickUnlock;
     final showPinPath =
         settingsProvider.hasPinSet &&
         (_fallbackToPinUi ||
@@ -660,18 +571,14 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
         (!settingsProvider.hasPinSet || !_fallbackToPinUi);
     final showPhoneLockOption = eligiblePhoneFirst;
 
-    final title = settingsProvider.needsMandatoryPinMigrationSync
-        ? 'Set up your App PIN'
-        : settingsProvider.requiresAppPinForUnlock
-        ? 'Enter your App PIN'
+    final title = settingsProvider.requiresAppPinForUnlock
+        ? l10n.titleEnterYourPin
         : !settingsProvider.hasPinSet
-        ? 'Unlock with Phone Screen Lock'
-        : 'Unlock Authenticator';
+        ? l10n.titleUseDeviceLock
+        : l10n.titleUnlockApp;
     final subtitle = showPhonePrimary && !showPinPath
-        ? (settingsProvider.needsMandatoryPinMigrationSync
-              ? 'Use your Phone Screen Lock to set up your App PIN'
-              : 'Use your Phone Screen Lock to unlock')
-        : settingsProvider.unlockInstructionText;
+        ? l10n.descUnlockWithPhone
+        : _unlockInstructionText(l10n, settingsProvider.unlockInstruction);
     final showReasonBanner =
         settingsProvider.pinRequiredReason != PinRequiredReason.none;
     final showPhoneErrorBanner =
@@ -735,7 +642,10 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        settingsProvider.pinRequiredMessage,
+                        _pinRequiredText(
+                          l10n,
+                          settingsProvider.pinRequiredReason,
+                        ),
                         style: TextStyle(
                           color: theme.colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w600,
@@ -778,8 +688,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                         style: theme.textTheme.headlineSmall,
                         decoration: InputDecoration(
                           hintText: _lockoutSeconds > 0
-                              ? 'Locked for $_lockoutSeconds s'
-                              : 'Enter App PIN',
+                              ? l10n.labelPinLockedFor(_lockoutSeconds)
+                              : l10n.labelEnterPin,
                           errorText:
                               _lockoutSeconds == 0 && _pinFieldError.isNotEmpty
                               ? _pinFieldError
@@ -821,7 +731,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Too many attempts. Try again in $_lockoutSeconds s',
+                                l10n.errorTooManyAttempts(_lockoutSeconds),
                                 style: TextStyle(
                                   color: theme.colorScheme.onErrorContainer,
                                   fontWeight: FontWeight.w600,
@@ -857,9 +767,9 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                                   color: theme.colorScheme.onPrimary,
                                 ),
                               )
-                            : const Text(
-                                'Unlock with App PIN',
-                                style: TextStyle(
+                            : Text(
+                                l10n.actionUnlockWithPin,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -870,7 +780,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                     TextButton(
                       onPressed: _handleForgotPin,
                       child: Text(
-                        'Forgot App PIN?',
+                        l10n.actionForgotPin,
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -918,8 +828,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                       ),
                       label: Text(
                         _isAuthenticating
-                            ? 'Checking Phone Screen Lock...'
-                            : 'Use Phone Screen Lock',
+                            ? l10n.labelCheckingPhoneLock
+                            : l10n.actionUsePhoneLock,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -945,9 +855,9 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                       showPinPath &&
                       showPhoneLockOption) ...[
                     const SizedBox(height: 16),
-                    const Text(
-                      'OR',
-                      style: TextStyle(
+                    Text(
+                      l10n.labelOr,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w500,
                         color: Colors.grey,
                       ),
@@ -964,8 +874,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                       ),
                       label: Text(
                         _isAuthenticating
-                            ? 'Checking Phone Screen Lock...'
-                            : 'Use Phone Screen Lock',
+                            ? l10n.labelCheckingPhoneLock
+                            : l10n.actionUsePhoneLock,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

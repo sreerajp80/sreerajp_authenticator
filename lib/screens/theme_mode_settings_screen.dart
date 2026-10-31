@@ -2,8 +2,10 @@
 // Author: Sreeraj P
 // Description: Configuration screen for Light / Dark / System theme mode selection with live feedback
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../providers/settings_provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -15,6 +17,7 @@ class ThemeModeSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = context.watch<ThemeProvider>();
+    final l10n = AppLocalizations.of(context);
 
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
@@ -27,19 +30,22 @@ class ThemeModeSettingsScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Theme Mode')),
+          appBar: AppBar(title: Text(l10n.titleThemeMode)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              _buildSectionLabel(context, 'SELECT THEME MODE'),
+              _buildSectionLabel(
+                context,
+                l10n.titleSelectThemeMode.toUpperCase(),
+              ),
               const SizedBox(height: 12),
               _buildThemeOptionCard(
                 context: context,
                 mode: ThemeMode.system,
                 currentMode: themeProvider.themeMode,
                 icon: Icons.brightness_auto_outlined,
-                title: 'System Default',
-                subtitle: 'Automatically follow your device system theme',
+                title: l10n.labelThemeSystem,
+                subtitle: l10n.descThemeSystem,
                 onTap: () => themeProvider.setThemeMode(ThemeMode.system),
               ),
               const SizedBox(height: 12),
@@ -48,8 +54,8 @@ class ThemeModeSettingsScreen extends StatelessWidget {
                 mode: ThemeMode.light,
                 currentMode: themeProvider.themeMode,
                 icon: Icons.light_mode_outlined,
-                title: 'Light Theme',
-                subtitle: 'Clean, high-contrast light appearance',
+                title: l10n.labelThemeLight,
+                subtitle: l10n.descThemeLight,
                 onTap: () => themeProvider.setThemeMode(ThemeMode.light),
               ),
               const SizedBox(height: 12),
@@ -58,13 +64,15 @@ class ThemeModeSettingsScreen extends StatelessWidget {
                 mode: ThemeMode.dark,
                 currentMode: themeProvider.themeMode,
                 icon: Icons.dark_mode_outlined,
-                title: 'Dark Theme',
-                subtitle:
-                    'Comfortable dark appearance for low-light environments',
+                title: l10n.labelThemeDark,
+                subtitle: l10n.descThemeDark,
                 onTap: () => themeProvider.setThemeMode(ThemeMode.dark),
               ),
               const SizedBox(height: 24),
-              _buildSectionLabel(context, 'CURRENT STATUS'),
+              _buildSectionLabel(
+                context,
+                l10n.titleCurrentStatus.toUpperCase(),
+              ),
               const SizedBox(height: 12),
               Card(
                 margin: EdgeInsets.zero,
@@ -95,8 +103,8 @@ class ThemeModeSettingsScreen extends StatelessWidget {
                           children: [
                             Text(
                               themeProvider.isDarkMode
-                                  ? 'Active: Dark Appearance'
-                                  : 'Active: Light Appearance',
+                                  ? l10n.labelActiveDark
+                                  : l10n.labelActiveLight,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -104,7 +112,10 @@ class ThemeModeSettingsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              _getThemeModeDescription(themeProvider.themeMode),
+                              _getThemeModeDescription(
+                                l10n,
+                                themeProvider.themeMode,
+                              ),
                               style: TextStyle(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 fontSize: 13,
@@ -225,14 +236,14 @@ class ThemeModeSettingsScreen extends StatelessWidget {
     );
   }
 
-  String _getThemeModeDescription(ThemeMode mode) {
+  String _getThemeModeDescription(AppLocalizations l10n, ThemeMode mode) {
     switch (mode) {
       case ThemeMode.system:
-        return 'Follows your device system-wide dark mode preference.';
+        return l10n.descThemeStatusSystem;
       case ThemeMode.light:
-        return 'Always stays in light appearance mode.';
+        return l10n.descThemeStatusLight;
       case ThemeMode.dark:
-        return 'Always stays in dark appearance mode.';
+        return l10n.descThemeStatusDark;
     }
   }
 }

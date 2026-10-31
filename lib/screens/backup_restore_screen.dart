@@ -3,10 +3,14 @@
 // Last Modified: 2025 October 14
 // Description: Screen for encrypted backup and restore only
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../providers/account_provider.dart';
 import '../services/export_import_service.dart';
+import '../utils/app_logger.dart';
 import '../providers/settings_provider.dart';
 
 class BackupRestoreScreen extends StatefulWidget {
@@ -19,6 +23,9 @@ class BackupRestoreScreen extends StatefulWidget {
 class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   final _exportImportService = ExportImportService();
   bool _isProcessing = false;
+
+  /// Localized strings. Read only while the screen is mounted.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
 
   Future<void> _handleExportEncrypted() async {
     final settingsProvider = context.read<SettingsProvider>();
@@ -35,26 +42,29 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Set Backup Password'),
+        title: Text(_l10n.titleSetBackupPassword),
         content: StatefulBuilder(
           builder: (context, setState) {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Create a strong password to encrypt your backup. You will need this password to restore your accounts.',
-                  style: TextStyle(fontSize: 13),
+                Text(
+                  _l10n.descSetBackupPassword,
+                  style: const TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
                   obscureText: obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: _l10n.labelPassword,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock),
-                    helperText: 'Minimum 8 characters',
+                    helperText: _l10n.descPasswordMin8,
                     suffixIcon: IconButton(
+                      tooltip: obscurePassword
+                          ? _l10n.tooltipShowPassword
+                          : _l10n.tooltipHidePassword,
                       icon: Icon(
                         obscurePassword
                             ? Icons.visibility_off
@@ -70,10 +80,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   controller: confirmPasswordController,
                   obscureText: obscureConfirm,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: _l10n.labelConfirmPassword,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
+                      tooltip: obscureConfirm
+                          ? _l10n.tooltipShowPassword
+                          : _l10n.tooltipHidePassword,
                       icon: Icon(
                         obscureConfirm
                             ? Icons.visibility_off
@@ -91,7 +104,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(_l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -100,30 +113,28 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
               if (password.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password cannot be empty')),
+                  SnackBar(content: Text(_l10n.errorPasswordEmpty)),
                 );
                 return;
               }
 
               if (password.length < 8) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Password must be at least 8 characters'),
-                  ),
+                  SnackBar(content: Text(_l10n.errorPasswordTooShort8)),
                 );
                 return;
               }
 
               if (password != confirm) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Passwords do not match')),
+                  SnackBar(content: Text(_l10n.errorPasswordMismatch)),
                 );
                 return;
               }
 
               Navigator.pop(context, password);
             },
-            child: const Text('Create Backup'),
+            child: Text(_l10n.actionCreateBackup),
           ),
         ],
       ),
@@ -143,7 +154,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final accounts = accountProvider.accounts;
 
       if (accounts.isEmpty) {
-        _showMessage('No accounts to backup', isError: true);
+        _showMessage(_l10n.errorNoAccountsToBackup, isError: true);
         return;
       }
 
@@ -153,14 +164,15 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       );
 
       if (result && mounted) {
-        _showMessage('Encrypted backup created successfully');
+        _showMessage(_l10n.descBackupCreated);
         _showBackupSavedDialog();
       } else if (mounted) {
-        _showMessage('Backup cancelled or failed', isError: true);
+        _showMessage(_l10n.errorBackupCanceledOrFailed, isError: true);
       }
     } catch (e) {
+      AppLogger.error('Failed to create backup', e);
       if (mounted) {
-        _showMessage('Error creating backup: $e', isError: true);
+        _showMessage(_l10n.errorBackupFailed, isError: true);
       }
     } finally {
       settingsProvider.setBackupInProgress(false);
@@ -175,8 +187,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     settingsProvider.setBackupInProgress(true);
 
     final confirmed = await _showConfirmDialog(
-      'Restore Accounts',
-      'Import accounts from an encrypted backup file. Existing accounts will not be affected.',
+      _l10n.titleRestoreAccounts,
+      _l10n.descRestoreAccounts,
     );
 
     if (!confirmed) {
@@ -191,25 +203,26 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     final password = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Enter Backup Password'),
+        title: Text(_l10n.titleEnterBackupPassword),
         content: StatefulBuilder(
           builder: (context, setState) {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Enter the password you used when creating this backup:',
-                ),
+                Text(_l10n.descEnterBackupPassword),
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
                   obscureText: obscurePassword,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: _l10n.labelPassword,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
+                      tooltip: obscurePassword
+                          ? _l10n.tooltipShowPassword
+                          : _l10n.tooltipHidePassword,
                       icon: Icon(
                         obscurePassword
                             ? Icons.visibility_off
@@ -228,11 +241,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(_l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, passwordController.text),
-            child: const Text('Restore'),
+            child: Text(_l10n.actionRestore),
           ),
         ],
       ),
@@ -251,20 +264,12 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         password,
       );
 
-      if (backupData == null) {
-        _showMessage(
-          'No data imported. Check your password and try again.',
-          isError: true,
-        );
-        return;
-      }
+      // The user cancelled the file picker.
+      if (backupData == null) return;
 
       final accounts = backupData['accounts'] as List? ?? [];
       if (accounts.isEmpty) {
-        _showMessage(
-          'No accounts found in backup. Check your password and try again.',
-          isError: true,
-        );
+        _showMessage(_l10n.errorNoAccountsInBackup, isError: true);
         return;
       }
 
@@ -273,13 +278,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final result = await accountProvider.importData(backupData);
 
       if (mounted) {
-        _showMessage(
-          'Successfully restored ${result.accountsAdded} account(s)',
-        );
+        _showMessage(_l10n.descAccountsRestored(result.accountsAdded));
       }
+    } on BackupPasswordException {
+      if (mounted) _showMessage(_l10n.errorBackupPassword, isError: true);
+    } on BackupFileTooLargeException {
+      if (mounted) _showMessage(_l10n.errorBackupTooLarge, isError: true);
+    } on BackupContentException {
+      if (mounted) _showMessage(_l10n.errorBackupInvalid, isError: true);
     } catch (e) {
+      AppLogger.error('Failed to restore backup', e);
       if (mounted) {
-        _showMessage('Error restoring backup: $e', isError: true);
+        _showMessage(_l10n.errorRestoreFailed, isError: true);
       }
     } finally {
       settingsProvider.setBackupInProgress(false);
@@ -300,29 +310,27 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 12),
-            const Text('Backup Created'),
+            Expanded(child: Text(_l10n.titleBackupCreated)),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Your encrypted backup has been saved successfully.'),
-            SizedBox(height: 16),
+            Text(_l10n.descBackupSaved),
+            const SizedBox(height: 16),
             Text(
-              '⚠️ Important:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              '⚠️ ${_l10n.titleImportant}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text('• Store your backup file in a safe location'),
-            Text('• Remember your backup password'),
-            Text('• Without the password, you cannot restore'),
+            const SizedBox(height: 8),
+            Text(_l10n.descBackupTips),
           ],
         ),
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Got It'),
+            child: Text(_l10n.actionGotIt),
           ),
         ],
       ),
@@ -338,11 +346,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(_l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Continue'),
+            child: Text(_l10n.actionContinue),
           ),
         ],
       ),
@@ -378,7 +386,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Backup & Restore')),
+          appBar: AppBar(title: Text(_l10n.titleBackupRestore)),
           body: _isProcessing
               ? const Center(child: CircularProgressIndicator())
               : ListView(
@@ -399,7 +407,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
-                                'All backups are encrypted with a password for maximum security',
+                                _l10n.descBackupsEncrypted,
                                 style: TextStyle(
                                   color: theme.colorScheme.onPrimaryContainer,
                                   fontWeight: FontWeight.w500,
@@ -415,7 +423,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
                     // Create Backup Section
                     Text(
-                      'CREATE BACKUP',
+                      _l10n.titleCreateBackupSection.toUpperCase(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -437,10 +445,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             color: theme.colorScheme.onPrimaryContainer,
                           ),
                         ),
-                        title: const Text('Create Encrypted Backup'),
-                        subtitle: const Text(
-                          'Export all accounts with password protection',
-                        ),
+                        title: Text(_l10n.labelCreateEncryptedBackup),
+                        subtitle: Text(_l10n.descCreateEncryptedBackup),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: _handleExportEncrypted,
                       ),
@@ -450,7 +456,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
                     // Restore Backup Section
                     Text(
-                      'RESTORE BACKUP',
+                      _l10n.titleRestoreBackupSection.toUpperCase(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -472,10 +478,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             color: theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
-                        title: const Text('Restore from Backup'),
-                        subtitle: const Text(
-                          'Import accounts from encrypted backup file',
-                        ),
+                        title: Text(_l10n.labelRestoreFromBackup),
+                        subtitle: Text(_l10n.descRestoreFromBackup),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: _handleImportEncrypted,
                       ),
@@ -498,24 +502,22 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                   color: theme.colorScheme.onTertiaryContainer,
                                 ),
                                 const SizedBox(width: 12),
-                                Text(
-                                  'Best Practices',
-                                  style: TextStyle(
-                                    color:
-                                        theme.colorScheme.onTertiaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                Expanded(
+                                  child: Text(
+                                    _l10n.titleBestPractices,
+                                    style: TextStyle(
+                                      color:
+                                          theme.colorScheme.onTertiaryContainer,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              '• Create backups regularly\n'
-                              '• Use a strong, unique password\n'
-                              '• Store backups in multiple secure locations\n'
-                              '• Keep your password in a password manager\n'
-                              '• Test your backups by restoring them',
+                              _l10n.descBestPractices,
                               style: TextStyle(
                                 color: theme.colorScheme.onTertiaryContainer,
                                 fontSize: 13,
@@ -543,7 +545,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
-                                'Never share your backup files or passwords. Anyone with access to both can generate your authentication codes.',
+                                _l10n.descNeverShareBackups,
                                 style: TextStyle(
                                   color: theme.colorScheme.onErrorContainer,
                                   fontSize: 12,

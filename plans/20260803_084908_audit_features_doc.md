@@ -1,6 +1,6 @@
 # Plan: Audit and Update Features Reference Document
 
-**Status:** Completed
+**Status:** completed
 
 ## Target Files
 - `docs/features.md`

@@ -2,16 +2,18 @@
 // Author: Sreeraj P
 // Description: About screen displaying app information dynamically from AppConfig with auto-lock monitoring
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/widgets/made_with_love.dart';
+
 import '../config/app_config.dart';
 import '../config/app_flavor_config.dart';
 import '../providers/settings_provider.dart';
 import '../services/config_service.dart';
 import '../utils/build_date.g.dart';
-import '../utils/constants.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -49,16 +51,53 @@ class _AboutScreenState extends State<AboutScreen> {
     }
   }
 
+  String get _languageCode => Localizations.localeOf(context).languageCode;
+
   void _showLicensesDialog() {
+    final l10n = AppLocalizations.of(context);
     showLicensePage(
       context: context,
-      applicationName: _config.appName.isNotEmpty
-          ? _config.appName
-          : AppFlavorConfig.instance.appName,
+      applicationName: _config.appName.resolve(_languageCode),
       applicationVersion: _packageInfo?.version ?? _config.version,
       applicationIcon: const Icon(Icons.security, size: 48),
-      applicationLegalese: AppConstants.licensesLegalese,
+      applicationLegalese: l10n.descCopyright,
     );
+  }
+
+  /// Row label for an `app_config.json` details key, from ARB
+  /// `aboutDetail<Key>` (guideline.md §1.6). The raw key is the last-resort
+  /// fallback, so a newly added key still renders.
+  String _detailLabel(AppLocalizations l10n, String key) {
+    switch (key) {
+      case 'author':
+        return l10n.aboutDetailAuthor;
+      case 'email':
+        return l10n.aboutDetailEmail;
+      case 'website':
+        return l10n.aboutDetailWebsite;
+      case 'privacyPolicy':
+        return l10n.aboutDetailPrivacyPolicy;
+      case 'license':
+        return l10n.aboutDetailLicense;
+      case 'aiUsed':
+        return l10n.aboutDetailAiUsed;
+      case 'ideUsed':
+        return l10n.aboutDetailIdeUsed;
+      default:
+        return key;
+    }
+  }
+
+  /// Email rows open the mail app; https rows open the browser.
+  VoidCallback? _detailAction(String key, String value) {
+    if (key.trim().toLowerCase() == 'email') {
+      return () => _openMail(value);
+    }
+    final uri = Uri.tryParse(value);
+    if (uri != null && uri.scheme == 'https') {
+      return () => _openUrl(uri);
+    }
+    return null;
   }
 
   Widget _buildFeatureItem(IconData icon, String text) {
@@ -68,7 +107,7 @@ class _AboutScreenState extends State<AboutScreen> {
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
-          Text(text),
+          Expanded(child: Text(text)),
         ],
       ),
     );
@@ -81,43 +120,50 @@ class _AboutScreenState extends State<AboutScreen> {
     }
   }
 
+  Future<void> _openUrl(Uri uri) async {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   void _showPrivacyPolicy() {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(AppConstants.privacyPolicyTitle),
-        content: const SingleChildScrollView(
+        title: Text(l10n.titlePrivacyPolicy),
+        content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                AppConstants.privacyPolicyStorageTitle,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                l10n.titlePrivacyStorage,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
-              Text(AppConstants.privacyPolicyStorageDescription),
-              SizedBox(height: 16),
+              const SizedBox(height: 8),
+              Text(l10n.descPrivacyStorage),
+              const SizedBox(height: 16),
               Text(
-                AppConstants.privacyPolicyPermissionsTitle,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                l10n.titlePrivacyPermissions,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
-              Text(AppConstants.privacyPolicyPermissionsDescription),
-              SizedBox(height: 16),
+              const SizedBox(height: 8),
+              Text(l10n.descPrivacyPermissions),
+              const SizedBox(height: 16),
               Text(
-                AppConstants.privacyPolicySecurityTitle,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                l10n.titlePrivacySecurity,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
-              Text(AppConstants.privacyPolicySecurityDescription),
+              const SizedBox(height: 8),
+              Text(l10n.descPrivacySecurity),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(AppConstants.closeButtonText),
+            child: Text(l10n.actionClose),
           ),
         ],
       ),
@@ -127,6 +173,9 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final lang = _languageCode;
+    final description = _config.description.resolve(lang);
 
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
@@ -139,7 +188,7 @@ class _AboutScreenState extends State<AboutScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('About')),
+          appBar: AppBar(title: Text(l10n.titleAbout)),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : ListView(
@@ -163,16 +212,17 @@ class _AboutScreenState extends State<AboutScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            _config.appName.isNotEmpty
-                                ? _config.appName
-                                : AppFlavorConfig.instance.appName,
+                            _config.appName.resolve(lang),
+                            textAlign: TextAlign.center,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Version ${_packageInfo?.version ?? _config.version}',
+                            l10n.labelVersionNumber(
+                              _packageInfo?.version ?? _config.version,
+                            ),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -189,7 +239,9 @@ class _AboutScreenState extends State<AboutScreen> {
                                   size: 18,
                                 ),
                                 label: Text(
-                                  AppFlavorConfig.instance.environmentName,
+                                  AppFlavorConfig.instance.isDev
+                                      ? l10n.labelEnvDevelopment
+                                      : l10n.labelEnvProduction,
                                 ),
                               ),
                               Chip(
@@ -199,7 +251,7 @@ class _AboutScreenState extends State<AboutScreen> {
                                 ),
                                 label: Text(
                                   _packageInfo?.packageName ??
-                                      AppFlavorConfig.instance.appName,
+                                      _config.appName.resolve(lang),
                                 ),
                               ),
                               const Chip(
@@ -215,29 +267,27 @@ class _AboutScreenState extends State<AboutScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppConstants.aboutSectionTitle,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                    if (description.trim().isNotEmpty) ...[
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.titleAbout,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _config.description.isNotEmpty
-                                  ? _config.description
-                                  : AppConstants.aboutDescription,
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(description),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -245,7 +295,7 @@ class _AboutScreenState extends State<AboutScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppConstants.featuresSectionTitle,
+                              l10n.titleFeatures,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -253,27 +303,27 @@ class _AboutScreenState extends State<AboutScreen> {
                             const SizedBox(height: 12),
                             _buildFeatureItem(
                               Icons.qr_code_scanner,
-                              AppConstants.qrScanningFeature,
+                              l10n.descFeatureQr,
                             ),
                             _buildFeatureItem(
                               Icons.lock,
-                              AppConstants.encryptedStorageFeature,
+                              l10n.descFeatureEncrypted,
                             ),
                             _buildFeatureItem(
                               Icons.backup,
-                              AppConstants.backupRestoreFeature,
+                              l10n.descFeatureBackup,
                             ),
                             _buildFeatureItem(
                               Icons.folder,
-                              AppConstants.accountOrganizationFeature,
+                              l10n.descFeatureOrganize,
                             ),
                             _buildFeatureItem(
                               Icons.fingerprint,
-                              AppConstants.biometricAuthFeature,
+                              l10n.descFeatureBiometric,
                             ),
                             _buildFeatureItem(
                               Icons.dark_mode,
-                              AppConstants.darkModeFeature,
+                              l10n.descFeatureDarkMode,
                             ),
                           ],
                         ),
@@ -284,7 +334,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                         child: Text(
-                          AppConstants.developerSectionTitle,
+                          l10n.titleDeveloper.toUpperCase(),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -297,14 +347,14 @@ class _AboutScreenState extends State<AboutScreen> {
                           children: [
                             for (final entry in _config.details.entries)
                               if (entry.key.trim().isNotEmpty &&
-                                  entry.value.trim().isNotEmpty)
+                                  entry.value.resolve(lang).trim().isNotEmpty)
                                 ListTile(
-                                  title: Text(entry.key),
-                                  subtitle: Text(entry.value),
-                                  onTap:
-                                      entry.key.trim().toLowerCase() == 'email'
-                                      ? () => _openMail(entry.value)
-                                      : null,
+                                  title: Text(_detailLabel(l10n, entry.key)),
+                                  subtitle: Text(entry.value.resolve(lang)),
+                                  onTap: _detailAction(
+                                    entry.key,
+                                    entry.value.resolve(lang),
+                                  ),
                                 ),
                           ],
                         ),
@@ -314,7 +364,7 @@ class _AboutScreenState extends State<AboutScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text(
-                        AppConstants.linksSectionTitle,
+                        l10n.titleLinks.toUpperCase(),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -327,16 +377,14 @@ class _AboutScreenState extends State<AboutScreen> {
                         children: [
                           ListTile(
                             leading: const Icon(Icons.privacy_tip),
-                            title: const Text(AppConstants.privacyPolicyTitle),
+                            title: Text(l10n.titlePrivacyPolicy),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => _showPrivacyPolicy(),
                           ),
                           const Divider(height: 1),
                           ListTile(
                             leading: const Icon(Icons.article),
-                            title: const Text(
-                              AppConstants.openSourceLicensesTitle,
-                            ),
+                            title: Text(l10n.titleOpenSourceLicenses),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: _showLicensesDialog,
                           ),
@@ -346,23 +394,16 @@ class _AboutScreenState extends State<AboutScreen> {
                     const SizedBox(height: 24),
                     Center(
                       child: Text(
-                        AppConstants.copyrightText,
+                        l10n.descCopyright,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        AppConstants.footerText,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    // Signature badge: last element, ≥ 24 dp above it.
+                    const MadeWithLove(),
+                    SizedBox(height: 8 + MediaQuery.paddingOf(context).bottom),
                   ],
                 ),
         );

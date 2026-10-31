@@ -1,6 +1,6 @@
 # Change Log — Tag Autocomplete & Tag Browsing for Account Entries
 
-**Plan File:** [plans/20260819_184500_tag-autocomplete-and-browse.md](file:///l:/Android/SreerajP_Authenticator/plans/20260819_184500_tag-autocomplete-and-browse.md)
+**Plan File:** [plans/20260819_184500_tag-autocomplete-and-browse.md](../plans/20260819_184500_tag-autocomplete-and-browse.md)
 
 ## Summary of Changes
 Implemented instant tag autocomplete on the first typed character and a tag browsing modal for account creation and editing:
@@ -33,15 +33,15 @@ Implemented instant tag autocomplete on the first typed character and a tag brow
 ---
 
 ## Files Added
-- [lib/widgets/add_account/browse_tags_bottom_sheet.dart](file:///l:/Android/SreerajP_Authenticator/lib/widgets/add_account/browse_tags_bottom_sheet.dart)
-- [lib/widgets/add_account/tag_autocomplete_field.dart](file:///l:/Android/SreerajP_Authenticator/lib/widgets/add_account/tag_autocomplete_field.dart)
-- [test/widgets/add_account/tag_autocomplete_field_test.dart](file:///l:/Android/SreerajP_Authenticator/test/widgets/add_account/tag_autocomplete_field_test.dart)
+- [lib/widgets/add_account/browse_tags_bottom_sheet.dart](../lib/widgets/add_account/browse_tags_bottom_sheet.dart)
+- [lib/widgets/add_account/tag_autocomplete_field.dart](../lib/widgets/add_account/tag_autocomplete_field.dart)
+- [test/widgets/add_account/tag_autocomplete_field_test.dart](../test/widgets/add_account/tag_autocomplete_field_test.dart)
 
 ## Files Modified
-- [lib/widgets/add_account/account_info_card.dart](file:///l:/Android/SreerajP_Authenticator/lib/widgets/add_account/account_info_card.dart)
-- [lib/screens/add_account_screen.dart](file:///l:/Android/SreerajP_Authenticator/lib/screens/add_account_screen.dart)
-- [test/screens/tag_management_screen_test.dart](file:///l:/Android/SreerajP_Authenticator/test/screens/tag_management_screen_test.dart)
-- [plans/20260819_145600_tag-autocomplete-and-browse.md](file:///l:/Android/SreerajP_Authenticator/plans/20260819_145600_tag-autocomplete-and-browse.md)
+- [lib/widgets/add_account/account_info_card.dart](../lib/widgets/add_account/account_info_card.dart)
+- [lib/screens/add_account_screen.dart](../lib/screens/add_account_screen.dart)
+- [test/screens/tag_management_screen_test.dart](../test/screens/tag_management_screen_test.dart)
+- [plans/20260819_145600_tag-autocomplete-and-browse.md](../plans/20260819_145600_tag-autocomplete-and-browse.md)
 
 ---
 

@@ -19,11 +19,35 @@ import '../models/account.dart';
 import '../utils/constants.dart';
 import '../utils/network_utils.dart';
 
-/// Error type for sync failures surfaced to the UI. The [message] is safe to
-/// show to the user and never contains secret or decrypted data.
+/// Why a Wi-Fi sync step failed. The UI turns the code into localized text
+/// (services hold no UI text).
+enum P2pSyncErrorCode {
+  notSyncQr,
+  unsupportedVersion,
+  missingHost,
+  invalidPort,
+  missingPairingCode,
+  malformedPayload,
+  tooManyAccounts,
+  fieldTooLarge,
+  peerGone,
+  sendFailed,
+  noResponse,
+  invalidResponse,
+  connectionClosed,
+  wrongPairingCode,
+  timedOut,
+  connectFailed,
+  connectionError,
+}
+
+/// Error type for sync failures. [code] is what the UI shows (localized);
+/// [message] is English detail for logs and tests only. Neither ever contains
+/// secret or decrypted data.
 class P2pSyncException implements Exception {
+  final P2pSyncErrorCode code;
   final String message;
-  const P2pSyncException(this.message);
+  const P2pSyncException(this.code, this.message);
   @override
   String toString() => message;
 }
@@ -50,20 +74,20 @@ class P2pSyncService {
   _BoundedLineReader? _activeReader;
   void Function()? _onClientConnected;
   void Function()? _onClientDisconnected;
-  void Function(String message)? _onHostError;
-
-  /// True once a client has authenticated and the connection is being held open.
-  bool get hasConnectedClient => _activeSocket != null;
+  void Function(P2pSyncException error)? _onHostError;
 
   // ─── Crypto (app-agnostic core) ────────────────────────────────────────────
 
   static final Random _secureRandom = Random.secure();
 
   /// Fresh ~320-bit pairing code: 64 chars from a 31-symbol alphabet.
-  static String generatePairingCode() {
+  /// [length] is shorter for the optical transfer code.
+  static String generatePairingCode({
+    int length = AppConstants.syncPairingCodeLength,
+  }) {
     const alphabet = AppConstants.syncPairingAlphabet;
     final sb = StringBuffer();
-    for (var i = 0; i < AppConstants.syncPairingCodeLength; i++) {
+    for (var i = 0; i < length; i++) {
       sb.write(alphabet[_secureRandom.nextInt(alphabet.length)]);
     }
     return sb.toString();
@@ -81,8 +105,10 @@ class P2pSyncService {
   }
 
   /// Hyphen-group the code for display, e.g. ABCDEFGH-JKMNPQRS-...
-  static String formatPairingCode(String code) {
-    const group = AppConstants.syncPairingCodeGroup;
+  static String formatPairingCode(
+    String code, {
+    int group = AppConstants.syncPairingCodeGroup,
+  }) {
     final chunks = <String>[];
     for (var i = 0; i < code.length; i += group) {
       chunks.add(code.substring(i, min(i + group, code.length)));
@@ -122,42 +148,61 @@ class P2pSyncService {
     try {
       uri = Uri.parse(raw.trim());
     } catch (_) {
-      throw const P2pSyncException('Not a sync QR code');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.notSyncQr,
+        'Not a sync QR code',
+      );
     }
 
     if (uri.scheme != AppConstants.syncQrScheme ||
         uri.host != AppConstants.syncQrHost) {
-      throw const P2pSyncException('Not a sync QR code');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.notSyncQr,
+        'Not a sync QR code',
+      );
     }
     if (uri.queryParameters[AppConstants.syncQrKeyVersion] !=
         AppConstants.syncQrVersion) {
-      throw const P2pSyncException('Unsupported sync QR version');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.unsupportedVersion,
+        'Unsupported sync QR version',
+      );
     }
 
     final ipAddress = (uri.queryParameters[AppConstants.syncQrKeyIp] ?? '')
         .trim();
     if (ipAddress.isEmpty) {
-      throw const P2pSyncException('Sync QR is missing the host address');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.missingHost,
+        'Sync QR is missing the host address',
+      );
     }
 
     final port = int.tryParse(
       uri.queryParameters[AppConstants.syncQrKeyPort] ?? '',
     );
     if (port == null || port < 1 || port > 65535) {
-      throw const P2pSyncException('Sync QR has an invalid port');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.invalidPort,
+        'Sync QR has an invalid port',
+      );
     }
 
     final code = normalizeCode(
       uri.queryParameters[AppConstants.syncQrKeyCode] ?? '',
     );
     if (code.isEmpty) {
-      throw const P2pSyncException('Sync QR is missing the pairing code');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.missingPairingCode,
+        'Sync QR is missing the pairing code',
+      );
     }
 
     return (ipAddress: ipAddress, port: port, code: code);
   }
 
-  static Uint8List _randomBytes(int length) {
+  /// Secure random bytes (salts).
+  static Uint8List randomBytes(int length) {
     final bytes = Uint8List(length);
     for (var i = 0; i < length; i++) {
       bytes[i] = _secureRandom.nextInt(256);
@@ -199,7 +244,10 @@ class P2pSyncService {
   static String decryptWire(String encoded, enc.Key key) {
     final all = base64.decode(encoded);
     if (all.length <= AppConstants.gcmNonceSize) {
-      throw const P2pSyncException('Malformed ciphertext');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.malformedPayload,
+        'Malformed ciphertext',
+      );
     }
     final iv = enc.IV(
       Uint8List.fromList(all.sublist(0, AppConstants.gcmNonceSize)),
@@ -214,8 +262,8 @@ class P2pSyncService {
   // ─── Payload validation (before ingestion) ─────────────────────────────────
 
   /// Parse + validate a received plaintext JSON payload against the caps in
-  /// [AppConstants]. Returns a map with 'accounts' (`List<Account>`) and
-  /// 'groups' (`List<Group>`) ready for the import funnel. Throws
+  /// [AppConstants]. Returns a map with 'accounts' (`List<Account>`) ready for
+  /// the import funnel. Throws
   /// [P2pSyncException] on any cap violation or malformed data — applied before
   /// the data reaches the DB.
   static Map<String, dynamic> validateAndParse(String jsonStr) {
@@ -223,27 +271,48 @@ class P2pSyncService {
     try {
       decoded = jsonDecode(jsonStr);
     } catch (_) {
-      throw const P2pSyncException('Malformed sync payload');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.malformedPayload,
+        'Malformed sync payload',
+      );
     }
     if (decoded is! Map<String, dynamic>) {
-      throw const P2pSyncException('Malformed sync payload');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.malformedPayload,
+        'Malformed sync payload',
+      );
     }
 
     final hasAccounts = decoded['accounts'] is List;
     final accountsJson = (decoded['accounts'] as List?) ?? const [];
 
     if (accountsJson.length > AppConstants.syncMaxAccounts) {
-      throw const P2pSyncException('Payload exceeds the account limit');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.tooManyAccounts,
+        'Payload exceeds the account limit',
+      );
     }
 
     try {
       final accounts = <Account>[];
       for (final item in accountsJson) {
         if (item is! Map<String, dynamic>) {
-          throw const P2pSyncException('Malformed account entry');
+          throw const P2pSyncException(
+            P2pSyncErrorCode.malformedPayload,
+            'Malformed account entry',
+          );
         }
         _checkFieldLengths(item);
-        accounts.add(Account.fromMap(item));
+        final account = Account.fromMap(item);
+        // mOTP is no longer supported, and its PIN was not encrypted.
+        if (account.type.toLowerCase() == 'motp' ||
+            account.algorithm.toUpperCase() == 'MOTP') {
+          throw const P2pSyncException(
+            P2pSyncErrorCode.malformedPayload,
+            'Unsupported account type',
+          );
+        }
+        accounts.add(account);
       }
 
       // Only include category keys that were actually present, so the receiver
@@ -266,14 +335,20 @@ class P2pSyncService {
     } on P2pSyncException {
       rethrow;
     } catch (_) {
-      throw const P2pSyncException('Malformed sync payload');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.malformedPayload,
+        'Malformed sync payload',
+      );
     }
   }
 
   static void _checkFieldLengths(Map<String, dynamic> map) {
     for (final value in map.values) {
       if (value is String && value.length > AppConstants.syncMaxFieldLength) {
-        throw const P2pSyncException('A field in the payload is too large');
+        throw const P2pSyncException(
+          P2pSyncErrorCode.fieldTooLarge,
+          'A field in the payload is too large',
+        );
       }
     }
   }
@@ -294,7 +369,7 @@ class P2pSyncService {
     required Duration idleTimeout,
     required void Function() onClientConnected,
     required void Function() onClientDisconnected,
-    required void Function(String message) onError,
+    required void Function(P2pSyncException error) onError,
     required void Function() onTimedOut,
   }) async {
     await stopHost();
@@ -335,7 +410,12 @@ class P2pSyncService {
       }
     } catch (e) {
       if (!_timedOut && !_stopped) {
-        _onHostError?.call('Server error: $e');
+        _onHostError?.call(
+          P2pSyncException(
+            P2pSyncErrorCode.connectionError,
+            'Server error: $e',
+          ),
+        );
       }
     }
   }
@@ -356,7 +436,7 @@ class P2pSyncService {
     final reader = _BoundedLineReader(socket);
     try {
       // 0. Per-session salt sent in clear (not secret), then derive key.
-      final salt = _randomBytes(AppConstants.saltSize);
+      final salt = randomBytes(AppConstants.saltSize);
       socket.write('${base64.encode(salt)}\n');
       await socket.flush();
       final key = deriveKey(code, salt);
@@ -417,13 +497,19 @@ class P2pSyncService {
     final socket = _activeSocket;
     final key = _activeKey;
     if (socket == null || key == null) {
-      throw const P2pSyncException('The other device is no longer connected');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.peerGone,
+        'The other device is no longer connected',
+      );
     }
     try {
       socket.write('${encryptWire(payload, key)}\n');
       await socket.flush();
     } catch (e) {
-      throw P2pSyncException('Sync send failed: $e');
+      throw P2pSyncException(
+        P2pSyncErrorCode.sendFailed,
+        'Sync send failed: $e',
+      );
     } finally {
       // A session sends exactly one payload; stop hosting once it is delivered.
       await stopHost();
@@ -508,13 +594,19 @@ class P2pSyncService {
           .readLine(AppConstants.syncMaxHandshakeLine)
           .timeout(AppConstants.syncSocketTimeout);
       if (saltLine == null) {
-        throw const P2pSyncException('No response from host');
+        throw const P2pSyncException(
+          P2pSyncErrorCode.noResponse,
+          'No response from host',
+        );
       }
       final List<int> salt;
       try {
         salt = base64.decode(saltLine);
       } catch (_) {
-        throw const P2pSyncException('Invalid response from host');
+        throw const P2pSyncException(
+          P2pSyncErrorCode.invalidResponse,
+          'Invalid response from host',
+        );
       }
       final key = deriveKey(code, salt);
 
@@ -527,7 +619,10 @@ class P2pSyncService {
           .readLine(AppConstants.syncMaxHandshakeLine)
           .timeout(AppConstants.syncSocketTimeout);
       if (ans == null) {
-        throw const P2pSyncException('Connection closed by host');
+        throw const P2pSyncException(
+          P2pSyncErrorCode.connectionClosed,
+          'Connection closed by host',
+        );
       }
       bool accepted;
       try {
@@ -536,7 +631,10 @@ class P2pSyncService {
         accepted = false;
       }
       if (!accepted) {
-        throw const P2pSyncException('Incorrect pairing code');
+        throw const P2pSyncException(
+          P2pSyncErrorCode.wrongPairingCode,
+          'Incorrect pairing code',
+        );
       }
 
       // Connected and waiting: the sender now chooses what to share.
@@ -548,21 +646,31 @@ class P2pSyncService {
           .readLine(AppConstants.syncMaxPayloadLine)
           .timeout(AppConstants.syncPayloadWaitTimeout);
       if (encPayload == null) {
-        throw const P2pSyncException('The other device closed the connection');
+        throw const P2pSyncException(
+          P2pSyncErrorCode.connectionClosed,
+          'The other device closed the connection',
+        );
       }
       try {
         return decryptWire(encPayload, key);
       } catch (_) {
         throw const P2pSyncException(
+          P2pSyncErrorCode.wrongPairingCode,
           'Decryption failed; check the pairing code',
         );
       }
     } on P2pSyncException {
       rethrow;
     } on TimeoutException {
-      throw const P2pSyncException('The connection timed out');
+      throw const P2pSyncException(
+        P2pSyncErrorCode.timedOut,
+        'The connection timed out',
+      );
     } on SocketException catch (e) {
-      throw P2pSyncException('Could not connect to host: ${e.message}');
+      throw P2pSyncException(
+        P2pSyncErrorCode.connectFailed,
+        'Could not connect to host: ${e.message}',
+      );
     } finally {
       await reader?.cancel();
       try {
@@ -666,7 +774,9 @@ class _BoundedLineReader {
     final completer = _pending;
     _pending = null;
     if (completer != null && !completer.isCompleted) {
-      completer.completeError(P2pSyncException(message));
+      completer.completeError(
+        P2pSyncException(P2pSyncErrorCode.connectionError, message),
+      );
     }
   }
 

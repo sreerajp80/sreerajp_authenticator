@@ -2,21 +2,25 @@
 // Author: Sreeraj P
 // Description: Autocomplete tag input field with instant matching on 1st character and tag browser support
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import 'browse_tags_bottom_sheet.dart';
 
 class TagAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
   final List<String> availableTags;
-  final String labelText;
-  final String hintText;
+
+  /// Defaults to the localized "Tags" label and hint when null.
+  final String? labelText;
+  final String? hintText;
 
   const TagAutocompleteField({
     super.key,
     required this.controller,
     required this.availableTags,
-    this.labelText = 'Tags (Comma separated)',
-    this.hintText = 'e.g., Work, Crypto, VIP',
+    this.labelText,
+    this.hintText,
   });
 
   @override
@@ -259,7 +263,7 @@ class _TagAutocompleteFieldState extends State<TagAutocompleteField> {
                                 ),
                               ),
                               Text(
-                                'Tap to add',
+                                AppLocalizations.of(context).labelTapToAdd,
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: theme.colorScheme.onSurfaceVariant
@@ -283,19 +287,20 @@ class _TagAutocompleteFieldState extends State<TagAutocompleteField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return CompositedTransformTarget(
       link: _layerLink,
       child: TextFormField(
         controller: widget.controller,
         focusNode: _focusNode,
         decoration: InputDecoration(
-          labelText: widget.labelText,
-          hintText: widget.hintText,
+          labelText: widget.labelText ?? l10n.labelTags,
+          hintText: widget.hintText ?? l10n.descTagsFieldHint,
           border: const OutlineInputBorder(),
           prefixIcon: const Icon(Icons.label_outlined),
           suffixIcon: IconButton(
             icon: const Icon(Icons.sell_outlined),
-            tooltip: 'Browse existing tags',
+            tooltip: l10n.tooltipBrowseTags,
             onPressed: _openBrowseTags,
           ),
         ),

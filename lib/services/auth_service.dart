@@ -7,6 +7,7 @@
 import 'dart:convert';
 import 'dart:isolate';
 import 'dart:math';
+
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -138,7 +139,11 @@ class AuthService {
     }
   }
 
-  Future<LocalAuthResult> authenticateWithBiometric() async {
+  /// [reason] is the localized text the system prompt shows; the caller
+  /// passes it from AppLocalizations (services hold no UI text).
+  Future<LocalAuthResult> authenticateWithBiometric({
+    required String reason,
+  }) async {
     try {
       final isAvailable = await isBiometricAvailable();
       if (!isAvailable) {
@@ -146,7 +151,7 @@ class AuthService {
       }
 
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate with biometrics to access your accounts',
+        localizedReason: reason,
         biometricOnly: true,
         persistAcrossBackgrounding: true,
       );
@@ -159,7 +164,11 @@ class AuthService {
     }
   }
 
-  Future<LocalAuthResult> authenticateWithPhoneLock() async {
+  /// [reason] is the localized text the system prompt shows; the caller
+  /// passes it from AppLocalizations (services hold no UI text).
+  Future<LocalAuthResult> authenticateWithPhoneLock({
+    required String reason,
+  }) async {
     try {
       final isSupported = await isPhoneLockQuickUnlockAvailable();
       if (!isSupported) {
@@ -167,7 +176,7 @@ class AuthService {
       }
 
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Unlock Authenticator with your Phone Screen Lock',
+        localizedReason: reason,
         biometricOnly: false,
         persistAcrossBackgrounding: true,
         sensitiveTransaction: false,
@@ -205,10 +214,6 @@ class AuthService {
     return LocalAuthOutcome.error;
   }
 
-  Future<bool> authenticateWithDeviceLock() async {
-    return (await authenticateWithPhoneLock()).isSuccess;
-  }
-
   Future<bool> isDeviceSupported() async {
     try {
       return await _localAuth.isDeviceSupported();
@@ -227,8 +232,8 @@ class AuthService {
     }
   }
 
-  Future<bool> authenticate() async {
-    return (await authenticateWithPhoneLock()).isSuccess;
+  Future<bool> authenticate({required String reason}) async {
+    return (await authenticateWithPhoneLock(reason: reason)).isSuccess;
   }
 
   Future<void> setPin(String pin) async {
@@ -424,15 +429,6 @@ class AuthService {
     return AppConstants.lockoutSeconds8PlusAttempts;
   }
 
-  Future<bool> isScreenLockEnabled() async {
-    try {
-      return await _localAuth.isDeviceSupported();
-    } catch (e) {
-      AppLogger.error('Failed to check screen lock status', e);
-      return false;
-    }
-  }
-
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
       return await _localAuth.getAvailableBiometrics();
@@ -440,21 +436,5 @@ class AuthService {
       AppLogger.error('Failed to load available biometrics', e);
       return [];
     }
-  }
-
-  String getBiometricTypeString(List<BiometricType> types) {
-    if (types.contains(BiometricType.face)) {
-      return 'Face ID';
-    }
-    if (types.contains(BiometricType.fingerprint)) {
-      return 'Fingerprint';
-    }
-    if (types.contains(BiometricType.strong)) {
-      return 'Biometric';
-    }
-    if (types.contains(BiometricType.weak)) {
-      return 'Biometric (Weak)';
-    }
-    return 'Biometric';
   }
 }

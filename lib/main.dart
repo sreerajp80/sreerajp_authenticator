@@ -2,12 +2,17 @@
 // Author: Sreeraj P
 // Created: 2025 September 25
 // Last Modified: 2025 October 14
-// Description: Main entry point for the SreerajP Authenticator app with lock screen check using routing wrapper pattern
+// Description: Main entry point for the Sreeraj P Authenticator app with lock screen check using routing wrapper pattern
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:screen_protector/screen_protector.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+import 'package:sreerajp_authenticator/config/locale_config.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/providers/locale_provider.dart';
+import 'package:sreerajp_authenticator/services/config_service.dart';
 
 // Providers
 import 'providers/theme_provider.dart';
@@ -22,6 +27,7 @@ import 'screens/lock_screen.dart';
 
 // Theme
 import 'config/app_flavor_config.dart';
+import 'utils/screen_protection.dart';
 import 'utils/theme.dart';
 
 void main() async {
@@ -41,20 +47,39 @@ void main() async {
     ),
   );
 
-  // Prevent screenshots and screen recording (sets FLAG_SECURE on Android)
-  await ScreenProtector.protectDataLeakageOn();
-  await ScreenProtector.preventScreenshotOn();
+  await enableScreenProtection();
 
-  runApp(const MyApp());
+  // Read the saved language and the About config before the first frame, so
+  // the app never flashes the wrong language (engineering standard §8.4).
+  final prefs = await SharedPreferences.getInstance();
+
+  // Protection stays on unless the user turned it off in Settings.
+  if (!SettingsProvider.readBlockScreenshots(prefs)) {
+    await disableScreenProtection();
+  }
+
+  final localeProvider = LocaleProvider(prefs);
+  final appConfig = await ConfigService().load();
+
+  runApp(MyApp(localeProvider: localeProvider, appConfig: appConfig));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final LocaleProvider localeProvider;
+  final AppConfig appConfig;
+
+  const MyApp({
+    super.key,
+    required this.localeProvider,
+    required this.appConfig,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: localeProvider),
+        Provider.value(value: appConfig),
         // Theme Provider for managing app theme
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         // Settings Provider for managing security and app settings (must be before AccountsProvider)
@@ -64,13 +89,29 @@ class MyApp extends StatelessWidget {
         // Sync Provider for P2P LAN sync state (lazily created when used)
         ChangeNotifierProvider(create: (_) => SyncProvider()),
       ],
-      child: Consumer2<ThemeProvider, SettingsProvider>(
-        builder: (context, themeProvider, settingsProvider, child) {
+      child: Consumer3<ThemeProvider, SettingsProvider, LocaleProvider>(
+        builder: (context, themeProvider, settingsProvider, locales, child) {
           return MaterialApp(
-            title: AppFlavorConfig.instance.appName,
+            // The OS task title follows the active language (guideline.md §1.8).
+            onGenerateTitle: (context) => appConfig.appName.resolve(
+              Localizations.localeOf(context).languageCode,
+            ),
             debugShowCheckedModeBanner: false,
+
+            // Localization (engineering standard §8.1, §8.4)
+            locale: locales.locale,
+            supportedLocales: LocaleConfig.supportedLocales,
+            localizationsDelegates: LocaleConfig.localizationsDelegates,
+            localeResolutionCallback: LocaleConfig.localeResolution,
             builder: (context, child) {
-              final app = child ?? const SizedBox.shrink();
+              // Some packages still use package:flutter/material.dart; the bridge
+              // gives their widgets the app theme (engineering standard §6.1).
+              // It is deprecated on purpose as a temporary migration helper; remove
+              // it when those packages move to material_ui (docs/architecture.md §21).
+              // ignore: deprecated_member_use
+              final app = MaterialUiCompatibilityBridge(
+                child: child ?? const SizedBox.shrink(),
+              );
               if (!AppFlavorConfig.instance.showEnvironmentBanner) {
                 return app;
               }
@@ -149,6 +190,10 @@ class _AppInitializerState extends State<_AppInitializer> {
   Widget _buildSplashScreen() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+    final appName = context.read<AppConfig>().appName.resolve(
+      Localizations.localeOf(context).languageCode,
+    );
 
     return Scaffold(
       body: Container(
@@ -187,37 +232,25 @@ class _AppInitializerState extends State<_AppInitializer> {
               ),
               const SizedBox(height: 32),
 
-              // App Name
-              Text(
-                'Sreeraj P',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      offset: const Offset(0, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                'Authenticator',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.2,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      offset: const Offset(0, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
+              // App Name (from app_config.json, in the active language)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  appName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        offset: const Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 48),
@@ -236,7 +269,7 @@ class _AppInitializerState extends State<_AppInitializer> {
               const SizedBox(height: 16),
 
               Text(
-                'Securing your accounts...',
+                l10n.descSplashLoading,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 14,

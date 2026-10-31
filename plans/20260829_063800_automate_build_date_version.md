@@ -1,6 +1,6 @@
 # Plan: Automate Build Metadata Generation & Display Build Date in About Screen
 
-**Status:** Completed
+**Status:** completed
 
 ## Overview
 Automate build metadata generation (`app_version.g.dart` and `build_date.g.dart`) during Gradle builds (e.g. `flutter build apk`) and display the build date in the About screen.

@@ -1,6 +1,6 @@
-# Architecture — SreerajP Authenticator
+# Architecture — Sreeraj P Authenticator
 
-This document describes the technical architecture, layer boundaries, app lifecycle, state management, and persistence design of SreerajP Authenticator. Read this before changing screens, services, providers, models, or state logic.
+This document describes the technical architecture, layer boundaries, app lifecycle, state management, and persistence design of Sreeraj P Authenticator. Read this before changing screens, services, providers, models, or state logic.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md) | [guidelines/architecture.md](guidelines/architecture.md)
 
@@ -8,16 +8,15 @@ This document describes the technical architecture, layer boundaries, app lifecy
 
 ## 1. Scope
 
-- Product: `SreerajP Authenticator`
+- Product: `Sreeraj P Authenticator`
 - Repository type: `application`
 - Engineering standard profiles in force:
   - `Core Baseline`
   - `Production App Extension`
   - `Sensitive Data Extension`
-- Platforms in repository:
-  - `Android` (primary target)
-  - `iOS` (runner present)
-  - `Windows` (runner present)
+- Declared platforms (from [`PROJECT_PROFILE.md`](PROJECT_PROFILE.md) §3):
+  - `Android` (the only platform)
+- The `ios/`, `macos/`, `windows/`, `linux/` and `web/` folders were removed.
 
 ---
 
@@ -44,8 +43,8 @@ This document describes the technical architecture, layer boundaries, app lifecy
 
 The app uses a Tier 1 Flutter structure with `Provider` for app state, `sqflite` for local
 persistence, `flutter_secure_storage` for secret and key material, and service classes for OTP,
-encryption, authentication, migration, and import/export logic. The app is intentionally offline:
-accounts, groups, lock settings, and encrypted backups are handled locally on-device without any
+encryption, authentication, and import/export logic. The app is intentionally offline:
+accounts, lock settings, and encrypted backups are handled locally on-device without any
 application network API.
 
 ---
@@ -82,7 +81,7 @@ lib/
 | `lib/models/` | Account data model and mapping with multi-tag support |
 | `lib/providers/` | App state, lock policy, filtering, sort order, and theme state |
 | `lib/screens/` | Route-level UI and user flows |
-| `lib/services/` | OTP, crypto, auth, migration, backup/import, brand icons, and database logic |
+| `lib/services/` | OTP, crypto, auth, backup/import, brand icons, database logic, and "Delete all data" (`data_wipe_service.dart`) |
 | `lib/widgets/` | Reusable UI pieces shared by screens |
 | `lib/utils/` | Constants, theme definitions, and shared helper content |
 
@@ -99,7 +98,8 @@ Documented from [`lib/main.dart`](../lib/main.dart).
 | 3 | `SystemChrome.setSystemUIOverlayStyle(...)` | Transparent status and navigation bars |
 | 4 | `ScreenProtector.protectDataLeakageOn()` | Enables platform screenshot/data-leak protection hooks |
 | 5 | `ScreenProtector.preventScreenshotOn()` | Applies screenshot blocking; on Android this sets `FLAG_SECURE` |
-| 6 | `runApp(const MyApp())` | Starts the widget tree |
+| 6 | `disableScreenProtection()` | Only if the user turned off "Block screenshots" (`block_screenshots` in SharedPreferences) |
+| 7 | `runApp(const MyApp())` | Starts the widget tree |
 
 Deferred initialization:
 
@@ -159,7 +159,7 @@ Implications:
 - State boundaries:
   - Widgets own: form inputs, visual expansion state, loading indicators, and local interaction state
   - Providers own: lock state, theme mode, account collections, tag filtering, sort, and import state
-  - Services own: OTP generation, encryption, persistence, migrations, authentication, brand icons, and backup logic
+  - Services own: OTP generation, encryption, persistence, authentication, brand icons, and backup logic
 
 ---
 
@@ -209,7 +209,8 @@ Current state:
 
 SQLite schema version: `4`
 
-Migration history:
+Version history (upgrades from older versions are no longer supported, because the app has had
+no public release):
 
 | Version | Change Summary |
 |---------|---------------|
@@ -222,7 +223,7 @@ Migration history:
 
 | Type | Purpose | Mutable? | Notes |
 |------|---------|----------|-------|
-| `Account` | Stores OTP account metadata and the encrypted secret | `Yes` | Supports TOTP, HOTP, Steam Guard, Blizzard, YubiKey, mOTP, issuer, algorithm, digits, period, multi-tagging, and ordering |
+| `Account` | Stores OTP account metadata and the encrypted secret | `Yes` | Supports TOTP, HOTP, Steam Guard, Blizzard, YubiKey, issuer, algorithm, digits, period, multi-tagging, and ordering |
 
 ### Serialization Strategy
 
@@ -291,22 +292,26 @@ Migration history:
   with the host's tabbed send UI in
   [`lib/screens/send_to_device_screen.dart`](../lib/screens/send_to_device_screen.dart).
   The host holds the connection open after a peer authenticates and the **sender chooses what to
-  share**: a Full Sync (all accounts, groups, and the syncable settings — theme, auto-lock, and sync
+  share**: a Full Sync (all accounts and the syncable settings — theme, auto-lock, and sync
   idle timeout — via `SettingsProvider.syncableSettingsSnapshot`) to a fresh device, or a selective
   incremental sync of chosen categories. Payloads carry an optional `settings` object and a
-  `syncMode` marker; device-specific security settings are never sent. Received accounts/groups are
+  `syncMode` marker; device-specific security settings are never sent. Received accounts are
   routed through the existing import funnel (`AccountsProvider.importData`, add-only / client-wins,
   now returning `ImportResult` counts) and settings through `SettingsProvider.applySyncedSettings`
   (fill-only on an incremental sync). The host auto-stops after a configurable idle timeout
   (`SettingsProvider.syncHostIdleTimeout`), and idle auto-lock is suppressed while the sync screen is
   open (`SettingsProvider.setSyncInProgress`) so a session is not torn down mid-transfer. Full threat
   model in `docs/security.md`.
+- Optical air-gap sync (no network): the same payload is sealed with AES-256-GCM by
+  `OpticalSyncCrypto` ([`lib/services/optical_sync_service.dart`](../lib/services/optical_sync_service.dart)),
+  keyed by a one-time transfer code shown on the receiver and typed on the sender, then sent as
+  Fountain-code QR frames (version 2). See `docs/security.md` §5.2.
 
 ### Platform Channels Or Native Integrations
 
 - `screen_protector`: screenshot and screen-recording protection
 - `local_auth`: device lock and biometric authentication
-- `mobile_scanner`: QR scanning
+- `flutter_zxing` and `camera`: QR scanning (`lib/widgets/qr_camera_view.dart`)
 - `flutter_secure_storage`: key and secret-material storage
 - `device_state_service` method channel: boot-count checks for adaptive unlock policy
 
@@ -314,16 +319,22 @@ Migration history:
 
 ## 15. Environment And Build Model
 
-- Flavors used: `dev`, `prod` on Android
-- Runtime config mechanism: `--dart-define=FLUTTER_APP_FLAVOR=<value>`
-- Build outputs currently documented and used:
-  - `debug APK`
-  - `release APK`
-  - `release app bundle`
-- Additional runners: iOS and Windows runners are present, but Android is the primary documented
-  release target today
-- Obfuscation: should be enabled explicitly for production release builds with
-  `--obfuscate --split-debug-info=build/symbols/android-prod/` for the current Android prod release
+- Flavors used: `dev`, `prod`. `pubspec.yaml` sets `default-flavor: dev` for every platform, so
+  release builds always pass `--flavor prod`
+- Runtime config mechanism: native Android flavor; Flutter sets `FLUTTER_APP_FLAVOR` from
+  `--flavor`, read by `AppFlavorConfig`
+- Obfuscation: enabled for every production release build with
+  `--obfuscate --split-debug-info=build/symbols/<platform>-prod-<version>/`; symbols archived
+  outside the repository ([`release_process.md`](release_process.md) §6.1)
+
+### Target Platforms And Distribution
+
+The minimum OS for each platform, and its reason, is recorded only in
+[`PROJECT_PROFILE.md`](PROJECT_PROFILE.md) §3.
+
+| Platform | Release artifact | Channel(s) | Signing | Platform-specific notes |
+|---|---|---|---|---|
+| Android | `.aab` / split `.apk` | Google Play, direct APK | release keystore + Play App Signing | Camera, biometric and INTERNET (local Wi-Fi sync) permissions; `FLAG_SECURE` |
 
 ---
 
@@ -334,6 +345,23 @@ Migration history:
 - Design tokens location: colors, spacing, and themed component styles currently live in
   [`lib/utils/theme.dart`](../lib/utils/theme.dart)
 - Shared widget strategy: reusable components live under `lib/widgets/`
+- Material package: widgets come from `material_ui` (`package:material_ui/material_ui.dart`).
+  The `migrate_design_widgets` lint in `analysis_options.yaml` blocks the old SDK imports.
+  `MaterialApp.builder` in `lib/main.dart` wraps the app in `MaterialUiCompatibilityBridge`
+  so packages that still use the SDK library get the app theme (see §21)
+- Localization (engineering standard §8): `en` (template), `ml`, `sa`. ARB files in `lib/l10n/`,
+  generated `AppLocalizations` (via `l10n.yaml`). `LocaleConfig` (`lib/config/locale_config.dart`)
+  holds the supported locales, the delegate list (Sanskrit fallback delegates from
+  `lib/l10n/fallback_localizations.dart` first, then `GlobalMaterialLocalizations.delegates`),
+  device-locale resolution and `formattingLocale(...)`. `LocaleProvider`
+  (`lib/providers/locale_provider.dart`) is the single source of the chosen language; `main()`
+  creates it before `runApp`, so the first frame is already in the right language. The picker is
+  `lib/screens/language_settings_screen.dart`.
+- Fonts: bundled Noto Sans Malayalam and Noto Sans Devanagari are the theme's
+  `fontFamilyFallback` (`AppTheme.fontFamilyFallback`); licences in `fonts/OFL-*.txt`.
+- About screen: `assets/config/app_config.json` holds locale maps (`LocalizedText`); row labels
+  come from ARB `aboutDetail<Key>`; the screen ends with the `MadeWithLove` badge
+  (`lib/widgets/made_with_love.dart`, heart token `AppTheme.heartRed`).
 - Accessibility expectations:
   - Minimum touch target: 48 x 48 dp on mobile
   - Color contrast: target WCAG AA minimum
@@ -358,7 +386,7 @@ Migration history:
 
 | Test Type | Scope | Notes |
 |-----------|-------|-------|
-| Unit | Services, models, providers, and flavor config | Includes OTP vectors, encryption round-trips, migration, auth, DB, and import/export |
+| Unit | Services, models, providers, and flavor config | Includes OTP vectors, encryption round-trips, auth, DB, and import/export |
 | Widget | Home and security flows | Covers selected UI behavior and provider interactions |
 | Integration | Not committed currently | Manual device validation still required for release flows |
 | Performance | Manual | Release-build smoke testing required before distribution |
@@ -377,8 +405,7 @@ test/
 ### Critical Test Areas
 
 - RFC-based HOTP/TOTP generation and parsing
-- Encryption round-trips and legacy format decryption
-- SQLite schema migration from version 1 to 4
+- Encryption round-trips and rejection of old formats
 - App lock, recovery-key, and lockout behavior
 - Encrypted backup/import flows and duplicate-handling logic
 - Root routing behavior when the app is locked vs unlocked
@@ -388,8 +415,7 @@ test/
 ## 19. Operational Constraints
 
 - Minimum supported OS versions:
-  - Android: `21+`
-  - iOS and Windows runners: present, but not the primary release target documented here
+  - Recorded only in [`PROJECT_PROFILE.md`](PROJECT_PROFILE.md) §3 (Android `minSdk 29`)
 - Performance constraints:
   - Cold startup target: under 2 seconds to first meaningful frame in release builds
   - Frame budget: 16 ms at 60 Hz
@@ -422,6 +448,13 @@ test/
 - Risk: Release-only hardening and offline verification still depend on manual checklist discipline.
   Mitigation: Follow [`release_process.md`](release_process.md)
   for production builds and add automation over time.
+- Risk: `flutter_slidable` and `percent_indicator` still render widgets from the SDK
+  `package:flutter/material.dart`. They need `MaterialUiCompatibilityBridge`, which is deprecated
+  as a temporary helper. Other packages import that library, but the app shows no widget from
+  them that reads its theme.
+  Mitigation: when updating dependencies, check whether each package has moved to
+  `material_ui`; remove the bridge (and its `ignore` comment in `lib/main.dart`) once none is left.
+  The app passes no theme or colour-scheme objects into these packages (analyze is clean).
 
 ---
 

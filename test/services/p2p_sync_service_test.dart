@@ -26,7 +26,6 @@ void main() {
             createdAt: fixedTime,
           ).toMap(),
       ],
-      'groups': <Map<String, dynamic>>[],
     };
     if (settings != null) map[AppConstants.syncPayloadKeySettings] = settings;
     if (syncMode != null) map[AppConstants.syncPayloadKeySyncMode] = syncMode;
@@ -169,6 +168,18 @@ void main() {
       expect((data['accounts'] as List<Account>).length, 2);
     });
 
+    test('rejects an mOTP account', () {
+      final payload = jsonDecode(buildPayloadJson(accounts: 1)) as Map;
+      final account = (payload['accounts'] as List).first as Map;
+      account['type'] = 'motp';
+      account['algorithm'] = 'MOTP';
+
+      expect(
+        () => P2pSyncService.validateAndParse(jsonEncode(payload)),
+        throwsA(isA<P2pSyncException>()),
+      );
+    });
+
     test('rejects malformed JSON', () {
       expect(
         () => P2pSyncService.validateAndParse('not json'),
@@ -182,7 +193,6 @@ void main() {
           AppConstants.syncMaxAccounts + 1,
           (i) => {'name': 'a$i'},
         ),
-        'groups': [],
       });
       expect(
         () => P2pSyncService.validateAndParse(json),
@@ -204,7 +214,6 @@ void main() {
             'sortOrder': 0,
           },
         ],
-        'groups': [],
       });
       expect(
         () => P2pSyncService.validateAndParse(json),

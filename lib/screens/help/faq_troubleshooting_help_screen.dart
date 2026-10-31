@@ -2,8 +2,11 @@
 // Author: Sreeraj P
 // Description: User-facing FAQ and troubleshooting guide addressing common questions
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../../providers/settings_provider.dart';
 
 class FaqTroubleshootingHelpScreen extends StatelessWidget {
@@ -13,6 +16,10 @@ class FaqTroubleshootingHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        final appName = context.read<AppConfig>().appName.resolve(
+          Localizations.localeOf(context).languageCode,
+        );
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,88 +29,55 @@ class FaqTroubleshootingHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('FAQs & Troubleshooting')),
+          appBar: AppBar(title: Text(l10n.helpFaq01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'Find quick answers to common questions about 2FA codes, account recovery, security safeguards, and troubleshooting.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpFaq02),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.key_outlined,
-                title: '2FA Codes & Verification',
+                title: l10n.helpFaq03,
                 children: [
-                  _FaqItem(
-                    question:
-                        'Why are my codes rejected as invalid by websites?',
-                    answer:
-                        'The most common cause is clock drift on your device. Open Android Settings -> Date & Time and enable "Set time automatically" (network-provided time). This ensures your phone clock matches UTC precisely.',
-                  ),
-                  _FaqItem(
-                    question: 'Can I copy a code with 1 tap?',
-                    answer:
-                        'Yes! Simply tap anywhere on the account card on your home screen. The 6-digit code is immediately copied to your clipboard with a confirmation snackbar.',
-                  ),
-                  _FaqItem(
-                    question: 'How do HOTP codes differ from TOTP codes?',
-                    answer:
-                        'TOTP codes update automatically every 30 seconds based on time. HOTP codes update only when you manually tap the refresh icon to advance the counter.',
-                  ),
+                  _FaqItem(question: l10n.helpFaq04, answer: l10n.helpFaq05),
+                  _FaqItem(question: l10n.helpFaq06, answer: l10n.helpFaq07),
+                  _FaqItem(question: l10n.helpFaq08, answer: l10n.helpFaq09),
                 ],
               ),
 
               _Section(
                 icon: Icons.security_outlined,
-                title: 'Security & App Privacy',
+                title: l10n.helpFaq10,
                 children: [
+                  _FaqItem(question: l10n.helpFaq11, answer: l10n.helpFaq12),
                   _FaqItem(
-                    question:
-                        'Why does my screen go blank when switching apps?',
-                    answer:
-                        'Screenshot Guard enforces Android\'s FLAG_SECURE protection. This prevents screen recording apps and recent task switchers from capturing your sensitive 2FA seeds.',
+                    question: l10n.helpFaq13(appName),
+                    answer: l10n.helpFaq14(appName),
                   ),
-                  _FaqItem(
-                    question:
-                        'Does SreerajP Authenticator send any data online?',
-                    answer:
-                        'No. SreerajP Authenticator is 100% offline-first. It contains no analytics beacons, tracking SDKs, or cloud backends. Your data never leaves your device unless you initiate a local P2P sync or backup export.',
-                  ),
-                  _FaqItem(
-                    question: 'What if biometric recognition fails?',
-                    answer:
-                        'If your fingerprint or face is not recognized, you can authenticate using your device screen lock PIN, pattern, or password.',
-                  ),
+                  _FaqItem(question: l10n.helpFaq15, answer: l10n.helpFaq16),
                 ],
               ),
 
               _Section(
                 icon: Icons.sync_outlined,
-                title: 'Backups, Transfers & Migration',
+                title: l10n.helpFaq17,
                 children: [
                   _FaqItem(
-                    question: 'How do I transfer my accounts to a new phone?',
-                    answer:
-                        'You can either use "Sync to Another Device" over local Wi-Fi, scan an animated Optical Air-Gap QR sequence, or export an encrypted backup file from your old phone and import it on the new one.',
+                    question: l10n.helpFaq18,
+                    answer: l10n.helpFaq19(l10n.titleSyncDevice),
                   ),
+                  _FaqItem(question: l10n.helpFaq20, answer: l10n.helpFaq21),
                   _FaqItem(
-                    question: 'What happens if I forget my backup password?',
-                    answer:
-                        'Because backup files use authenticated AES-256 encryption and there are no central servers, a lost backup password cannot be recovered. Keep your password written down safely.',
-                  ),
-                  _FaqItem(
-                    question:
-                        'Will importing a backup erase my existing accounts?',
-                    answer:
-                        'No. SreerajP Authenticator uses safe, add-only merging. Existing accounts are preserved and new accounts are added without duplicate clashes.',
+                    question: l10n.helpFaq22,
+                    answer: l10n.helpFaq23(appName),
                   ),
                 ],
               ),
 
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _Footer(
-                'Need further assistance? Check the individual guides in the Help menu or inspect your permissions under Settings -> Permissions.',
+                l10n.helpFaq24(l10n.titleSettings, l10n.titlePermissions),
               ),
             ],
           ),

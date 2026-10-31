@@ -5,10 +5,13 @@
 //   out-of-band channel (read by camera, never sent over the network); this
 //   screen only parses and returns data and never touches the database.
 
-import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/widgets/sync_error_text.dart';
 
 import '../services/p2p_sync_service.dart';
+import '../widgets/qr_camera_view.dart';
 
 /// Result returned to the caller on a successful scan.
 typedef SyncQrResult = ({String ipAddress, int port, String code});
@@ -21,18 +24,11 @@ class SyncQrScannerScreen extends StatefulWidget {
 }
 
 class _SyncQrScannerScreenState extends State<SyncQrScannerScreen> {
-  final MobileScannerController controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    formats: [BarcodeFormat.qrCode],
-  );
+  /// Localized strings. Read only while the screen is mounted.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
+  final QrCameraController controller = QrCameraController();
 
   bool _isProcessing = false;
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
 
   void _processCode(String? raw) {
     if (raw == null || _isProcessing) return;
@@ -47,7 +43,7 @@ class _SyncQrScannerScreenState extends State<SyncQrScannerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message),
+            content: Text(p2pSyncErrorText(_l10n, e.code)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -63,30 +59,23 @@ class _SyncQrScannerScreenState extends State<SyncQrScannerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan sync QR code'),
+        title: Text(_l10n.titleScanSyncQr),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
             onPressed: () => controller.toggleTorch(),
-            tooltip: 'Toggle Flash',
+            tooltip: _l10n.tooltipToggleFlash,
           ),
           IconButton(
             icon: const Icon(Icons.flip_camera_ios),
             onPressed: () => controller.switchCamera(),
-            tooltip: 'Switch Camera',
+            tooltip: _l10n.tooltipSwitchCamera,
           ),
         ],
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: (capture) {
-              for (final barcode in capture.barcodes) {
-                _processCode(barcode.rawValue);
-              }
-            },
-          ),
+          QrCameraView(controller: controller, onCode: _processCode),
           Container(
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.5),
@@ -106,13 +95,13 @@ class _SyncQrScannerScreenState extends State<SyncQrScannerScreen> {
                     ),
                   ),
                 ),
-                const Positioned(
+                Positioned(
                   bottom: 100,
                   left: 0,
                   right: 0,
                   child: Text(
-                    'Scan the QR shown on the sending device',
-                    style: TextStyle(
+                    _l10n.descScanSenderQr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,

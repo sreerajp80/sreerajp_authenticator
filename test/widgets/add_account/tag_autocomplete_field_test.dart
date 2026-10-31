@@ -1,7 +1,8 @@
 // File Path: sreerajp_authenticator/test/widgets/add_account/tag_autocomplete_field_test.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sreerajp_authenticator/config/locale_config.dart';
 import 'package:sreerajp_authenticator/widgets/add_account/browse_tags_bottom_sheet.dart';
 import 'package:sreerajp_authenticator/widgets/add_account/tag_autocomplete_field.dart';
 
@@ -14,6 +15,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: LocaleConfig.localizationsDelegates,
+          supportedLocales: LocaleConfig.supportedLocales,
           home: Scaffold(
             body: TagAutocompleteField(
               controller: controller,
@@ -23,7 +26,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Tags (Comma separated)'), findsOneWidget);
+      expect(find.text('Tags'), findsOneWidget);
       expect(find.byIcon(Icons.sell_outlined), findsOneWidget);
       expect(find.byIcon(Icons.label_outlined), findsOneWidget);
     });
@@ -35,6 +38,8 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
+            localizationsDelegates: LocaleConfig.localizationsDelegates,
+            supportedLocales: LocaleConfig.supportedLocales,
             home: Scaffold(
               body: TagAutocompleteField(
                 controller: controller,
@@ -85,6 +90,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: LocaleConfig.localizationsDelegates,
+          supportedLocales: LocaleConfig.supportedLocales,
           home: Scaffold(
             body: TagAutocompleteField(
               controller: controller,
@@ -111,6 +118,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: LocaleConfig.localizationsDelegates,
+          supportedLocales: LocaleConfig.supportedLocales,
           home: Scaffold(
             body: TagAutocompleteField(
               controller: controller,
@@ -125,7 +134,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check bottom sheet contents
-      expect(find.text('Browse Existing Tags'), findsOneWidget);
+      expect(find.text('Browse existing tags'), findsOneWidget);
       expect(find.text('#Work'), findsOneWidget);
       expect(find.text('#Crypto'), findsOneWidget);
       expect(find.text('#Personal'), findsOneWidget);
@@ -137,7 +146,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap Apply
-      await tester.tap(find.text('Apply (2 selected)'));
+      await tester.tap(find.text('Apply (2)'));
       await tester.pumpAndSettle();
 
       // Check controller text
@@ -149,6 +158,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: LocaleConfig.localizationsDelegates,
+          supportedLocales: LocaleConfig.supportedLocales,
           home: Scaffold(
             body: TagAutocompleteField(
               controller: controller,
@@ -182,6 +193,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: LocaleConfig.localizationsDelegates,
+          supportedLocales: LocaleConfig.supportedLocales,
           home: Scaffold(
             body: BrowseTagsBottomSheet(
               availableTags: const ['Alpha', 'Beta', 'Gamma'],
@@ -198,7 +211,7 @@ void main() {
 
       // Enter search filter 'bet'
       await tester.enterText(
-        find.widgetWithText(TextField, 'Search existing tags...'),
+        find.widgetWithText(TextField, 'Search tags…'),
         'bet',
       );
       await tester.pumpAndSettle();
@@ -208,7 +221,7 @@ void main() {
       expect(find.text('#Gamma'), findsNothing);
 
       // Tap Clear All
-      await tester.tap(find.text('Clear All'));
+      await tester.tap(find.text('Clear all'));
       await tester.pumpAndSettle();
 
       // Tap Apply

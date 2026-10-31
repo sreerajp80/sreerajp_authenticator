@@ -1,6 +1,6 @@
 # Two-Tab Home Screen (Accounts & Tag Cloud) and Tag Management
 
-**Status:** Approved
+**Status:** completed
 
 ## Issue
 1. **Home Screen Layout:** Horizontal tag filter bar on the main list was inconvenient and tag filtering wasn't updating account cards.
@@ -29,36 +29,36 @@
 
 ## Files to Change
 
-### 1. [lib/providers/account_provider.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/account_provider.dart)
+### 1. [lib/providers/account_provider.dart](../lib/providers/account_provider.dart)
 - Add `renameTag(String oldTag, String newTag)`: Renames tag across all accounts and updates DB.
 - Add `deleteTag(String tag)`: Removes tag from all accounts and updates DB.
 - Add `getAccountCountForTag(String tag)` helper.
 - Update `filteredAccounts` logic so selected tag filters (AND/OR matching) are properly applied when `selectedTags` is non-empty.
 
-### 2. [lib/screens/home_screen.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/home_screen.dart)
+### 2. [lib/screens/home_screen.dart](../lib/screens/home_screen.dart)
 - Implement `TabController` (or `TabBarView` / `IndexedStack`) with 2 main tabs:
   - **Tab 1: Accounts**
   - **Tab 2: Tags**
 - Integrate search bar, active filter banner (`Filtered by #Tag [Clear]`), and account list into Tab 1.
 - Apply `provider.selectedTags` properly in `_getFilteredAndSortedAccounts`.
 
-### 3. [NEW] [lib/widgets/home/home_tag_cloud_view.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets/home/home_tag_cloud_view.dart)
+### 3. [NEW] [lib/widgets/home/home_tag_cloud_view.dart](../lib/widgets/home/home_tag_cloud_view.dart)
 - Build the **Tag Cloud View** for Tab 2:
   - Header with total tag count and "Manage Tags" button.
   - `Wrap` layout of tag chips with account count badges.
   - Tapping a tag invokes `provider.toggleTag(tag)` and switches `HomeScreen` to Tab 1.
 
-### 4. [NEW] [lib/screens/tag_management_screen.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/tag_management_screen.dart)
+### 4. [NEW] [lib/screens/tag_management_screen.dart](../lib/screens/tag_management_screen.dart)
 - Build the dedicated **Tag Management Screen**:
   - Search bar for tags.
   - Edit/rename tag dialog (updates all member accounts).
   - Delete tag dialog (removes tag from all member accounts).
   - Empty state when no tags exist.
 
-### 5. [lib/widgets/account_tile.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets/account_tile.dart)
+### 5. [lib/widgets/account_tile.dart](../lib/widgets/account_tile.dart)
 - Update tag chip rendering on account cards with higher contrast background, rounded border, and bold text color.
 
-### 6. [lib/screens/settings_screen.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/settings_screen.dart)
+### 6. [lib/screens/settings_screen.dart](../lib/screens/settings_screen.dart)
 - Add a "Manage Tags" settings tile linking to `TagManagementScreen`.
 
 ### 7. Tests

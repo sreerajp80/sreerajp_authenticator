@@ -2,7 +2,8 @@
 // Author: Sreeraj P
 // Description: Modal bottom sheet allowing users to browse and multi-select existing vault tags
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 class BrowseTagsBottomSheet extends StatefulWidget {
   final List<String> availableTags;
@@ -91,6 +92,7 @@ class _BrowseTagsBottomSheetState extends State<BrowseTagsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final mediaQuery = MediaQuery.of(context);
 
@@ -136,7 +138,7 @@ class _BrowseTagsBottomSheetState extends State<BrowseTagsBottomSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Browse Existing Tags',
+                          l10n.titleBrowseTags,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -149,12 +151,12 @@ class _BrowseTagsBottomSheetState extends State<BrowseTagsBottomSheet> {
                               _selectedTags.clear();
                             });
                           },
-                          child: const Text('Clear All'),
+                          child: Text(l10n.actionClearAll),
                         ),
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.of(context).pop(),
-                        tooltip: 'Close',
+                        tooltip: l10n.tooltipClose,
                       ),
                     ],
                   ),
@@ -169,10 +171,11 @@ class _BrowseTagsBottomSheetState extends State<BrowseTagsBottomSheet> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search existing tags...',
+                        hintText: l10n.labelSearchExistingTags,
                         prefixIcon: const Icon(Icons.search, size: 20),
                         suffixIcon: _searchFilter.isNotEmpty
                             ? IconButton(
+                                tooltip: l10n.tooltipClearSearch,
                                 icon: const Icon(Icons.clear, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
@@ -201,14 +204,14 @@ class _BrowseTagsBottomSheetState extends State<BrowseTagsBottomSheet> {
                   child: widget.availableTags.isEmpty
                       ? _buildEmptyState(
                           context,
-                          'No existing tags found',
-                          'Type new tags in the text field to assign them to this entry.',
+                          l10n.emptyNoExistingTags,
+                          l10n.emptyTypeNewTags,
                         )
                       : _filteredTags.isEmpty
                       ? _buildEmptyState(
                           context,
-                          'No matching tags',
-                          'No existing tags match "$_searchFilter".',
+                          l10n.emptyNoMatchingTags,
+                          l10n.emptyNoTagsMatchQuery(_searchFilter),
                         )
                       : _buildTagsList(theme, isDark),
                 ),
@@ -223,8 +226,8 @@ class _BrowseTagsBottomSheetState extends State<BrowseTagsBottomSheet> {
                     icon: const Icon(Icons.check),
                     label: Text(
                       _selectedTags.isEmpty
-                          ? 'Done'
-                          : 'Apply (${_selectedTags.length} selected)',
+                          ? l10n.actionDone
+                          : l10n.actionApplySelected(_selectedTags.length),
                     ),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(46),

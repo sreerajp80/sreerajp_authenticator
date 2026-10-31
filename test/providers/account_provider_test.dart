@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sreerajp_authenticator/providers/account_provider.dart';
 import 'package:sreerajp_authenticator/services/database_service.dart';
-import 'package:sreerajp_authenticator/utils/constants.dart';
 
 import 'provider_test_helpers.dart';
 
@@ -11,12 +12,7 @@ void main() {
   late DatabaseService db;
 
   setUp(() async {
-    await setUpProviderTestEnvironment(
-      sharedPreferences: const {
-        AppConstants.aesMigrationKey: true,
-        AppConstants.gcmMigrationKey: true,
-      },
-    );
+    await setUpProviderTestEnvironment(sharedPreferences: const {});
     db = DatabaseService.instance;
   });
 
@@ -24,7 +20,64 @@ void main() {
     await tearDownProviderTestEnvironment();
   });
 
+  group('nextHotpCode', () {
+    const rfcSecret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+
+    Future<AccountsProvider> withHotp() async {
+      final provider = AccountsProvider();
+      await settleAsyncWork();
+      await provider.addAccount(
+        makeAccount(type: 'hotp', counter: 0, secret: rfcSecret),
+      );
+      await waitForCondition(
+        () => provider.accounts.length == 1 && !provider.isLoading,
+      );
+      return provider;
+    }
+
+    test('steps through the RFC 4226 values and saves the counter', () async {
+      final provider = await withHotp();
+      for (final expected in ['755224', '287082', '359152']) {
+        final result = await provider.nextHotpCode(provider.accounts.first);
+        expect(result.code, expected);
+      }
+      expect(provider.accounts.first.counter, 3);
+      final saved = await db.getAllAccounts();
+      expect(saved.single.counter, 3);
+    });
+
+    test('a stale save gives no code and does not move the counter', () async {
+      final provider = await withHotp();
+      final account = provider.accounts.first;
+      // Another writer moved the counter after the list was loaded.
+      await db.setHotpCounter(account.id!, 0, 9);
+
+      final result = await provider.nextHotpCode(account);
+      expect(result.isSuccess, isFalse);
+      expect(result.code, isNull);
+      expect((await db.getAllAccounts()).single.counter, 9);
+    });
+  });
+
   group('AccountsProvider', () {
+    test('reports a failed load, and clears it after a good load', () async {
+      final provider = AccountsProvider();
+      await waitForCondition(() => !provider.isLoading);
+      expect(provider.loadFailed, isFalse);
+
+      // A folder cannot be opened as a database.
+      await DatabaseService.resetForTesting();
+      final goodPath = DatabaseService.testDbPath;
+      DatabaseService.testDbPath = Directory.systemTemp.path;
+      await provider.loadAccounts();
+      expect(provider.loadFailed, isTrue);
+      expect(provider.accounts, isEmpty);
+
+      DatabaseService.testDbPath = goodPath;
+      await provider.loadAccounts();
+      expect(provider.loadFailed, isFalse);
+    });
+
     test('loads accounts ordered by sortOrder', () async {
       await db.createAccount(makeAccount(name: 'Third', sortOrder: 2));
       await db.createAccount(makeAccount(name: 'First', sortOrder: 0));
@@ -64,34 +117,6 @@ void main() {
       expect(storedAccount.secret, isNot(plainSecret));
       expect(storedAccount.secret, contains(':'));
       expect(provider.accounts.single.secret, storedAccount.secret);
-    });
-
-    test('searchQuery filters accounts by name and issuer', () async {
-      await db.createAccount(makeAccount(name: 'GitHub', issuer: 'GitHub'));
-      await db.createAccount(makeAccount(name: 'Workspace', issuer: 'Google'));
-      await db.createAccount(makeAccount(name: 'Slack', issuer: 'Slack'));
-
-      final provider = AccountsProvider();
-      await waitForCondition(
-        () =>
-            provider.accounts.length == 3 &&
-            !provider.isLoading &&
-            !provider.isPreDecrypting,
-      );
-
-      provider.setSearchQuery('goo');
-
-      expect(
-        provider.filteredAccounts.map((account) => account.name).toList(),
-        ['Workspace'],
-      );
-
-      provider.setSearchQuery('git');
-
-      expect(
-        provider.filteredAccounts.map((account) => account.name).toList(),
-        ['GitHub'],
-      );
     });
 
     test(

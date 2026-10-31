@@ -1,6 +1,6 @@
 # Plan: Tag Autocomplete and Tag Browsing for Account Entries
 
-**Status:** Implemented
+**Status:** completed
 
 ## Issue
 When creating or editing account entries in the Add/Edit Account screen:

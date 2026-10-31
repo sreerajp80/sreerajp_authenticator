@@ -1,6 +1,6 @@
 # Plan: Optical Air-Gap Sync Transfer Duration Estimate & Large Vault Warning
 
-**Status:** Proposed / Pending Approval
+**Status:** completed
 
 ## Issue
 1. Optical Air-Gap Sync (animated QR stream) displays frame index and percentage progress, but does not inform the user of the estimated transfer duration in seconds.
@@ -16,8 +16,8 @@
    - On the Optical Sync transmitter screen, if `totalChunks >= AppConstants.opticalLargeVaultChunkThreshold`, display a warning banner explaining that the vault payload is large (~X chunks, ~Y seconds) and recommending P2P Wi-Fi Sync for faster transfer.
 
 ## Files to Change
-- [constants.dart](file:///l:/Android/SreerajP_Authenticator/lib/utils/constants.dart)
-- [optical_sync_screen.dart](file:///l:/Android/SreerajP_Authenticator/lib/screens/optical_sync_screen.dart)
+- [constants.dart](../lib/utils/constants.dart)
+- [optical_sync_screen.dart](../lib/screens/optical_sync_screen.dart)
 
 ## Verification Plan
 ### Automated Tests

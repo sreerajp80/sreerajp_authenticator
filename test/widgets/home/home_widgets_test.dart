@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sreerajp_authenticator/config/locale_config.dart';
 import 'package:sreerajp_authenticator/widgets/home/home_empty_state.dart';
 import 'package:sreerajp_authenticator/widgets/home/home_fab_button.dart';
 import 'package:sreerajp_authenticator/widgets/home/home_search_bar.dart';
@@ -140,10 +141,10 @@ void main() {
       await tester.longPress(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
 
-      expect(find.text('QR Scanner'), findsOneWidget);
-      expect(find.text('Manual Entry'), findsOneWidget);
+      expect(find.text('QR scanner'), findsOneWidget);
+      expect(find.text('Manual entry'), findsOneWidget);
 
-      await tester.tap(find.text('Manual Entry'));
+      await tester.tap(find.text('Manual entry'));
       await tester.pumpAndSettle();
 
       expect(qrScanTapped, 0);
@@ -155,6 +156,8 @@ void main() {
 Future<void> pumpHomeWidget(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: LocaleConfig.localizationsDelegates,
+      supportedLocales: LocaleConfig.supportedLocales,
       home: Scaffold(body: Center(child: child)),
     ),
   );

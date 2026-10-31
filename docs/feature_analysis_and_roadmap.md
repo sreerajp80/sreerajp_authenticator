@@ -38,7 +38,7 @@ lib/
 │   ├── export_import_service.dart # Password-protected .aes file backup & restore
 │   ├── migration_service.dart     # Legacy XOR/AES-CBC secret migration
 │   ├── optical_sync_service.dart  # Animated QR stream air-gap encoder & decoder
-│   ├── otp_service.dart           # TOTP, HOTP, Steam Guard, Blizzard, YubiKey, mOTP engines
+│   ├── otp_service.dart           # TOTP, HOTP, Steam Guard, Blizzard, YubiKey engines
 │   └── p2p_sync_service.dart      # Encrypted socket LAN transfer with out-of-band PIN/QR
 └── widgets/             # Reusable UI widgets organized by feature (account_tile, add_account, home)
 ```
@@ -192,8 +192,8 @@ In addition to new features, existing features in [`lib/services`](../lib/servic
 ### Improvement 1: Steam Guard & Non-Standard Algorithm Support `[COMPLETED]` ✅
 
 - **Status:** **Completed** ✅
-- **Implementation:** Extended [`OTPService`](../lib/services/otp_service.dart) to support **Steam Guard** (HMAC-SHA1 5-character lookup `23456789BCDFGHJKMNPQRTVWXY`), **mOTP** (Mobile OTP), and hex-encoded secrets. Added native URI parsing for `steam://` and `motp://` schemas in `OTPService.parseOtpAuthUri()` and [`QrScannerScreen`](../lib/screens/qr_scanner_screen.dart).
-- **Current Behavior:** Decodes, generates, and formats Steam Guard 5-letter alphanumeric codes and mOTP codes with custom PIN/counter handling seamlessly.
+- **Implementation:** Extended [`OTPService`](../lib/services/otp_service.dart) to support **Steam Guard** (HMAC-SHA1 5-character lookup `23456789BCDFGHJKMNPQRTVWXY`) and hex-encoded secrets. mOTP was removed before the first release. Added native URI parsing for the `steam://` schema in `OTPService.parseOtpAuthUri()` and [`QrScannerScreen`](../lib/screens/qr_scanner_screen.dart).
+- **Current Behavior:** Decodes, generates, and formats Steam Guard 5-letter alphanumeric codes.
 
 ---
 

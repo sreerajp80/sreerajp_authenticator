@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 class TimerIndicator extends StatelessWidget {
   final int remainingTime;
@@ -48,6 +49,8 @@ class TimerIndicator extends StatelessWidget {
         percent: percentage,
         center: Text(
           '$remainingTime',
+          semanticsLabel: AppLocalizations.of(context)
+              .labelSecondsCount(remainingTime),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,

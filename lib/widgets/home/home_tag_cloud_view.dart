@@ -2,10 +2,14 @@
 // Author: Sreeraj P
 // Description: Tag Cloud View widget displaying all account tags with account member counts
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/account_provider.dart';
 import '../../screens/tag_management_screen.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../utils/theme.dart';
 
 class HomeTagCloudView extends StatefulWidget {
@@ -30,6 +34,7 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Consumer<AccountsProvider>(
@@ -49,30 +54,34 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
             children: [
               // Header Row
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tag Cloud',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppTheme.deepBlue,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.titleTagCloud,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : AppTheme.deepBlue,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Tap any tag to view matching accounts',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isDark
-                              ? Colors.grey.shade400
-                              : Colors.grey.shade600,
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.descTagCloud,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade600,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  OutlinedButton.icon(
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    tooltip: l10n.actionManageTags,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -81,13 +90,9 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.tune, size: 18),
-                    label: const Text('Manage Tags'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    style: IconButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -107,10 +112,11 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                   controller: _searchController,
                   onChanged: (val) => setState(() => _tagSearch = val),
                   decoration: InputDecoration(
-                    hintText: 'Search tags...',
+                    hintText: l10n.labelSearchTags,
                     prefixIcon: const Icon(Icons.search, size: 20),
                     suffixIcon: _tagSearch.isNotEmpty
                         ? IconButton(
+                            tooltip: l10n.tooltipClearSearch,
                             icon: const Icon(Icons.clear, size: 18),
                             onPressed: () {
                               _searchController.clear();
@@ -162,7 +168,11 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Active filter: ${selectedTags.map((t) => t.startsWith('#') ? t : '#$t').join(', ')}',
+                          l10n.descActiveFilter(
+                            selectedTags
+                                .map((t) => t.startsWith('#') ? t : '#$t')
+                                .join(', '),
+                          ),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -173,7 +183,7 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                       TextButton.icon(
                         onPressed: () => provider.clearSelectedTags(),
                         icon: const Icon(Icons.close, size: 16),
-                        label: const Text('Clear'),
+                        label: Text(l10n.actionClear),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           visualDensity: VisualDensity.compact,
@@ -203,8 +213,8 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                         const SizedBox(height: 12),
                         Text(
                           availableTags.isEmpty
-                              ? 'No tags created yet'
-                              : 'No tags matching "$_tagSearch"',
+                              ? l10n.emptyNoTagsYet
+                              : l10n.emptyNoTagsMatching(_tagSearch),
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: isDark
                                 ? Colors.grey.shade300
@@ -214,8 +224,8 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                         const SizedBox(height: 4),
                         Text(
                           availableTags.isEmpty
-                              ? 'Add tags when creating or editing an account'
-                              : 'Try searching for a different keyword',
+                              ? l10n.emptyAddTagsHint
+                              : l10n.emptyTryDifferentKeyword,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isDark
                                 ? Colors.grey.shade500

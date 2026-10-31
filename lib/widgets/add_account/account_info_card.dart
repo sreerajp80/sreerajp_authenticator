@@ -2,7 +2,9 @@
 
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import 'tag_autocomplete_field.dart';
 
 class AccountInfoCard extends StatelessWidget {
@@ -40,6 +42,7 @@ class AccountInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Card(
       child: Padding(
@@ -48,7 +51,7 @@ class AccountInfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ACCOUNT INFORMATION',
+              l10n.titleAccountInformation.toUpperCase(),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -59,15 +62,15 @@ class AccountInfoCard extends StatelessWidget {
 
             TextFormField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Account Name *',
-                hintText: 'e.g., john@example.com',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
+              decoration: InputDecoration(
+                labelText: l10n.labelAccountName,
+                hintText: l10n.descAccountNameExample,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Account name is required';
+                  return l10n.errorAccountNameRequired;
                 }
                 return null;
               },
@@ -77,11 +80,11 @@ class AccountInfoCard extends StatelessWidget {
 
             TextFormField(
               controller: issuerController,
-              decoration: const InputDecoration(
-                labelText: 'Issuer (Optional)',
-                hintText: 'e.g., Google, GitHub',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.business),
+              decoration: InputDecoration(
+                labelText: l10n.labelIssuer,
+                hintText: l10n.descIssuerExample,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.business),
               ),
             ),
 
@@ -120,7 +123,7 @@ class AccountInfoCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Secret Key *',
+                                l10n.labelSecretKey,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -143,8 +146,8 @@ class AccountInfoCard extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               isAppLockEnabled
-                                  ? 'Tap to unlock'
-                                  : 'Enable app lock',
+                                  ? l10n.labelTapToUnlock
+                                  : l10n.labelEnableAppLock,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: theme.colorScheme.primary,
@@ -164,8 +167,8 @@ class AccountInfoCard extends StatelessWidget {
                   TextFormField(
                     controller: secretController,
                     decoration: InputDecoration(
-                      labelText: 'Secret Key *',
-                      hintText: 'Base32 encoded secret',
+                      labelText: l10n.labelSecretKey,
+                      hintText: l10n.descSecretKeyBase32,
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.key),
                       suffixIcon: isEditing
@@ -178,7 +181,7 @@ class AccountInfoCard extends StatelessWidget {
                           : IconButton(
                               icon: const Icon(Icons.qr_code_scanner),
                               onPressed: () => onQrScan(),
-                              tooltip: 'Scan QR Code',
+                              tooltip: l10n.tooltipScanQr,
                             ),
                     ),
                     validator: secretValidator,

@@ -1,33 +1,56 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sreerajp_authenticator/config/app_config.dart';
 import 'package:sreerajp_authenticator/services/config_service.dart';
 
 void main() {
+  group('LocalizedText Tests', () {
+    test('plain text resolves the same for every language', () {
+      const text = LocalizedText.plain('hello');
+      expect(text.resolve('en'), 'hello');
+      expect(text.resolve('sa'), 'hello');
+    });
+
+    test('locale map resolves exact locale, then en, then any', () {
+      final text = LocalizedText.fromJson({'en': 'Hi', 'ml': 'നമസ്കാരം'});
+      expect(text.resolve('ml'), 'നമസ്കാരം');
+      expect(text.resolve('sa'), 'Hi');
+      expect(LocalizedText.fromJson({'ml': 'x'}).resolve('en'), 'x');
+    });
+
+    test('invalid input falls back without throwing', () {
+      expect(LocalizedText.fromJson(42, fallback: 'f').resolve('en'), 'f');
+      expect(LocalizedText.fromJson({'en': 1}).isEmpty, isTrue);
+    });
+  });
+
   group('AppConfig Model Tests', () {
-    test('AppConfig.fromJson parses valid JSON fields correctly', () {
+    test('AppConfig.fromJson parses plain and locale-map fields', () {
       final jsonMap = {
-        'appName': 'Test App',
+        'appName': {'en': 'Test App', 'ml': 'ടെസ്റ്റ് ആപ്പ്'},
         'description': 'Test Description',
         'version': '1.2.3',
         'build': '45',
         'details': {
-          'Author': 'Jane Doe',
-          'Email': 'jane@example.com',
-          'License': 'MIT',
+          'author': {'en': 'Jane Doe', 'ml': 'ജെയിൻ ഡോ'},
+          'email': 'jane@example.com',
+          'license': 'MIT',
         },
       };
 
       final config = AppConfig.fromJson(jsonMap);
 
-      expect(config.appName, equals('Test App'));
-      expect(config.description, equals('Test Description'));
-      expect(config.version, equals('1.2.3'));
-      expect(config.build, equals('45'));
-      expect(config.details['Author'], equals('Jane Doe'));
-      expect(config.details['Email'], equals('jane@example.com'));
-      expect(config.details['License'], equals('MIT'));
+      expect(config.appName.resolve('en'), 'Test App');
+      expect(config.appName.resolve('ml'), 'ടെസ്റ്റ് ആപ്പ്');
+      expect(config.description.resolve('sa'), 'Test Description');
+      expect(config.version, '1.2.3');
+      expect(config.build, '45');
+      expect(config.details['author']!.resolve('ml'), 'ജെയിൻ ഡോ');
+      expect(config.details['email']!.resolve('en'), 'jane@example.com');
+      expect(config.details['license']!.resolve('en'), 'MIT');
     });
 
     test(
@@ -43,13 +66,23 @@ void main() {
 
         final config = AppConfig.fromJson(jsonMap);
 
-        expect(config.appName, equals(AppConfig.fallback.appName));
-        expect(config.description, equals(AppConfig.fallback.description));
-        expect(config.version, equals(AppConfig.fallback.version));
-        expect(config.build, equals(AppConfig.fallback.build));
+        expect(
+          config.appName.resolve('en'),
+          AppConfig.fallback.appName.resolve('en'),
+        );
+        expect(config.description.isEmpty, isTrue);
+        expect(config.version, AppConfig.fallback.version);
+        expect(config.build, AppConfig.fallback.build);
         expect(config.details, isEmpty);
       },
     );
+
+    test('fallback app name exists in every declared language', () {
+      final name = AppConfig.fallback.appName;
+      expect(name.resolve('en'), 'Sreeraj P Authenticator');
+      expect(name.resolve('ml'), 'ശ്രീരാജ് പി പ്രമാണീകാരി');
+      expect(name.resolve('sa'), 'श्रीराज पी प्रमाणीकारकः');
+    });
   });
 
   group('ConfigService Loader Tests', () {
@@ -59,16 +92,16 @@ void main() {
         'description': 'Custom Description',
         'version': '2.0.0',
         'build': '10',
-        'details': {'Developer': 'Sreeraj'},
+        'details': {'developer': 'Sreeraj'},
       });
 
       final service = ConfigService(loadAsset: (path) async => jsonString);
 
       final config = await service.load();
 
-      expect(config.appName, equals('Custom Authenticator'));
-      expect(config.version, equals('2.0.0'));
-      expect(config.details['Developer'], equals('Sreeraj'));
+      expect(config.appName.resolve('en'), 'Custom Authenticator');
+      expect(config.version, '2.0.0');
+      expect(config.details['developer']!.resolve('en'), 'Sreeraj');
     });
 
     test('ConfigService.load returns fallback on asset load error', () async {
@@ -78,8 +111,7 @@ void main() {
 
       final config = await service.load();
 
-      expect(config.appName, equals(AppConfig.fallback.appName));
-      expect(config.version, equals(AppConfig.fallback.version));
+      expect(identical(config, AppConfig.fallback), isTrue);
     });
 
     test('ConfigService.load returns fallback on malformed JSON', () async {
@@ -89,7 +121,7 @@ void main() {
 
       final config = await service.load();
 
-      expect(config.appName, equals(AppConfig.fallback.appName));
+      expect(identical(config, AppConfig.fallback), isTrue);
     });
 
     test(
@@ -114,8 +146,20 @@ void main() {
 
         final config = await service.loadAndVerify(packageInfo: packageInfo);
 
-        expect(config.appName, equals('Verified App'));
+        expect(config.appName.resolve('en'), 'Verified App');
       },
     );
+
+    test('bundled app_config.json matches pubspec.yaml version', () {
+      final config = AppConfig.fromJson(
+        jsonDecode(File('assets/config/app_config.json').readAsStringSync())
+            as Map<String, dynamic>,
+      );
+      final version = RegExp(
+        r'^version:\s*(\S+)',
+        multiLine: true,
+      ).firstMatch(File('pubspec.yaml').readAsStringSync())!.group(1)!;
+      expect('${config.version}+${config.build}', version);
+    });
   });
 }

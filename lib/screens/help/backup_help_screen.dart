@@ -2,8 +2,11 @@
 // Author: Sreeraj P
 // Description: User-facing guide for encrypted backups, password protection, and safe restore
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../../providers/settings_provider.dart';
 
 class BackupHelpScreen extends StatelessWidget {
@@ -13,6 +16,10 @@ class BackupHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        final appName = context.read<AppConfig>().appName.resolve(
+          Localizations.localeOf(context).languageCode,
+        );
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,64 +29,56 @@ class BackupHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Encrypted Backup & Restore')),
+          appBar: AppBar(title: Text(l10n.helpBackup01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'Backups protect you against phone damage, loss, or when migrating to a new device. All backup files are strongly encrypted with a password of your choice.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpBackup02),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.file_upload_outlined,
-                title: 'Creating an Encrypted Backup',
+                title: l10n.helpBackup03,
                 children: [
                   _Bullet(
-                    'Go to Settings -> Backup & Restore -> tap "Export Encrypted Backup".',
+                    l10n.helpBackup04(
+                      l10n.titleSettings,
+                      l10n.titleBackupRestore,
+                      l10n.labelCreateEncryptedBackup,
+                    ),
                   ),
-                  _Bullet(
-                    'Choose a strong backup password. The app derives an AES-256 key using PBKDF2 with 100,000 iterations to encrypt the archive.',
-                  ),
-                  _Bullet(
-                    'Save the exported `.json` / backup file to your device storage, an external USB drive, or your personal offline archive.',
-                  ),
+                  _Bullet(l10n.helpBackup05),
+                  _Bullet(l10n.helpBackup06),
                 ],
               ),
 
               _Section(
                 icon: Icons.password_outlined,
-                title: 'Password Security & Recovery',
+                title: l10n.helpBackup07,
                 children: [
-                  _Bullet(
-                    'Your backup password is never stored or transmitted. You MUST remember it or keep it written down safely.',
-                  ),
-                  _Bullet(
-                    'Because SreerajP Authenticator is 100% offline, there is no "Forgot Password" or server reset. A lost backup password cannot be recovered.',
-                  ),
+                  _Bullet(l10n.helpBackup08),
+                  _Bullet(l10n.helpBackup09(appName)),
                 ],
               ),
 
               _Section(
                 icon: Icons.file_download_outlined,
-                title: 'Restoring & Importing Backups',
+                title: l10n.helpBackup10,
                 children: [
                   _Bullet(
-                    'Go to Settings -> Backup & Restore -> tap "Import Backup".',
+                    l10n.helpBackup11(
+                      l10n.titleSettings,
+                      l10n.titleBackupRestore,
+                      l10n.labelRestoreFromBackup,
+                    ),
                   ),
-                  _Bullet(
-                    'Select your backup file and enter the password used when creating it.',
-                  ),
-                  _Bullet(
-                    'The app validates the archive integrity and merges new accounts into your existing vault without deleting current tokens.',
-                  ),
+                  _Bullet(l10n.helpBackup12),
+                  _Bullet(l10n.helpBackup13),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: Make an updated backup whenever you add critical new 2FA accounts.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpBackup14),
             ],
           ),
         );

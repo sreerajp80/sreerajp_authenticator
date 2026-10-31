@@ -3,15 +3,18 @@
 // Created: 2026 March 20
 // Description: Permissions screen showing all app permissions with status and auto-lock monitoring
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../providers/settings_provider.dart';
 import '../utils/theme.dart';
 
 class _PermissionInfo {
-  final String name;
-  final String description;
+  /// Localized name and description, read with the active AppLocalizations.
+  final String Function(AppLocalizations l10n) name;
+  final String Function(AppLocalizations l10n) description;
   final IconData icon;
   final Permission? permission;
   final bool isImplicit;
@@ -37,38 +40,37 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   final Map<Permission, PermissionStatus> _statuses = {};
   bool _isLoading = true;
 
-  static const _explicitPermissions = [
+  static final _explicitPermissions = [
     _PermissionInfo(
-      name: 'Camera',
-      description: 'Used to scan QR codes for adding accounts',
+      name: (l10n) => l10n.labelPermCamera,
+      description: (l10n) => l10n.descPermCamera,
       icon: Icons.camera_alt_outlined,
       permission: Permission.camera,
     ),
   ];
 
-  static const _implicitPermissions = [
+  static final _implicitPermissions = [
     _PermissionInfo(
-      name: 'Biometric / Device Lock',
-      description:
-          'Used for app lock authentication via fingerprint or device credentials',
+      name: (l10n) => l10n.labelPermBiometric,
+      description: (l10n) => l10n.descPermBiometric,
       icon: Icons.fingerprint,
       isImplicit: true,
     ),
     _PermissionInfo(
-      name: 'Vibration',
-      description: 'Used for haptic feedback during QR code scanning',
+      name: (l10n) => l10n.labelPermVibration,
+      description: (l10n) => l10n.descPermVibration,
       icon: Icons.vibration,
       isImplicit: true,
     ),
     _PermissionInfo(
-      name: 'Secure Storage',
-      description: 'Uses Android Keystore to securely store encryption keys',
+      name: (l10n) => l10n.labelPermSecureStorage,
+      description: (l10n) => l10n.descPermSecureStorage,
       icon: Icons.enhanced_encryption_outlined,
       isImplicit: true,
     ),
     _PermissionInfo(
-      name: 'Local Database',
-      description: 'Stores encrypted account data locally on your device',
+      name: (l10n) => l10n.labelPermLocalDatabase,
+      description: (l10n) => l10n.descPermLocalDatabase,
       icon: Icons.storage_outlined,
       isImplicit: true,
     ),
@@ -112,6 +114,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
@@ -124,7 +127,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Permissions')),
+          appBar: AppBar(title: Text(l10n.titlePermissions)),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : ListView(
@@ -159,7 +162,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'This app only requests permissions when needed and never collects data.',
+                                l10n.descPermissionsIntro,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurface,
                                 ),
@@ -173,7 +176,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                     const SizedBox(height: 8),
 
                     // Explicit Permissions Section
-                    _buildSectionHeader('Runtime Permissions', theme),
+                    _buildSectionHeader(l10n.titleRuntimePermissions, theme),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -206,7 +209,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                     const SizedBox(height: 24),
 
                     // Implicit Permissions Section
-                    _buildSectionHeader('Built-in Capabilities', theme),
+                    _buildSectionHeader(l10n.titleBuiltInCapabilities, theme),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -254,7 +257,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                     const SizedBox(height: 24),
 
                     // No network access note
-                    _buildSectionHeader('Privacy', theme),
+                    _buildSectionHeader(l10n.titlePrivacy, theme),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -295,7 +298,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'No Internet Access',
+                                            l10n.labelNoCloudService,
                                             style: theme.textTheme.titleMedium
                                                 ?.copyWith(
                                                   fontWeight: FontWeight.w600,
@@ -303,7 +306,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'This app works completely offline. Your data never leaves your device.',
+                                            l10n.descNoCloudService,
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
                                                   color: theme
@@ -372,6 +375,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     PermissionStatus? status,
   }) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isGranted = status?.isGranted ?? false;
     final isDenied = status?.isDenied ?? false;
     final isPermanentlyDenied = status?.isPermanentlyDenied ?? false;
@@ -382,19 +386,19 @@ class _PermissionsScreenState extends State<PermissionsScreen>
 
     if (isGranted) {
       statusColor = AppTheme.successGreen;
-      statusText = 'Granted';
+      statusText = l10n.labelStatusGranted;
       statusIcon = Icons.check_circle;
     } else if (isPermanentlyDenied) {
       statusColor = AppTheme.errorCoral;
-      statusText = 'Denied';
+      statusText = l10n.labelStatusDenied;
       statusIcon = Icons.cancel;
     } else if (isDenied) {
       statusColor = AppTheme.warningAmber;
-      statusText = 'Not granted';
+      statusText = l10n.labelStatusNotGranted;
       statusIcon = Icons.remove_circle_outline;
     } else {
       statusColor = theme.colorScheme.onSurfaceVariant;
-      statusText = 'Not requested';
+      statusText = l10n.labelStatusNotRequested;
       statusIcon = Icons.help_outline;
     }
 
@@ -436,14 +440,14 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      info.name,
+                      info.name(l10n),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      info.description,
+                      info.description(l10n),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -507,14 +511,14 @@ class _PermissionsScreenState extends State<PermissionsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  info.name,
+                  info.name(AppLocalizations.of(context)),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  info.description,
+                  info.description(AppLocalizations.of(context)),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -529,7 +533,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Built-in',
+              AppLocalizations.of(context).labelBuiltIn,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,

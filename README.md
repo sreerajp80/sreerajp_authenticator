@@ -1,4 +1,4 @@
-# SreerajP Authenticator
+# Sreeraj P Authenticator
 
 Flutter authenticator app for generating TOTP and HOTP codes with encrypted local storage, app lock, QR onboarding, grouped account management, and encrypted backup/restore.
 
@@ -6,7 +6,7 @@ Flutter authenticator app for generating TOTP and HOTP codes with encrypted loca
 
 This project is an offline-first authenticator application built with Flutter and Provider. Secrets are stored locally in SQLite after device-side encryption, the encryption key is kept in `FlutterSecureStorage`, and the app can be protected with either an app PIN or the device's screen lock.
 
-The repository includes the standard Flutter runners for Android, iOS, web, desktop, and tests. The implemented security model, permissions, and build flavor workflow are currently documented around the Android app, which is the primary target reflected in the codebase.
+The app ships on Android only (Android 10+, see `docs/PROJECT_PROFILE.md`). iOS, macOS, Windows, Linux and web are not declared platforms; their folders were removed.
 
 ## Implemented Features
 
@@ -112,7 +112,7 @@ Out of scope: this app does not try to protect against a fully compromised or ro
 | Local database | `sqflite` |
 | Secure key storage | `flutter_secure_storage` |
 | Auth | `local_auth` |
-| QR scanning | `mobile_scanner` |
+| QR scanning | `flutter_zxing`, `camera` |
 | Encryption | `encrypt` + `pointycastle` |
 | Sharing / file flows | `share_plus`, `file_picker`, `path_provider` |
 
@@ -170,8 +170,8 @@ The `--dart-define` value matters because the in-app flavor config reads `FLUTTE
 
 | Flavor | Package ID | App Name | Purpose |
 |--------|------------|----------|---------|
-| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | `SreerajP Authenticator Dev` | Local development and internal testing |
-| `prod` | `in.sreerajp.sreerajp_authenticator` | `SreerajP Authenticator` | Release builds |
+| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | `Sreeraj P Authenticator Dev` | Local development and internal testing |
+| `prod` | `in.sreerajp.sreerajp_authenticator` | `Sreeraj P Authenticator` | Release builds |
 
 ## Common Commands
 

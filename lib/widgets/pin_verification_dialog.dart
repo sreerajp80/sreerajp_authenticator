@@ -2,24 +2,27 @@
 
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 import '../providers/settings_provider.dart';
 import '../services/auth_service.dart';
 
+/// Asks for the app PIN (or the phone lock when no PIN is set).
+/// [purpose] is one localized sentence that says why, shown under the title.
 Future<bool> showPinVerificationDialog({
   required BuildContext context,
   required String purpose,
   required SettingsProvider settingsProvider,
   required AuthService authService,
 }) async {
+  final l10n = AppLocalizations.of(context);
   if (!settingsProvider.isAppLockEnabled) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'App lock is not properly configured. Please re-enable it.',
-        ),
+      SnackBar(
+        content: Text(l10n.errorAppLockMisconfigured),
         backgroundColor: Colors.orange,
       ),
     );
@@ -30,15 +33,17 @@ Future<bool> showPinVerificationDialog({
     if (!settingsProvider.phoneLockQuickUnlockEnabled) {
       if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('App lock has no unlock method. Please re-enable it.'),
+        SnackBar(
+          content: Text(l10n.errorAppLockNoMethod),
           backgroundColor: Colors.orange,
         ),
       );
       return false;
     }
 
-    final result = await authService.authenticateWithPhoneLock();
+    final result = await authService.authenticateWithPhoneLock(
+      reason: l10n.descAuthReasonPhoneLock,
+    );
     if (!result.isSuccess) return false;
     await settingsProvider.handleSuccessfulAppPinUnlock();
     return true;
@@ -52,13 +57,14 @@ Future<bool> showPinVerificationDialog({
     barrierDismissible: false,
     builder: (dialogContext) => StatefulBuilder(
       builder: (statefulContext, setDialogState) => AlertDialog(
-        title: Text('Enter App PIN to $purpose'),
+        title: Text(l10n.titleEnterAppPin),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'App PIN is required for sensitive actions and secret access.',
-            ),
+            Text(purpose, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text(l10n.descPinRequiredForSensitive),
             const SizedBox(height: 16),
             TextField(
               controller: pinController,
@@ -68,9 +74,9 @@ Future<bool> showPinVerificationDialog({
               autofocus: true,
               enabled: !isVerifying,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'App PIN',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.labelAppPin,
+                border: const OutlineInputBorder(),
                 counterText: '',
               ),
               onSubmitted: isVerifying
@@ -94,10 +100,10 @@ Future<bool> showPinVerificationDialog({
 
                         ScaffoldMessenger.of(statefulContext).showSnackBar(
                           SnackBar(
-                            content: const Text('Incorrect App PIN'),
-                            backgroundColor: Theme.of(
-                              statefulContext,
-                            ).colorScheme.error,
+                            content: Text(l10n.errorPinIncorrect),
+                            backgroundColor: Theme.of(statefulContext)
+                                .colorScheme
+                                .error,
                             behavior: SnackBarBehavior.floating,
                             margin: const EdgeInsets.all(8),
                           ),
@@ -117,7 +123,7 @@ Future<bool> showPinVerificationDialog({
             onPressed: isVerifying
                 ? null
                 : () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.actionCancel),
           ),
           ElevatedButton(
             onPressed: isVerifying
@@ -141,10 +147,10 @@ Future<bool> showPinVerificationDialog({
 
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
                         SnackBar(
-                          content: const Text('Incorrect App PIN'),
-                          backgroundColor: Theme.of(
-                            dialogContext,
-                          ).colorScheme.error,
+                          content: Text(l10n.errorPinIncorrect),
+                          backgroundColor: Theme.of(dialogContext)
+                              .colorScheme
+                              .error,
                           behavior: SnackBarBehavior.floating,
                           margin: const EdgeInsets.all(8),
                         ),
@@ -152,7 +158,7 @@ Future<bool> showPinVerificationDialog({
                       HapticFeedback.heavyImpact();
                     }
                   },
-            child: const Text('Verify'),
+            child: Text(l10n.actionVerify),
           ),
         ],
       ),

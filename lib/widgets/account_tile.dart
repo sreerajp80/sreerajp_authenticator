@@ -5,10 +5,16 @@
 // Description: Widget for displaying individual account tiles with OTP codes and countdown timer.
 
 import 'dart:async';
-import 'package:flutter/material.dart';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 import '../models/account.dart';
+import '../providers/account_provider.dart';
+import '../services/clipboard_service.dart';
 import '../services/otp_service.dart';
 import '../utils/constants.dart';
 import '../utils/app_logger.dart';
@@ -52,6 +58,9 @@ class _AccountTileState extends State<AccountTile>
   bool _isInitialLoad = true;
   bool _isCodeVisible = false;
   Timer? _visibilityTimer;
+  bool _isFetchingHotp = false;
+
+  bool get _isHotp => widget.account.type.toLowerCase() == 'hotp';
 
   @override
   void initState() {
@@ -65,8 +74,13 @@ class _AccountTileState extends State<AccountTile>
       end: 1.0,
     ).animate(_animationController);
 
-    _generateOTPInitial();
-    _startSynchronizedTimer();
+    // An HOTP code is made only on request, because each one uses up a counter.
+    if (_isHotp) {
+      _isInitialLoad = false;
+    } else {
+      _generateOTPInitial();
+      _startSynchronizedTimer();
+    }
   }
 
   @override
@@ -188,12 +202,48 @@ class _AccountTileState extends State<AccountTile>
     });
   }
 
+  void _showHotpError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _nextHotpCode() async {
+    if (_isFetchingHotp) return;
+    setState(() => _isFetchingHotp = true);
+    final result = await context.read<AccountsProvider>().nextHotpCode(
+      widget.account,
+    );
+    if (!mounted) return;
+    setState(() {
+      _isFetchingHotp = false;
+      if (result.isSuccess) _applyOTPResult(result);
+    });
+    if (!result.isSuccess) {
+      _showHotpError(AppLocalizations.of(context).errorHotpNextFailed);
+      return;
+    }
+    HapticFeedback.lightImpact();
+    if (!_isCodeVisible) _toggleCodeVisibility();
+  }
+
   void _copyToClipboard() {
+    if (_isHotp && _otpCode == AppConstants.otpUnavailablePlaceholder) {
+      _showHotpError(AppLocalizations.of(context).descHotpTapForCode);
+      return;
+    }
     if (_otpError != null ||
         _otpCode == AppConstants.otpUnavailablePlaceholder) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Code unavailable for ${widget.account.name}'),
+          content: Text(
+            AppLocalizations.of(context)
+                .errorCodeUnavailable(widget.account.name),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 2),
         ),
@@ -203,15 +253,7 @@ class _AccountTileState extends State<AccountTile>
 
     HapticFeedback.mediumImpact();
     final copiedCode = _otpCode;
-    Clipboard.setData(ClipboardData(text: copiedCode));
-
-    // Auto-clear clipboard after 30 seconds if it still contains the copied code
-    Future.delayed(const Duration(seconds: 30), () async {
-      final data = await Clipboard.getData(Clipboard.kTextPlain);
-      if (data?.text == copiedCode) {
-        Clipboard.setData(const ClipboardData(text: ''));
-      }
-    });
+    ClipboardService.copySecret(copiedCode);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -220,7 +262,12 @@ class _AccountTileState extends State<AccountTile>
           children: [
             const Icon(Icons.check_circle, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text('Code copied for ${widget.account.name}'),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)
+                    .descCodeCopied(widget.account.name),
+              ),
+            ),
           ],
         ),
         behavior: SnackBarBehavior.floating,
@@ -254,6 +301,9 @@ class _AccountTileState extends State<AccountTile>
   }
 
   String _getDisplayCode() {
+    if (_isHotp && _otpCode == AppConstants.otpUnavailablePlaceholder) {
+      return _otpCode;
+    }
     if (!_isCodeVisible) {
       // Return asterisks matching the digit count
       return '*' * widget.account.digits;
@@ -421,188 +471,213 @@ class _AccountTileState extends State<AccountTile>
                 // Layer 5: Main content with DYNAMIC HEIGHT
                 Material(
                   color: Colors.transparent,
-                  child: InkWell(
-                    onTapDown: (_) => setState(() => _isPressed = true),
-                    onTapUp: (_) => setState(() => _isPressed = false),
-                    onTapCancel: () => setState(() => _isPressed = false),
-                    onTap: widget.onTap,
-                    onLongPress: widget.onLongPress,
-                    onDoubleTap:
-                        (widget.isSelectionMode || widget.onTap != null)
+                  child: Semantics(
+                    onTapHint: widget.isSelectionMode
                         ? null
-                        : _copyToClipboard,
-                    borderRadius: BorderRadius.circular(16),
-                    highlightColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.85,
-                    ),
-                    splashColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.25,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
+                        : AppLocalizations.of(context).actionCopyCode,
+                    child: InkWell(
+                      onTapDown: (_) => setState(() => _isPressed = true),
+                      onTapUp: (_) => setState(() => _isPressed = false),
+                      onTapCancel: () => setState(() => _isPressed = false),
+                      onTap: () {
+                        widget.onTap?.call();
+                        if (!widget.isSelectionMode) _copyToClipboard();
+                      },
+                      onLongPress: widget.onLongPress,
+                      borderRadius: BorderRadius.circular(16),
+                      highlightColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.85,
                       ),
-                      child: IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (widget.isSelectionMode)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: Icon(
-                                  widget.isSelected
-                                      ? Icons.check_circle
-                                      : Icons.radio_button_unchecked,
-                                  color: widget.isSelected
-                                      ? theme.colorScheme.primary
-                                      : (isDark
-                                            ? Colors.grey.shade500
-                                            : Colors.grey.shade400),
-                                  size: 24,
+                      splashColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.25,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              if (widget.isSelectionMode)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Icon(
+                                    widget.isSelected
+                                        ? Icons.check_circle
+                                        : Icons.radio_button_unchecked,
+                                    color: widget.isSelected
+                                        ? theme.colorScheme.primary
+                                        : (isDark
+                                              ? Colors.grey.shade500
+                                              : Colors.grey.shade400),
+                                    size: 24,
+                                  ),
                                 ),
+                              AccountAvatar(
+                                displayLetter:
+                                    (widget.account.issuer?.isNotEmpty == true
+                                            ? widget.account.issuer![0]
+                                            : widget.account.name[0])
+                                        .toUpperCase(),
+                                issuer: widget.account.issuer,
+                                accountName: widget.account.name,
                               ),
-                            AccountAvatar(
-                              displayLetter:
-                                  (widget.account.issuer?.isNotEmpty == true
-                                          ? widget.account.issuer![0]
-                                          : widget.account.name[0])
-                                      .toUpperCase(),
-                              issuer: widget.account.issuer,
-                              accountName: widget.account.name,
-                            ),
-                            const SizedBox(width: 12),
+                              const SizedBox(width: 12),
 
-                            // Account Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (widget
-                                                    .account
-                                                    .issuer
-                                                    ?.isNotEmpty ==
-                                                true)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 2,
-                                                ),
-                                                child: Text(
-                                                  widget.account.issuer!,
-                                                  style: theme
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.copyWith(
-                                                        color: isDark
-                                                            ? Colors
-                                                                  .grey
-                                                                  .shade400
-                                                            : theme
-                                                                  .colorScheme
-                                                                  .onSurfaceVariant,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 11,
+                              // Account Details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (widget
+                                                      .account
+                                                      .issuer
+                                                      ?.isNotEmpty ==
+                                                  true)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 2,
                                                       ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                  child: Text(
+                                                    widget.account.issuer!,
+                                                    style: theme
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color: isDark
+                                                              ? Colors
+                                                                    .grey
+                                                                    .shade400
+                                                              : theme
+                                                                    .colorScheme
+                                                                    .onSurfaceVariant,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 11,
+                                                        ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              Text(
+                                                widget.account.name,
+                                                style: theme
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      fontSize: 13,
+                                                      color: isDark
+                                                          ? Colors.white
+                                                          : null,
+                                                    ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (widget.account.tags.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 6),
+                                        child: Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
+                                          children: widget.account.tags.map((
+                                            tag,
+                                          ) {
+                                            final label = tag.startsWith('#')
+                                                ? tag
+                                                : '#$tag';
+                                            return Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? theme.colorScheme.primary
+                                                          .withValues(
+                                                            alpha: 0.25,
+                                                          )
+                                                    : theme.colorScheme.primary
+                                                          .withValues(
+                                                            alpha: 0.12,
+                                                          ),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .primary
+                                                      .withValues(alpha: 0.4),
+                                                  width: 1.0,
                                                 ),
                                               ),
-                                            Text(
-                                              widget.account.name,
-                                              style: theme.textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                    fontSize: 13,
-                                                    color: isDark
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
+                                              child: Text(
+                                                label,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? const Color(0xFF90CAF9)
+                                                      : theme
+                                                            .colorScheme
+                                                            .primary,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  if (widget.account.tags.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 6),
-                                      child: Wrap(
-                                        spacing: 6,
-                                        runSpacing: 4,
-                                        children: widget.account.tags.map((
-                                          tag,
-                                        ) {
-                                          final label = tag.startsWith('#')
-                                              ? tag
-                                              : '#$tag';
-                                          return Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: isDark
-                                                  ? theme.colorScheme.primary
-                                                        .withValues(alpha: 0.25)
-                                                  : theme.colorScheme.primary
-                                                        .withValues(
-                                                          alpha: 0.12,
-                                                        ),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: theme.colorScheme.primary
-                                                    .withValues(alpha: 0.4),
-                                                width: 1.0,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              label,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: isDark
-                                                    ? const Color(0xFF90CAF9)
-                                                    : theme.colorScheme.primary,
-                                              ),
-                                            ),
-                                          );
-                                        }).toList(),
+                                    const SizedBox(height: 8),
+                                    OtpCodeDisplay(
+                                      fadeAnimation: _fadeAnimation,
+                                      formattedCode: _formatOTP(
+                                        _getDisplayCode(),
                                       ),
+                                      isCodeVisible: _isCodeVisible,
+                                      onToggleVisibility: _toggleCodeVisibility,
                                     ),
-                                  const SizedBox(height: 8),
-                                  OtpCodeDisplay(
-                                    fadeAnimation: _fadeAnimation,
-                                    formattedCode: _formatOTP(
-                                      _getDisplayCode(),
-                                    ),
-                                    isCodeVisible: _isCodeVisible,
-                                    onToggleVisibility: _toggleCodeVisibility,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
 
-                            TimerIndicator(
-                              remainingTime: _remainingTime,
-                              period: widget.account.period,
-                            ),
-                            const SizedBox(width: 8),
-                          ],
+                              if (!_isHotp)
+                                TimerIndicator(
+                                  remainingTime: _remainingTime,
+                                  period: widget.account.period,
+                                )
+                              else if (!widget.isSelectionMode)
+                                IconButton(
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  tooltip: AppLocalizations.of(context)
+                                      .tooltipNextCode,
+                                  onPressed: _isFetchingHotp
+                                      ? null
+                                      : _nextHotpCode,
+                                ),
+                              const SizedBox(width: 8),
+                            ],
+                          ),
                         ),
                       ),
                     ),

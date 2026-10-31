@@ -10,6 +10,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 
@@ -18,6 +19,7 @@ import '../providers/account_provider.dart';
 import '../services/encryption_service.dart';
 import '../services/optical_sync_service.dart';
 import '../services/p2p_sync_service.dart';
+import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 
 /// Summary of one completed sync, shown to the user. On the host it reports what
@@ -49,8 +51,6 @@ class SyncSummary {
     this.settings = 0,
     this.accountsSkipped = 0,
   });
-
-  bool get isFull => mode == AppConstants.syncModeFull;
 }
 
 /// UI state for the sync flow. The host (send) flow lives in [SyncHosting]
@@ -120,9 +120,29 @@ class SyncCompleted extends SyncState {
   const SyncCompleted(this.summary);
 }
 
+/// Why a sync attempt stopped. The screens turn it into localized text
+/// (providers hold no UI text).
+enum SyncErrorCode {
+  hostTimeout,
+  hostStartFailed,
+  noDeviceConnected,
+  nothingSelected,
+  syncFailed,
+  opticalStartFailed,
+  opticalDecodeFailed,
+  opticalCodeInvalid,
+}
+
 class SyncError extends SyncState {
-  final String message;
-  const SyncError(this.message);
+  final SyncErrorCode code;
+
+  /// The Wi-Fi sync cause, when known (more specific text in the UI).
+  final P2pSyncErrorCode? p2pCode;
+
+  /// The optical sync cause, when known (more specific text in the UI).
+  final OpticalSyncErrorCode? opticalCode;
+
+  const SyncError(this.code, {this.p2pCode, this.opticalCode});
 }
 
 class SyncOpticalTransmitting extends SyncState {
@@ -154,12 +174,20 @@ class SyncOpticalTransmitting extends SyncState {
 }
 
 class SyncOpticalReceiving extends SyncState {
+  /// One-time transfer code to show on this (receiving) device. The user types
+  /// it on the sending device. Kept in memory only.
+  final String transferCode;
+
+  /// False while the code is shown; true once the camera is scanning.
+  final bool scanning;
   final int solvedChunks;
   final int totalChunks;
   final double progress;
   final String? sessionHash;
 
   const SyncOpticalReceiving({
+    required this.transferCode,
+    required this.scanning,
     required this.solvedChunks,
     required this.totalChunks,
     required this.progress,
@@ -195,10 +223,9 @@ class SyncProvider extends ChangeNotifier {
         idleTimeout: Duration(seconds: idleTimeoutSeconds),
         onClientConnected: _onClientConnected,
         onClientDisconnected: _onClientDisconnected,
-        onError: (message) => _setState(SyncError(message)),
-        onTimedOut: () => _setState(
-          const SyncError('No device connected in time; hosting stopped.'),
-        ),
+        onError: (error) =>
+            _setState(SyncError(SyncErrorCode.syncFailed, p2pCode: error.code)),
+        onTimedOut: () => _setState(const SyncError(SyncErrorCode.hostTimeout)),
       );
       _setState(
         SyncHosting(
@@ -208,7 +235,8 @@ class SyncProvider extends ChangeNotifier {
         ),
       );
     } catch (e) {
-      _setState(SyncError('Could not start hosting: $e'));
+      AppLogger.error('Could not start hosting', e);
+      _setState(const SyncError(SyncErrorCode.hostStartFailed));
     }
   }
 
@@ -230,7 +258,6 @@ class SyncProvider extends ChangeNotifier {
   /// ([AppConstants.syncModeFull] — settings overwrite on the client).
   Future<void> sendFullSync({
     required List<Account> accounts,
-    required List<dynamic> groups, // kept for API compatibility; always empty
     required Map<String, dynamic> settingsSnapshot,
   }) => _send(
     accounts: accounts,
@@ -245,10 +272,8 @@ class SyncProvider extends ChangeNotifier {
   /// data and applies settings fill-only).
   Future<void> sendSelectiveSync({
     required List<Account> accounts,
-    required List<dynamic> groups, // kept for API compatibility; always empty
     required Map<String, dynamic> settingsSnapshot,
     required bool includeAccounts,
-    required bool includeGroups, // kept for API compatibility; ignored
     required bool includeSettings,
   }) => _send(
     accounts: accounts,
@@ -267,11 +292,11 @@ class SyncProvider extends ChangeNotifier {
   }) async {
     final current = _state;
     if (current is! SyncHosting || !current.clientConnected) {
-      _setState(const SyncError('No device is connected to sync with.'));
+      _setState(const SyncError(SyncErrorCode.noDeviceConnected));
       return;
     }
     if (!includeAccounts && !includeSettings) {
-      _setState(const SyncError('Select at least one item to sync.'));
+      _setState(const SyncError(SyncErrorCode.nothingSelected));
       return;
     }
 
@@ -302,9 +327,11 @@ class SyncProvider extends ChangeNotifier {
         ),
       );
     } on P2pSyncException catch (e) {
-      _setState(SyncError(e.message));
+      AppLogger.error('Sync failed', e);
+      _setState(SyncError(SyncErrorCode.syncFailed, p2pCode: e.code));
     } catch (e) {
-      _setState(SyncError('Sync failed: $e'));
+      AppLogger.error('Sync failed', e);
+      _setState(const SyncError(SyncErrorCode.syncFailed));
     }
   }
 
@@ -332,9 +359,6 @@ class SyncProvider extends ChangeNotifier {
       );
       backup['accounts'] = decryptedAccounts.map((a) => a.toMap()).toList();
     }
-
-    // Always emit an empty groups array for format compatibility.
-    backup['groups'] = <Map<String, dynamic>>[];
 
     if (settingsSnapshot != null) {
       backup[AppConstants.syncPayloadKeySettings] = settingsSnapshot;
@@ -407,9 +431,11 @@ class SyncProvider extends ChangeNotifier {
         ),
       );
     } on P2pSyncException catch (e) {
-      _setState(SyncError(e.message));
+      AppLogger.error('Sync failed', e);
+      _setState(SyncError(SyncErrorCode.syncFailed, p2pCode: e.code));
     } catch (e) {
-      _setState(SyncError('Sync failed: $e'));
+      AppLogger.error('Sync failed', e);
+      _setState(const SyncError(SyncErrorCode.syncFailed));
     }
   }
 
@@ -417,15 +443,25 @@ class SyncProvider extends ChangeNotifier {
 
   OpticalSyncEncoder? _opticalEncoder;
   OpticalSyncDecoder? _opticalDecoder;
+  String? _opticalTransferCode;
   Timer? _opticalStreamTimer;
 
-  /// Start animated QR video stream transmission at target [fps] (12-15 FPS).
+  /// Start animated QR video stream transmission at target [fps] (10-15 FPS).
+  /// [transferCode] is the code typed from the receiving device; the payload is
+  /// sealed with it, so the QR frames carry only ciphertext.
   Future<void> startOpticalTransmitting({
     required List<Account> accounts,
     required Map<String, dynamic> settingsSnapshot,
+    required String transferCode,
     int fps = 12,
   }) async {
     await reset();
+    final code = OpticalSyncCrypto.parseTransferCode(transferCode);
+    if (code == null) {
+      _setState(const SyncError(SyncErrorCode.opticalCodeInvalid));
+      return;
+    }
+    // State stays SyncIdle (a plain spinner) while the payload is sealed.
     try {
       final jsonPayload = await _buildPayload(
         accounts: accounts,
@@ -434,7 +470,11 @@ class SyncProvider extends ChangeNotifier {
         mode: AppConstants.syncModeFull,
       );
 
-      final encoder = OpticalSyncEncoder(jsonPayload);
+      // PBKDF2 is slow on purpose; keep it off the UI isolate.
+      final sealed = await Isolate.run(
+        () => OpticalSyncCrypto.seal(jsonPayload, code),
+      );
+      final encoder = OpticalSyncEncoder(sealed);
       _opticalEncoder = encoder;
 
       var frameIndex = 0;
@@ -452,7 +492,8 @@ class SyncProvider extends ChangeNotifier {
 
       _startOpticalTimer(fps);
     } catch (e) {
-      _setState(SyncError('Failed to start optical stream: $e'));
+      AppLogger.error('Failed to start optical stream', e);
+      _setState(const SyncError(SyncErrorCode.opticalStartFailed));
     }
   }
 
@@ -485,17 +526,41 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
-  /// Initialize Optical Receiver state.
-  void startOpticalReceiving() {
-    reset();
+  /// Initialize Optical Receiver state with a new one-time transfer code. The
+  /// screen shows the code until [beginOpticalScanning] is called.
+  Future<void> startOpticalReceiving() async {
+    // Wait for reset: it ends by setting SyncIdle, which must not overwrite
+    // the receiving state set below.
+    await reset();
+    final code = OpticalSyncCrypto.generateTransferCode();
+    _opticalTransferCode = code;
     _opticalDecoder = OpticalSyncDecoder();
     _setState(
-      const SyncOpticalReceiving(
+      SyncOpticalReceiving(
+        transferCode: code,
+        scanning: false,
         solvedChunks: 0,
         totalChunks: 0,
         progress: 0.0,
       ),
     );
+  }
+
+  /// The user has typed the code on the sender; start reading frames.
+  void beginOpticalScanning() {
+    final current = _state;
+    if (current is SyncOpticalReceiving && !current.scanning) {
+      _setState(
+        SyncOpticalReceiving(
+          transferCode: current.transferCode,
+          scanning: true,
+          solvedChunks: current.solvedChunks,
+          totalChunks: current.totalChunks,
+          progress: current.progress,
+          sessionHash: current.sessionHash,
+        ),
+      );
+    }
   }
 
   /// Ingest raw frame string scanned from transmitter QR stream.
@@ -510,12 +575,17 @@ class SyncProvider extends ChangeNotifier {
     applySettings,
   }) async {
     final decoder = _opticalDecoder;
-    if (decoder == null || decoder.isComplete) return;
+    final code = _opticalTransferCode;
+    if (decoder == null || code == null || decoder.isComplete) return;
+    final current = _state;
+    if (current is! SyncOpticalReceiving || !current.scanning) return;
 
     final progressMade = decoder.processFrameString(rawFrame);
-    if (progressMade || _state is! SyncOpticalReceiving) {
+    if (progressMade) {
       _setState(
         SyncOpticalReceiving(
+          transferCode: code,
+          scanning: true,
           solvedChunks: decoder.solvedCount,
           totalChunks: decoder.totalChunks,
           progress: decoder.progress,
@@ -527,7 +597,11 @@ class SyncProvider extends ChangeNotifier {
     if (decoder.isComplete) {
       _setState(const SyncSyncing());
       try {
-        final reconstructedJson = decoder.getReconstructedPayload();
+        final sealed = decoder.getReconstructedSealed();
+        // PBKDF2 is slow on purpose; keep it off the UI isolate.
+        final reconstructedJson = await Isolate.run(
+          () => OpticalSyncCrypto.open(sealed, code),
+        );
         final data = P2pSyncService.validateAndParse(reconstructedJson);
 
         final importResult = await importData(data);
@@ -558,9 +632,13 @@ class SyncProvider extends ChangeNotifier {
           ),
         );
       } on OpticalSyncException catch (e) {
-        _setState(SyncError(e.message));
+        AppLogger.error('Optical sync decoding failed', e);
+        _setState(
+          SyncError(SyncErrorCode.opticalDecodeFailed, opticalCode: e.code),
+        );
       } catch (e) {
-        _setState(SyncError('Optical sync decoding failed: $e'));
+        AppLogger.error('Optical sync decoding failed', e);
+        _setState(const SyncError(SyncErrorCode.opticalDecodeFailed));
       }
     }
   }
@@ -571,6 +649,7 @@ class SyncProvider extends ChangeNotifier {
     _opticalStreamTimer = null;
     _opticalEncoder = null;
     _opticalDecoder = null;
+    _opticalTransferCode = null;
     await _service.stopHost();
     _setState(const SyncIdle());
   }

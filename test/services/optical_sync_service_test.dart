@@ -1,14 +1,53 @@
 // File Path: sreerajp_authenticator/test/services/optical_sync_service_test.dart
 // Author: Sreeraj P
-// Description: Unit test suite for Optical Air-Gap Sync engine (Fountain Code
-//   chunking, CRC32 checksums, out-of-order frame decoding, parity solving, and
-//   payload round-trip).
+// Description: Unit test suite for Optical Air-Gap Sync engine (AES-256-GCM
+//   seal/open with a one-time transfer code, Fountain Code chunking, CRC32
+//   checksums, out-of-order frame decoding, parity solving, payload round-trip,
+//   and that no frame carries plaintext secrets).
 
 import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sreerajp_authenticator/services/optical_sync_service.dart';
+import 'package:sreerajp_authenticator/utils/constants.dart';
+
+Matcher _opticalCode(OpticalSyncErrorCode code) =>
+    throwsA(isA<OpticalSyncException>().having((e) => e.code, 'code', code));
+
+String _payload(int count) => jsonEncode({
+  'version': 1,
+  'created': '2026-08-01T12:00:00Z',
+  'syncMode': 'FULL',
+  'accounts': List.generate(
+    count,
+    (i) => {
+      'id': i,
+      'name': 'user$i@domain.com',
+      'issuer': 'Provider $i',
+      'secret': 'HXDMVJECBOXWIZLAMI',
+      'algorithm': 'SHA1',
+      'digits': 6,
+      'period': 30,
+      'type': 'totp',
+      'createdAt': '2026-08-01T12:00:00.000',
+      'sortOrder': i,
+    },
+  ),
+});
 
 void main() {
+  // PBKDF2 (300,000 iterations) is slow on purpose, so seal once and reuse.
+  late String code;
+  late String payloadJson;
+  late Uint8List sealed;
+
+  setUpAll(() {
+    code = OpticalSyncCrypto.generateTransferCode();
+    payloadJson = _payload(15);
+    sealed = OpticalSyncCrypto.seal(payloadJson, code);
+  });
+
   group('CRC32 Checksum Tests', () {
     test('computes correct IEEE 802.3 CRC32', () {
       final bytes = utf8.encode('123456789');
@@ -18,35 +57,81 @@ void main() {
     });
   });
 
+  group('Transfer code', () {
+    test('has the configured length and only alphabet characters', () {
+      final c = OpticalSyncCrypto.generateTransferCode();
+      expect(c.length, AppConstants.opticalTransferCodeLength);
+      for (final ch in c.split('')) {
+        expect(AppConstants.syncPairingAlphabet.contains(ch), isTrue);
+      }
+    });
+
+    test('codes differ between calls', () {
+      expect(
+        OpticalSyncCrypto.generateTransferCode(),
+        isNot(OpticalSyncCrypto.generateTransferCode()),
+      );
+    });
+
+    test('formatted, lower-case input parses back to the same code', () {
+      final formatted = OpticalSyncCrypto.formatTransferCode(code);
+      expect(formatted.split('-').length, 3);
+      expect(
+        OpticalSyncCrypto.parseTransferCode(' ${formatted.toLowerCase()} '),
+        code,
+      );
+    });
+
+    test('a code of the wrong length is refused', () {
+      expect(OpticalSyncCrypto.parseTransferCode('ABCD-EFGH'), isNull);
+      expect(OpticalSyncCrypto.parseTransferCode(''), isNull);
+    });
+  });
+
+  group('Seal / open', () {
+    test('right code returns the same JSON', () {
+      expect(OpticalSyncCrypto.open(sealed, code), payloadJson);
+    });
+
+    test('wrong code → wrongTransferCode', () {
+      final other = OpticalSyncCrypto.generateTransferCode();
+      expect(
+        () => OpticalSyncCrypto.open(sealed, other),
+        _opticalCode(OpticalSyncErrorCode.wrongTransferCode),
+      );
+    });
+
+    test('one changed ciphertext byte fails the GCM check', () {
+      final tampered = Uint8List.fromList(sealed);
+      tampered[tampered.length - 20] ^= 0x01;
+      expect(
+        () => OpticalSyncCrypto.open(tampered, code),
+        _opticalCode(OpticalSyncErrorCode.wrongTransferCode),
+      );
+    });
+
+    test('too-short data → invalidFrame', () {
+      expect(
+        () => OpticalSyncCrypto.open(Uint8List(10), code),
+        _opticalCode(OpticalSyncErrorCode.invalidFrame),
+      );
+    });
+
+    test('sealing twice gives different bytes (fresh salt and nonce)', () {
+      final again = OpticalSyncCrypto.seal(payloadJson, code);
+      expect(again, isNot(equals(sealed)));
+    });
+  });
+
   group('OpticalSyncEncoder & Frame Serialization', () {
     test('splits payload into expected chunk count', () {
-      final payloadMap = {
-        'version': 1,
-        'created': '2026-08-01T12:00:00Z',
-        'accounts': List.generate(
-          20,
-          (i) => {
-            'id': i,
-            'name': 'user$i@example.com',
-            'issuer': 'Service $i',
-            'secret': 'JBSWY3DPEHPK3PXP',
-            'algorithm': 'SHA1',
-            'digits': 6,
-            'period': 30,
-            'type': 'totp',
-            'createdAt': '2026-08-01T12:00:00.000',
-            'sortOrder': i,
-          },
-        ),
-      };
-      final payloadJson = jsonEncode(payloadMap);
-      final encoder = OpticalSyncEncoder(payloadJson, chunkSize: 128);
+      final encoder = OpticalSyncEncoder(sealed, chunkSize: 128);
 
       expect(encoder.totalChunks, greaterThan(1));
       expect(encoder.sessionHash.length, equals(8));
 
       final frame0 = encoder.getFrame(0);
-      expect(frame0.version, equals(1));
+      expect(frame0.version, equals(AppConstants.opticalFrameVersion));
       expect(frame0.frameIndex, equals(0));
       expect(frame0.totalChunks, equals(encoder.totalChunks));
       expect(frame0.indices, equals([0]));
@@ -58,9 +143,36 @@ void main() {
       expect(parsed.crc32, equals(frame0.crc32));
     });
 
+    test('no frame carries a secret or an account name', () {
+      final encoder = OpticalSyncEncoder(sealed, chunkSize: 64);
+      final buffer = BytesBuilder();
+      for (var i = 0; i < encoder.totalChunks * 2; i++) {
+        final frame = encoder.getFrame(i);
+        final text = frame.toJsonString();
+        expect(text.contains('HXDMVJECBOXWIZLAMI'), isFalse);
+        expect(text.contains('domain.com'), isFalse);
+        buffer.add(frame.chunkData);
+      }
+      final allBytes = latin1.decode(buffer.takeBytes());
+      expect(allBytes.contains('HXDMVJECBOXWIZLAMI'), isFalse);
+      expect(allBytes.contains('Provider'), isFalse);
+    });
+
+    test('a version 1 (plaintext) frame is refused', () {
+      final frame = OpticalSyncEncoder(sealed).getFrame(0).toJsonString();
+      final v1 = frame.replaceFirst(
+        '"v":${AppConstants.opticalFrameVersion},',
+        '"v":1,',
+      );
+      expect(
+        () => OpticalSyncFrame.fromJsonString(v1),
+        _opticalCode(OpticalSyncErrorCode.unsupportedVersion),
+      );
+    });
+
     test('throws exception on invalid or corrupted JSON frame payload', () {
       expect(
-        () => OpticalSyncFrame.fromJsonString('{"v": 1}'),
+        () => OpticalSyncFrame.fromJsonString('{"v": 2}'),
         throwsA(isA<OpticalSyncException>()),
       );
       expect(
@@ -71,34 +183,8 @@ void main() {
   });
 
   group('OpticalSyncDecoder Reconstruction & Fountain Code Solver', () {
-    late String testPayloadJson;
-
-    setUp(() {
-      final payloadMap = {
-        'version': 1,
-        'created': '2026-08-01T12:00:00Z',
-        'syncMode': 'FULL',
-        'accounts': List.generate(
-          15,
-          (i) => {
-            'id': i,
-            'name': 'user$i@domain.com',
-            'issuer': 'Provider $i',
-            'secret': 'HXDMVJECBOXWIZLAMI',
-            'algorithm': 'SHA1',
-            'digits': 6,
-            'period': 30,
-            'type': 'totp',
-            'createdAt': '2026-08-01T12:00:00.000',
-            'sortOrder': i,
-          },
-        ),
-      };
-      testPayloadJson = jsonEncode(payloadMap);
-    });
-
-    test('reconstructs payload from in-order systematic frames', () {
-      final encoder = OpticalSyncEncoder(testPayloadJson, chunkSize: 64);
+    test('reconstructs sealed bytes from in-order systematic frames', () {
+      final encoder = OpticalSyncEncoder(sealed, chunkSize: 64);
       final decoder = OpticalSyncDecoder();
 
       for (var i = 0; i < encoder.totalChunks; i++) {
@@ -109,13 +195,20 @@ void main() {
 
       expect(decoder.isComplete, isTrue);
       expect(decoder.progress, equals(1.0));
-
-      final reconstructed = decoder.getReconstructedPayload();
-      expect(reconstructed, equals(testPayloadJson));
+      expect(decoder.getReconstructedSealed(), equals(sealed));
     });
 
-    test('reconstructs payload from out-of-order systematic frames', () {
-      final encoder = OpticalSyncEncoder(testPayloadJson, chunkSize: 64);
+    test('reconstructs and decrypts the payload with the right code', () {
+      final encoder = OpticalSyncEncoder(sealed, chunkSize: 64);
+      final decoder = OpticalSyncDecoder();
+      for (var i = 0; i < encoder.totalChunks; i++) {
+        decoder.processFrameString(encoder.getFrame(i).toJsonString());
+      }
+      expect(decoder.getReconstructedPayload(code), equals(payloadJson));
+    });
+
+    test('reconstructs from out-of-order systematic frames', () {
+      final encoder = OpticalSyncEncoder(sealed, chunkSize: 64);
       final decoder = OpticalSyncDecoder();
 
       final total = encoder.totalChunks;
@@ -127,13 +220,13 @@ void main() {
       }
 
       expect(decoder.isComplete, isTrue);
-      expect(decoder.getReconstructedPayload(), equals(testPayloadJson));
+      expect(decoder.getReconstructedSealed(), equals(sealed));
     });
 
     test(
-      'reconstructs payload when systematic frames are dropped using parity frames',
+      'reconstructs when systematic frames are dropped using parity frames',
       () {
-        final encoder = OpticalSyncEncoder(testPayloadJson, chunkSize: 64);
+        final encoder = OpticalSyncEncoder(sealed, chunkSize: 64);
         final decoder = OpticalSyncDecoder();
 
         final total = encoder.totalChunks;
@@ -154,12 +247,12 @@ void main() {
         }
 
         expect(decoder.isComplete, isTrue);
-        expect(decoder.getReconstructedPayload(), equals(testPayloadJson));
+        expect(decoder.getReconstructedSealed(), equals(sealed));
       },
     );
 
     test('rejects frame with tampered payload / CRC mismatch', () {
-      final encoder = OpticalSyncEncoder(testPayloadJson, chunkSize: 64);
+      final encoder = OpticalSyncEncoder(sealed, chunkSize: 64);
       final decoder = OpticalSyncDecoder();
 
       final validFrame = encoder.getFrame(0);

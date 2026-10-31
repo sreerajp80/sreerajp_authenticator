@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:pointycastle/export.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sreerajp_authenticator/services/auth_service.dart';
@@ -91,7 +90,7 @@ void main() {
 
   group('phone lock auth', () {
     test('authenticateWithPhoneLock returns success', () async {
-      final result = await authService.authenticateWithPhoneLock();
+      final result = await authService.authenticateWithPhoneLock(reason: 'r');
       expect(result.outcome, LocalAuthOutcome.success);
     });
 
@@ -100,7 +99,7 @@ void main() {
       () async {
         authenticateResponse = false;
 
-        final result = await authService.authenticateWithPhoneLock();
+        final result = await authService.authenticateWithPhoneLock(reason: 'r');
         expect(result.outcome, LocalAuthOutcome.failure);
       },
     );
@@ -110,7 +109,7 @@ void main() {
       () async {
         deviceSupported = false;
 
-        final result = await authService.authenticateWithPhoneLock();
+        final result = await authService.authenticateWithPhoneLock(reason: 'r');
         expect(result.outcome, LocalAuthOutcome.notAvailable);
       },
     );
@@ -118,14 +117,14 @@ void main() {
     test('authenticateWithPhoneLock maps cancel errors', () async {
       authenticateResponse = PlatformException(code: 'UserCanceled');
 
-      final result = await authService.authenticateWithPhoneLock();
+      final result = await authService.authenticateWithPhoneLock(reason: 'r');
       expect(result.outcome, LocalAuthOutcome.canceled);
     });
 
     test('authenticateWithPhoneLock maps lockout errors', () async {
       authenticateResponse = PlatformException(code: 'LockedOut');
 
-      final result = await authService.authenticateWithPhoneLock();
+      final result = await authService.authenticateWithPhoneLock(reason: 'r');
       expect(result.outcome, LocalAuthOutcome.lockedOut);
     });
   });
@@ -287,22 +286,6 @@ void main() {
 
       expect(await authService.getFailedAttempts(), 0);
       expect(await authService.getLockoutRemainingSeconds(), 0);
-    });
-  });
-
-  group('getBiometricTypeString', () {
-    test('returns Face ID for face biometric', () {
-      expect(
-        authService.getBiometricTypeString([BiometricType.face]),
-        'Face ID',
-      );
-    });
-
-    test('returns Fingerprint for fingerprint biometric', () {
-      expect(
-        authService.getBiometricTypeString([BiometricType.fingerprint]),
-        'Fingerprint',
-      );
     });
   });
 

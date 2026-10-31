@@ -11,7 +11,6 @@ import 'dart:typed_data';
 import 'package:base32/base32.dart';
 import 'package:crypto/crypto.dart';
 
-import '../config/app_flavor_config.dart';
 import '../models/account.dart';
 import '../services/encryption_service.dart';
 import '../utils/app_logger.dart';
@@ -67,8 +66,6 @@ class OTPService {
 
   /// How long decrypted secrets stay in memory before requiring re-decryption.
   static const Duration cacheTtl = AppConstants.cacheTtl;
-  static bool get _debugToolsEnabled =>
-      AppFlavorConfig.instance.enableVerboseLogging;
 
   // === SHARED CRYPTO HELPERS ===
 
@@ -127,13 +124,6 @@ class OTPService {
 
     if (algo == 'STEAM' || type == 'steam') {
       return _generateSteamCode(secretBytes, timeStep);
-    } else if (algo == 'MOTP' || type == 'motp') {
-      return _generateMotpCode(
-        plainSecret,
-        account.counter,
-        timeStep,
-        account.period,
-      );
     } else if (algo == 'BLIZZARD' || type == 'blizzard') {
       return _generateCode(
         secretBytes,
@@ -179,20 +169,6 @@ class OTPService {
     return buffer.toString();
   }
 
-  /// mOTP (Mobile OTP): MD5 digest of (timeStep + secret + pin).
-  static String _generateMotpCode(
-    String plainSecret,
-    int? pin,
-    int timeStep,
-    int period,
-  ) {
-    final cleanSecret = _cleanSecret(plainSecret).toLowerCase();
-    final pinStr = pin != null ? pin.toString() : '';
-    final inputStr = '$timeStep$cleanSecret$pinStr';
-    final digest = md5.convert(utf8.encode(inputStr));
-    return digest.toString().substring(0, 6).toUpperCase();
-  }
-
   /// Core OTP generation: HMAC + dynamic truncation (RFC 4226).
   static String _generateCode(
     Uint8List secretBytes,
@@ -213,120 +189,18 @@ class OTPService {
     return (binary % pow(10, digits).toInt()).toString().padLeft(digits, '0');
   }
 
-  // === ENHANCED DEBUGGING METHODS ===
-
-  /// Generate detailed debug information for an account.
-  /// Only available in the dev flavor — returns an empty map otherwise.
-  static Future<Map<String, dynamic>> getDebugInfo(Account account) async {
-    if (!_debugToolsEnabled) return const {};
-    try {
-      final actualSecret = await _getDecryptedSecret(account);
-      final cleanSecret = _cleanSecret(actualSecret);
-
-      final secretBytes = base32.decode(cleanSecret);
-      final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final timeStep = timestamp ~/ account.period;
-
-      return {
-        'secret_length': cleanSecret.length,
-        'secret_bytes_length': secretBytes.length,
-        'digits': account.digits,
-        'period': account.period,
-        'algorithm': account.algorithm,
-        'current_timestamp_ms': DateTime.now().millisecondsSinceEpoch,
-        'current_timestamp_s': timestamp,
-        'time_step': timeStep,
-        'device_time_utc': DateTime.now().toUtc().toIso8601String(),
-        'is_base32_valid': _isValidBase32(cleanSecret),
-      };
-    } catch (e) {
-      return {'error': e.runtimeType.toString()};
-    }
-  }
-
-  /// Generate OTP for multiple time windows (for debugging time sync issues)
-  static Future<Map<int, String>> generateTimeWindowCodes(
-    Account account, {
-    int windowsBefore = 1,
-    int windowsAfter = 1,
-  }) async {
-    if (!_debugToolsEnabled) return const {};
-
-    final codes = <int, String>{};
-
-    try {
-      final actualSecret = await _getDecryptedSecret(account);
-      final cleanSecret = _cleanSecret(actualSecret);
-      final secretBytes = base32.decode(cleanSecret);
-      final currentTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final currentTimeStep = currentTime ~/ account.period;
-      final hashAlgorithm = _getHashAlgorithm(account.algorithm);
-
-      for (int offset = -windowsBefore; offset <= windowsAfter; offset++) {
-        final timeStep = currentTimeStep + offset;
-        codes[offset] = _generateCode(
-          secretBytes,
-          _int64Bytes(timeStep),
-          hashAlgorithm,
-          account.digits,
-        );
-      }
-    } catch (e) {
-      AppLogger.error('Failed to generate TOTP window codes', e);
-    }
-
-    return codes;
-  }
-
-  /// Compare two secrets byte by byte.
-  /// Only available in the dev flavor — returns an empty map otherwise.
-  static Future<Map<String, dynamic>> compareSecrets(
-    String secret1,
-    String secret2,
-  ) async {
-    if (!_debugToolsEnabled) return const {};
-    try {
-      final clean1 = _cleanSecret(secret1);
-      final clean2 = _cleanSecret(secret2);
-
-      final bytes1 = base32.decode(clean1);
-      final bytes2 = base32.decode(clean2);
-
-      return {
-        'secrets_match': clean1 == clean2,
-        'secret1_length': clean1.length,
-        'secret2_length': clean2.length,
-        'secret1_bytes': bytes1.length,
-        'secret2_bytes': bytes2.length,
-        'bytes_match': _bytesEqual(bytes1, bytes2),
-      };
-    } catch (e) {
-      return {'error': e.runtimeType.toString()};
-    }
-  }
-
-  static bool _bytesEqual(Uint8List left, Uint8List right) {
-    if (left.length != right.length) {
-      return false;
-    }
-
-    for (int i = 0; i < left.length; i++) {
-      if (left[i] != right[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   /// Generate OTP Auth URI for the account
   static String generateOtpAuthUri(Account account, String plainSecret) {
+    final isHotp = account.type.toLowerCase() == 'hotp';
     final params = <String, String>{
       'secret': _cleanSecret(plainSecret),
       'issuer': account.issuer ?? account.name,
       'algorithm': account.algorithm,
       'digits': account.digits.toString(),
-      'period': account.period.toString(),
+      if (isHotp)
+        'counter': (account.counter ?? 0).toString()
+      else
+        'period': account.period.toString(),
     };
 
     final queryString = params.entries
@@ -337,7 +211,7 @@ class OTPService {
         ? '${Uri.encodeComponent(account.issuer!)}:${Uri.encodeComponent(account.name)}'
         : Uri.encodeComponent(account.name);
 
-    return 'otpauth://totp/$label?$queryString';
+    return 'otpauth://${isHotp ? 'hotp' : 'totp'}/$label?$queryString';
   }
 
   // === MAIN TOTP GENERATION METHODS ===
@@ -396,6 +270,33 @@ class OTPService {
     }
   }
 
+  /// Code for the account's stored counter. Decrypts the secret if it is not
+  /// cached. Does not move the counter; see [AccountsProvider.nextHotpCode].
+  static Future<OTPGenerationResult> generateHOTPAsync(Account account) async {
+    try {
+      final actualSecret = await _getDecryptedSecret(account);
+      final secretBytes = _decodeSecretBytes(account, actualSecret);
+      return OTPGenerationResult.success(
+        _generateCode(
+          secretBytes,
+          _int64Bytes(account.counter ?? 0),
+          _getHashAlgorithm(account.algorithm),
+          account.digits,
+        ),
+      );
+    } on OTPException catch (e) {
+      AppLogger.error('Failed to generate HOTP', e);
+      return OTPGenerationResult.failure(e);
+    } catch (e) {
+      final error = OTPUnexpectedException(
+        'Failed to generate HOTP for account "${account.name}"',
+        e,
+      );
+      AppLogger.error('Failed to generate HOTP', error);
+      return OTPGenerationResult.failure(error);
+    }
+  }
+
   static OTPGenerationResult generateHOTP(Account account) {
     try {
       final actualSecret = _getCachedSecret(account);
@@ -432,15 +333,17 @@ class OTPService {
     final algo = account.algorithm.toUpperCase();
     final type = account.type.toLowerCase();
 
+    // mOTP is no longer supported. An account left from an old version must
+    // show no code, not a wrong one.
     if (algo == 'MOTP' || type == 'motp') {
-      return Uint8List.fromList(utf8.encode(cleanSecret));
+      throw OTPInvalidSecretException(
+        'Account "${account.name}" uses mOTP, which is not supported',
+      );
     }
 
     if (requireMinLength &&
         algo != 'STEAM' &&
         type != 'steam' &&
-        algo != 'MOTP' &&
-        type != 'motp' &&
         cleanSecret.length < AppConstants.minSecretLength) {
       throw OTPInvalidSecretException(
         'Secret for account "${account.name}" is shorter than ${AppConstants.minSecretLength} characters',
@@ -636,31 +539,12 @@ class OTPService {
         );
       }
 
-      if (scheme == 'motp') {
-        final secret = parsedUri.queryParameters['secret'] ?? parsedUri.host;
-        final pin = int.tryParse(parsedUri.queryParameters['pin'] ?? '');
-        final pathText = parsedUri.path.replaceAll('/', '');
-        final name = pathText.isNotEmpty ? pathText : 'Mobile OTP';
-
-        return Account(
-          name: name,
-          secret: secret,
-          issuer: 'mOTP',
-          type: 'motp',
-          counter: pin,
-          digits: 6,
-          period: 10,
-          algorithm: 'MOTP',
-        );
-      }
-
       if (scheme != 'otpauth') return null;
 
       final rawType = parsedUri.host.toLowerCase();
       if (rawType != 'totp' &&
           rawType != 'hotp' &&
           rawType != 'steam' &&
-          rawType != 'motp' &&
           rawType != 'blizzard' &&
           rawType != 'yubikey') {
         return null;
@@ -681,11 +565,9 @@ class OTPService {
       final secret = parsedUri.queryParameters['secret'] ?? '';
       var algorithm =
           parsedUri.queryParameters['algorithm']?.toUpperCase() ?? 'SHA1';
-      var type =
-          (rawType == 'steam' ||
-              rawType == 'blizzard' ||
-              rawType == 'yubikey' ||
-              rawType == 'motp')
+      if (algorithm == 'MOTP') return null;
+      final type =
+          (rawType == 'steam' || rawType == 'blizzard' || rawType == 'yubikey')
           ? 'totp'
           : rawType;
 
@@ -695,22 +577,15 @@ class OTPService {
         algorithm = 'BLIZZARD';
       } else if (rawType == 'yubikey' || algorithm == 'YUBIKEY') {
         algorithm = 'YUBIKEY';
-      } else if (rawType == 'motp' || algorithm == 'MOTP') {
-        algorithm = 'MOTP';
-        type = 'motp';
       }
 
       final digits =
           int.tryParse(parsedUri.queryParameters['digits'] ?? '') ??
           (algorithm == 'STEAM' ? 5 : (algorithm == 'BLIZZARD' ? 8 : 6));
       final period =
-          int.tryParse(parsedUri.queryParameters['period'] ?? '') ??
-          (algorithm == 'MOTP' ? 10 : 30);
-      final counter = int.tryParse(
-        parsedUri.queryParameters['counter'] ??
-            parsedUri.queryParameters['pin'] ??
-            '0',
-      );
+          int.tryParse(parsedUri.queryParameters['period'] ?? '') ?? 30;
+      final counter = int.tryParse(parsedUri.queryParameters['counter'] ?? '0');
+      if (type == 'hotp' && counter != null && counter < 0) return null;
 
       return Account(
         name: name,

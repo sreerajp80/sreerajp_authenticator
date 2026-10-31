@@ -1,6 +1,6 @@
 # Change Log: Audit and Update Features Reference Document
 
-**Plan:** [20260803_084908_audit_features_doc.md](file:///l:/Android/SreerajP_Authenticator/plans/20260803_084908_audit_features_doc.md)  
+**Plan:** [20260803_084908_audit_features_doc.md](../plans/20260803_084908_audit_features_doc.md)  
 **Date:** 2026-08-03  
 **Author:** Antigravity
 

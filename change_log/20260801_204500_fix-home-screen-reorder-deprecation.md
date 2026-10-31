@@ -3,7 +3,7 @@
 **Plan Reference:** [plans/20260801_204500_fix-home-screen-reorder-deprecation.md](../plans/20260801_204500_fix-home-screen-reorder-deprecation.md)
 
 ## Summary of Changes
-Resolved the deprecation warning reported by static analysis in [`lib/screens/home_screen.dart`](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/home_screen.dart#L442).
+Resolved the deprecation warning reported by static analysis in [`lib/screens/home_screen.dart`](../lib/screens/home_screen.dart#L442).
 
 ---
 

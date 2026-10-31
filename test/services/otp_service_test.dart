@@ -385,6 +385,43 @@ void main() {
     });
   });
 
+  group('HOTP URI and async generation', () {
+    Account hotp(int counter) => Account(
+      name: 'hotp-uri',
+      secret: rfcSecret,
+      type: 'hotp',
+      counter: counter,
+      digits: 6,
+      period: 30,
+      algorithm: 'SHA1',
+    );
+
+    test('URI round trip keeps HOTP and its counter', () {
+      final uri = OTPService.generateOtpAuthUri(hotp(7), rfcSecret);
+      expect(uri, startsWith('otpauth://hotp/'));
+      expect(uri, isNot(contains('period=')));
+      final parsed = OTPService.parseOtpAuthUri(uri)!;
+      expect(parsed.type, 'hotp');
+      expect(parsed.counter, 7);
+    });
+
+    test('a negative counter is refused', () {
+      expect(
+        OTPService.parseOtpAuthUri(
+          'otpauth://hotp/Acme:me?secret=$rfcSecret&counter=-1',
+        ),
+        isNull,
+      );
+    });
+
+    test('generateHOTPAsync gives the RFC 4226 values', () async {
+      for (final entry in rfcHotpValues.entries) {
+        final result = await OTPService.generateHOTPAsync(hotp(entry.key));
+        expectSuccess(result, expectedCode: entry.value);
+      }
+    });
+  });
+
   group('cache management', () {
     test('clearCache does not break subsequent generation', () {
       final account = Account(
@@ -456,10 +493,10 @@ void main() {
       expect(int.tryParse(result.code!), isNotNull);
     });
 
-    test('mOTP generates 6-character hex code', () {
+    test('an old mOTP account gets no code', () {
       final account = Account(
         name: 'mOTP Account',
-        secret: '1234567890abcdef',
+        secret: 'JBSWY3DPEHPK3PXP',
         type: 'motp',
         counter: 1234,
         digits: 6,
@@ -467,10 +504,7 @@ void main() {
         algorithm: 'MOTP',
       );
 
-      final result = OTPService.generateTOTP(account);
-      expectSuccess(result);
-      expect(result.code!.length, 6);
-      expect(RegExp(r'^[0-9A-F]{6}$').hasMatch(result.code!), isTrue);
+      expect(OTPService.generateTOTP(account).isSuccess, isFalse);
     });
   });
 
@@ -508,15 +542,14 @@ void main() {
       expect(account.digits, 5);
     });
 
-    test('parses motp:// URI', () {
-      const uri = 'motp://mysecretkey?pin=1234';
-      final account = OTPService.parseOtpAuthUri(uri);
-
-      expect(account, isNotNull);
-      expect(account!.algorithm, 'MOTP');
-      expect(account.type, 'motp');
-      expect(account.counter, 1234);
-      expect(account.period, 10);
+    test('rejects mOTP URIs', () {
+      for (final uri in const [
+        'motp://mysecretkey?pin=1234',
+        'otpauth://motp/Test?secret=JBSWY3DPEHPK3PXP&pin=1234',
+        'otpauth://totp/Test?secret=JBSWY3DPEHPK3PXP&algorithm=MOTP',
+      ]) {
+        expect(OTPService.parseOtpAuthUri(uri), isNull, reason: uri);
+      }
     });
   });
 }

@@ -4,8 +4,10 @@
 //   SendToDeviceView); the receiver joins by scanning the QR or typing the host
 //   IP, port, and pairing code. See docs/security.md.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/widgets/sync_error_text.dart';
 
 import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
@@ -23,6 +25,8 @@ class SyncScreen extends StatefulWidget {
 }
 
 class _SyncScreenState extends State<SyncScreen> {
+  /// Localized strings. Read only while the screen is mounted.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
   final _hostIpController = TextEditingController();
   final _portController = TextEditingController();
   final _codeController = TextEditingController();
@@ -76,16 +80,16 @@ class _SyncScreenState extends State<SyncScreen> {
     final code = _codeController.text.trim();
 
     if (hostIp.isEmpty) {
-      _showMessage('Enter the host IP address', isError: true);
+      _showMessage(_l10n.errorEnterHostIp, isError: true);
       return;
     }
     final port = int.tryParse(portText);
     if (port == null || port < 1 || port > 65535) {
-      _showMessage('Enter the port shown on the other device', isError: true);
+      _showMessage(_l10n.errorEnterPort, isError: true);
       return;
     }
     if (P2pSyncService.normalizeCode(code).isEmpty) {
-      _showMessage('Enter the pairing code', isError: true);
+      _showMessage(_l10n.errorEnterPairingCode, isError: true);
       return;
     }
 
@@ -133,9 +137,7 @@ class _SyncScreenState extends State<SyncScreen> {
             return Scaffold(
               appBar: AppBar(
                 title: Text(
-                  isHosting
-                      ? 'Send to another device'
-                      : 'Sync to another device',
+                  isHosting ? _l10n.titleSendToDevice : _l10n.titleSyncDevice,
                 ),
               ),
               body: _buildBody(context, syncProvider.state),
@@ -149,9 +151,9 @@ class _SyncScreenState extends State<SyncScreen> {
   Widget _buildBody(BuildContext context, SyncState state) {
     return switch (state) {
       SyncHosting() => SendToDeviceView(state: state),
-      SyncConnecting() => _buildProgress('Connecting to host…'),
+      SyncConnecting() => _buildProgress(_l10n.descConnectingToHost),
       SyncWaitingForSender() => _buildWaitingForSender(context),
-      SyncSyncing() => _buildProgress('Receiving…'),
+      SyncSyncing() => _buildProgress(_l10n.descReceiving),
       SyncCompleted() => _buildCompleted(context, state),
       SyncError() => _buildError(context, state),
       SyncOpticalTransmitting() =>
@@ -178,8 +180,7 @@ class _SyncScreenState extends State<SyncScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'P2P LAN Sync: Both devices on the same Wi-Fi or hotspot. '
-                    'Pairing code never leaves your device.',
+                    _l10n.descP2pInfo,
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontSize: 13,
@@ -199,10 +200,8 @@ class _SyncScreenState extends State<SyncScreen> {
               theme.colorScheme.primaryContainer,
               theme.colorScheme.onPrimaryContainer,
             ),
-            title: const Text('Send over Wi-Fi / LAN'),
-            subtitle: const Text(
-              'Host: share your accounts and settings over local Wi-Fi',
-            ),
+            title: Text(_l10n.labelSendOverWifi),
+            subtitle: Text(_l10n.descSendOverWifi),
             trailing: const Icon(Icons.chevron_right),
             onTap: _startHosting,
           ),
@@ -216,15 +215,15 @@ class _SyncScreenState extends State<SyncScreen> {
               theme.colorScheme.secondaryContainer,
               theme.colorScheme.onSecondaryContainer,
             ),
-            title: const Text('Receive over Wi-Fi / LAN'),
-            subtitle: const Text('Join: scan the host QR or enter host IP'),
+            title: Text(_l10n.labelReceiveOverWifi),
+            subtitle: Text(_l10n.descReceiveOverWifi),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => setState(() => _showJoinForm = true),
           ),
         ),
         const SizedBox(height: 24),
         Text(
-          'OPTICAL AIR-GAP SYNC (NO WI-FI / NO SOCKETS)',
+          _l10n.descOpticalSectionHeader.toUpperCase(),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
@@ -240,10 +239,8 @@ class _SyncScreenState extends State<SyncScreen> {
               theme.colorScheme.tertiaryContainer,
               theme.colorScheme.onTertiaryContainer,
             ),
-            title: const Text('Optical Air-Gap Stream (Send)'),
-            subtitle: const Text(
-              'Transmit vault as animated QR stream (12-15 FPS)',
-            ),
+            title: Text(_l10n.labelOpticalSend),
+            subtitle: Text(_l10n.descOpticalSend),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.of(context).push(
@@ -265,10 +262,8 @@ class _SyncScreenState extends State<SyncScreen> {
               theme.colorScheme.surfaceContainerHighest,
               theme.colorScheme.onSurfaceVariant,
             ),
-            title: const Text('Scan Optical Air-Gap Stream (Receive)'),
-            subtitle: const Text(
-              'Capture animated QR stream using camera live preview',
-            ),
+            title: Text(_l10n.labelOpticalReceive),
+            subtitle: Text(_l10n.descOpticalReceive),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.of(context).push(
@@ -291,7 +286,7 @@ class _SyncScreenState extends State<SyncScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'SCAN THE QR ON THE OTHER DEVICE',
+          _l10n.descScanOtherQrHeader.toUpperCase(),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
@@ -301,7 +296,7 @@ class _SyncScreenState extends State<SyncScreen> {
         const SizedBox(height: 12),
         ElevatedButton.icon(
           icon: const Icon(Icons.qr_code_scanner),
-          label: const Text('Scan QR code'),
+          label: Text(_l10n.actionScanQrCode),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 48),
           ),
@@ -314,7 +309,7 @@ class _SyncScreenState extends State<SyncScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'or enter manually',
+                _l10n.labelOrEnterManually,
                 style: theme.textTheme.bodySmall,
               ),
             ),
@@ -325,8 +320,8 @@ class _SyncScreenState extends State<SyncScreen> {
         TextField(
           controller: _hostIpController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Host IP address',
+          decoration: InputDecoration(
+            labelText: _l10n.labelHostIp,
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.lan),
             hintText: 'e.g. 192.168.1.42',
@@ -336,8 +331,8 @@ class _SyncScreenState extends State<SyncScreen> {
         TextField(
           controller: _portController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Port',
+          decoration: InputDecoration(
+            labelText: _l10n.labelPort,
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.numbers),
           ),
@@ -346,8 +341,8 @@ class _SyncScreenState extends State<SyncScreen> {
         TextField(
           controller: _codeController,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(
-            labelText: 'Pairing code',
+          decoration: InputDecoration(
+            labelText: _l10n.labelPairingCode,
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.vpn_key),
           ),
@@ -355,13 +350,13 @@ class _SyncScreenState extends State<SyncScreen> {
         const SizedBox(height: 24),
         ElevatedButton.icon(
           icon: const Icon(Icons.sync),
-          label: const Text('Connect & receive'),
+          label: Text(_l10n.actionConnectReceive),
           onPressed: _join,
         ),
         const SizedBox(height: 8),
         TextButton(
           onPressed: () => setState(() => _showJoinForm = false),
-          child: const Text('Back'),
+          child: Text(_l10n.actionBack),
         ),
       ],
     );
@@ -390,12 +385,9 @@ class _SyncScreenState extends State<SyncScreen> {
           children: [
             Icon(Icons.link, size: 56, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
-            Text('Connected', style: theme.textTheme.titleLarge),
+            Text(_l10n.titleConnected, style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
-            const Text(
-              'Waiting for the sender to choose what to share…',
-              textAlign: TextAlign.center,
-            ),
+            Text(_l10n.descWaitingForSender, textAlign: TextAlign.center),
             const SizedBox(height: 24),
             const CircularProgressIndicator(),
           ],
@@ -420,7 +412,7 @@ class _SyncScreenState extends State<SyncScreen> {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text('Sync complete', style: theme.textTheme.titleLarge),
+            Text(_l10n.titleSyncComplete, style: theme.textTheme.titleLarge),
             const SizedBox(height: 16),
             ..._summaryLines(context, summary),
             const SizedBox(height: 24),
@@ -429,7 +421,7 @@ class _SyncScreenState extends State<SyncScreen> {
                 context.read<SyncProvider>().reset();
                 setState(() => _showJoinForm = false);
               },
-              child: const Text('Done'),
+              child: Text(_l10n.actionDone),
             ),
           ],
         ),
@@ -443,21 +435,22 @@ class _SyncScreenState extends State<SyncScreen> {
     final lines = <String>[];
 
     if (s.isHost) {
-      if (s.includedAccounts) lines.add('Sent ${s.accounts} account(s)');
-      if (s.includedSettings) lines.add('Sent ${s.settings} setting(s)');
+      if (s.includedAccounts) lines.add(_l10n.descSentAccounts(s.accounts));
+      if (s.includedSettings) lines.add(_l10n.descSentSettings(s.settings));
     } else {
       if (s.includedAccounts) {
-        final skipped = s.accountsSkipped > 0
-            ? ' (${s.accountsSkipped} already present, kept)'
-            : '';
-        lines.add('Added ${s.accounts} account(s)$skipped');
+        lines.add(
+          s.accountsSkipped > 0
+              ? _l10n.descAddedAccountsSkipped(s.accounts, s.accountsSkipped)
+              : _l10n.descAddedAccounts(s.accounts),
+        );
       }
       if (s.includedSettings) {
-        lines.add('Applied ${s.settings} setting(s)');
+        lines.add(_l10n.descAppliedSettings(s.settings));
       }
     }
 
-    if (lines.isEmpty) lines.add('Nothing to sync.');
+    if (lines.isEmpty) lines.add(_l10n.descNothingToSync);
 
     return [
       for (final line in lines)
@@ -485,16 +478,16 @@ class _SyncScreenState extends State<SyncScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
             const SizedBox(height: 16),
-            Text('Sync failed', style: theme.textTheme.titleLarge),
+            Text(_l10n.titleSyncFailed, style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
-            Text(state.message, textAlign: TextAlign.center),
+            Text(syncErrorText(_l10n, state), textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
                 context.read<SyncProvider>().reset();
                 setState(() => _showJoinForm = false);
               },
-              child: const Text('Back'),
+              child: Text(_l10n.actionBack),
             ),
           ],
         ),

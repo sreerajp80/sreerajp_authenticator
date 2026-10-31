@@ -1,6 +1,6 @@
 # Plan: Steam Guard & Non-Standard Algorithm Support
 
-**Status:** Approved
+**Status:** completed
 
 ## Context & Objective
 Currently, `OTPService` supports standard 6-digit to 8-digit numeric TOTP/HOTP (SHA-1, SHA-256, SHA-512). To expand app compatibility for non-standard authenticator types (Improvement 1 in `docs/feature_analysis_and_roadmap.md`), we need to extend `OTPService` to support:

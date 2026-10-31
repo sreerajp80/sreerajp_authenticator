@@ -1,18 +1,22 @@
 // File Path: sreerajp_authenticator/lib/screens/optical_sync_screen.dart
 // Author: Sreeraj P
-// Description: Optical Air-Gap Sync UI. Displays animated high-speed QR stream on
-//   the transmitting device (12-15 FPS) or scans frames continuously on the receiving
-//   device until Fountain Code 100% reconstruction is achieved offline.
+// Description: Optical Air-Gap Sync UI. The receiving device shows a one-time
+//   transfer code; the user types it on the transmitting device, which then shows
+//   the encrypted animated QR stream (10-15 FPS). The receiver scans frames until
+//   Fountain Code 100% reconstruction is achieved offline, then decrypts.
 
-import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/widgets/sync_error_text.dart';
 
 import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sync_provider.dart';
+import '../services/optical_sync_service.dart';
 import '../utils/constants.dart';
+import '../widgets/qr_camera_view.dart';
 
 enum OpticalSyncMode { transmit, receive }
 
@@ -26,10 +30,8 @@ class OpticalSyncScreen extends StatefulWidget {
 }
 
 class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
-  final MobileScannerController _scannerController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.unrestricted,
-    formats: const [BarcodeFormat.qrCode],
-  );
+  /// Localized strings. Read only while the screen is mounted.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
   SyncProvider? _syncProvider;
 
   @override
@@ -44,7 +46,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.initialMode == OpticalSyncMode.transmit) {
-        _startTransmitting();
+        _askCodeAndTransmit();
       } else {
         context.read<SyncProvider>().startOpticalReceiving();
       }
@@ -53,44 +55,58 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
 
   @override
   void dispose() {
-    _scannerController.dispose();
     _syncProvider?.reset();
     super.dispose();
   }
 
   String _formatDuration(int seconds) {
-    if (seconds <= 0) return '~0s';
-    if (seconds < 60) return '~${seconds}s';
+    if (seconds <= 0) return _l10n.labelDurationSeconds(0);
+    if (seconds < 60) return _l10n.labelDurationSeconds(seconds);
     final mins = seconds ~/ 60;
     final remSecs = seconds % 60;
-    return remSecs == 0 ? '~${mins}m' : '~${mins}m ${remSecs}s';
+    return remSecs == 0
+        ? _l10n.labelDurationMinutes(mins)
+        : _l10n.labelDurationMinSec(mins, remSecs);
   }
 
-  Future<void> _startTransmitting() async {
+  /// Ask for the transfer code shown on the receiving device, then start the
+  /// encrypted stream. Cancel closes the screen.
+  Future<void> _askCodeAndTransmit() async {
+    final code = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _TransferCodeDialog(),
+    );
+    if (!mounted) return;
+    if (code == null) {
+      Navigator.of(context).pop();
+      return;
+    }
     final accountsProvider = context.read<AccountsProvider>();
     final settingsProvider = context.read<SettingsProvider>();
     await context.read<SyncProvider>().startOpticalTransmitting(
       accounts: accountsProvider.accounts,
       settingsSnapshot: settingsProvider.syncableSettingsSnapshot(),
+      transferCode: code,
       fps: 12,
     );
   }
 
-  void _onBarcodeDetected(BarcodeCapture capture) {
-    for (final barcode in capture.barcodes) {
-      final raw = barcode.rawValue;
-      if (raw != null && raw.contains('"v":1')) {
-        final accountsProvider = context.read<AccountsProvider>();
-        final settingsProvider = context.read<SettingsProvider>();
+  /// Every frame of the current format starts with this text.
+  static final String _framePrefix =
+      '{"v":${AppConstants.opticalFrameVersion},';
 
-        context.read<SyncProvider>().processOpticalFrame(
-          rawFrame: raw,
-          importData: (data) => accountsProvider.importData(data),
-          applySettings: (settings, {required overwrite}) => settingsProvider
-              .applySyncedSettings(settings, overwrite: overwrite),
-        );
-      }
-    }
+  void _onFrameDecoded(String raw) {
+    if (!raw.startsWith(_framePrefix)) return;
+    final accountsProvider = context.read<AccountsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+
+    context.read<SyncProvider>().processOpticalFrame(
+      rawFrame: raw,
+      importData: (data) => accountsProvider.importData(data),
+      applySettings: (settings, {required overwrite}) =>
+          settingsProvider.applySyncedSettings(settings, overwrite: overwrite),
+    );
   }
 
   @override
@@ -102,8 +118,8 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
           appBar: AppBar(
             title: Text(
               widget.initialMode == OpticalSyncMode.transmit
-                  ? 'Optical Air-Gap Stream'
-                  : 'Scan Optical QR Stream',
+                  ? _l10n.titleOpticalSend
+                  : _l10n.titleOpticalScan,
             ),
           ),
           body: _buildBody(context, state),
@@ -116,13 +132,13 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
     return switch (state) {
       SyncOpticalTransmitting() => _buildTransmitterView(context, state),
       SyncOpticalReceiving() => _buildReceiverView(context, state),
-      SyncSyncing() => const Center(
+      SyncSyncing() => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Reconstructing vault…'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(_l10n.descReconstructing),
           ],
         ),
       ),
@@ -163,7 +179,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Large Vault Data Warning',
+                          _l10n.titleLargeVaultWarning,
                           style: TextStyle(
                             color: theme.colorScheme.onErrorContainer,
                             fontWeight: FontWeight.bold,
@@ -172,8 +188,10 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'This vault contains ${state.totalChunks} chunks ($estDurationStr est. transfer time). '
-                          'Streaming a large vault over camera QR can be slow. Consider using P2P Wi-Fi Sync for faster transfer.',
+                          _l10n.descLargeVault(
+                            state.totalChunks,
+                            estDurationStr,
+                          ),
                           style: TextStyle(
                             color: theme.colorScheme.onErrorContainer,
                             fontSize: 12,
@@ -202,8 +220,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'Point the receiver device camera at this animated QR stream. '
-                    'Chunks are encoded with Fountain Codes for zero-data air-gap sync.',
+                    _l10n.descPointReceiver,
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontSize: 13,
@@ -246,7 +263,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Stream Hash:'),
+                    Text(_l10n.labelStreamHash),
                     Chip(
                       label: Text(
                         state.sessionHash.toUpperCase(),
@@ -263,7 +280,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Est. Transfer Duration:'),
+                    Text(_l10n.labelEstDuration),
                     Text(
                       estDurationStr,
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -277,9 +294,12 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Frames Rendered:'),
+                    Text(_l10n.labelFramesRendered),
                     Text(
-                      '${state.currentFrameIndex} (Total Chunks: ${state.totalChunks})',
+                      _l10n.labelFramesValue(
+                        state.currentFrameIndex,
+                        state.totalChunks,
+                      ),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -289,14 +309,16 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Text('Target FPS: '),
+                    Text(_l10n.labelTargetFps),
                     const SizedBox(width: 8),
                     Expanded(
                       child: SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(value: 10, label: Text('10 FPS')),
-                          ButtonSegment(value: 12, label: Text('12 FPS')),
-                          ButtonSegment(value: 15, label: Text('15 FPS')),
+                        segments: [
+                          for (final fps in const [10, 12, 15])
+                            ButtonSegment(
+                              value: fps,
+                              label: Text(_l10n.labelFps(fps)),
+                            ),
                         ],
                         selected: {state.fps},
                         onSelectionChanged: (selection) {
@@ -316,7 +338,55 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
     );
   }
 
+  /// Receiver, before scanning: show the one-time transfer code.
+  Widget _buildTransferCodeView(
+    BuildContext context,
+    SyncOpticalReceiving state,
+  ) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Icon(Icons.key_rounded, size: 56, color: theme.colorScheme.primary),
+        const SizedBox(height: 16),
+        Text(
+          _l10n.titleTransferCode,
+          style: theme.textTheme.titleLarge,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+            child: Text(
+              OpticalSyncCrypto.formatTransferCode(state.transferCode),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          _l10n.descTransferCodeShow,
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: () => context.read<SyncProvider>().beginOpticalScanning(),
+          icon: const Icon(Icons.qr_code_scanner_rounded),
+          label: Text(_l10n.actionStartScanning),
+        ),
+      ],
+    );
+  }
+
   Widget _buildReceiverView(BuildContext context, SyncOpticalReceiving state) {
+    if (!state.scanning) return _buildTransferCodeView(context, state);
     final theme = Theme.of(context);
     final pct = (state.progress * 100).toStringAsFixed(0);
 
@@ -326,14 +396,11 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
         : (remainingChunks / 12).ceil();
     final estRemainingStr = state.totalChunks == 0
         ? ''
-        : ' (${_formatDuration(remainingSecs)} remaining)';
+        : ' (${_l10n.labelRemaining(_formatDuration(remainingSecs))})';
 
     return Stack(
       children: [
-        MobileScanner(
-          controller: _scannerController,
-          onDetect: _onBarcodeDetected,
-        ),
+        QrCameraView(ignoreDuplicates: false, onCode: _onFrameDecoded),
         Container(
           color: Colors.black.withValues(alpha: 0.4),
           child: Column(
@@ -370,8 +437,8 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                       children: [
                         Text(
                           state.totalChunks == 0
-                              ? 'Align camera with transmitter stream…'
-                              : 'Reconstructing Fountain Code stream…',
+                              ? _l10n.descAlignCamera
+                              : _l10n.descReconstructingStream,
                           style: theme.textTheme.titleMedium,
                         ),
                         Text(
@@ -394,12 +461,18 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Captured: ${state.solvedChunks} / ${state.totalChunks} chunks$estRemainingStr',
+                          _l10n.descCaptured(
+                                state.solvedChunks,
+                                state.totalChunks,
+                              ) +
+                              estRemainingStr,
                           style: theme.textTheme.bodySmall,
                         ),
                         if (state.sessionHash != null)
                           Text(
-                            'Session: ${state.sessionHash!.toUpperCase()}',
+                            _l10n.labelSession(
+                              state.sessionHash!.toUpperCase(),
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontFamily: 'monospace',
                               fontWeight: FontWeight.bold,
@@ -432,20 +505,21 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text(
-              'Optical Air-Gap Sync Complete',
-              style: theme.textTheme.titleLarge,
-            ),
+            Text(_l10n.titleOpticalComplete, style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             Text(
-              'Successfully reconstructed vault payload from optical QR stream.',
+              _l10n.descOpticalComplete,
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
-              'Added ${summary.accounts} account(s)'
-              '${summary.accountsSkipped > 0 ? " (${summary.accountsSkipped} skipped duplicates)" : ""}',
+              summary.accountsSkipped > 0
+                  ? _l10n.descAddedAccountsSkipped(
+                      summary.accounts,
+                      summary.accountsSkipped,
+                    )
+                  : _l10n.descAddedAccounts(summary.accounts),
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -456,7 +530,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                 context.read<SyncProvider>().reset();
                 Navigator.of(context).pop();
               },
-              child: const Text('Done'),
+              child: Text(_l10n.actionDone),
             ),
           ],
         ),
@@ -474,20 +548,94 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
             const SizedBox(height: 16),
-            Text('Optical Sync Failed', style: theme.textTheme.titleLarge),
+            Text(_l10n.titleOpticalFailed, style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
-            Text(state.message, textAlign: TextAlign.center),
+            Text(syncErrorText(_l10n, state), textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
                 context.read<SyncProvider>().reset();
                 Navigator.of(context).pop();
               },
-              child: const Text('Back'),
+              child: Text(_l10n.actionBack),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Sender: asks for the transfer code shown on the receiving device. Returns
+/// the normalized code, or null on cancel.
+class _TransferCodeDialog extends StatefulWidget {
+  const _TransferCodeDialog();
+
+  @override
+  State<_TransferCodeDialog> createState() => _TransferCodeDialogState();
+}
+
+class _TransferCodeDialogState extends State<_TransferCodeDialog> {
+  final TextEditingController _controller = TextEditingController();
+  bool _showError = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final code = OpticalSyncCrypto.parseTransferCode(_controller.text);
+    if (code == null) {
+      setState(() => _showError = true);
+      return;
+    }
+    Navigator.of(context).pop(code);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.titleTransferCode),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.descTransferCodeEnter),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            textCapitalization: TextCapitalization.characters,
+            style: const TextStyle(fontFamily: 'monospace', letterSpacing: 1.5),
+            decoration: InputDecoration(
+              labelText: l10n.titleTransferCode,
+              hintText: 'XXXX-XXXX-XXXX',
+              errorText: _showError
+                  ? l10n.errorTransferCodeLength(
+                      AppConstants.opticalTransferCodeLength,
+                    )
+                  : null,
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: (_) {
+              if (_showError) setState(() => _showError = false);
+            },
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.actionCancel),
+        ),
+        FilledButton(onPressed: _submit, child: Text(l10n.actionStartSending)),
+      ],
     );
   }
 }

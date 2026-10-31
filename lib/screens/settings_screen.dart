@@ -4,8 +4,14 @@
 // Last Modified: 2026 August 20
 // Description: Enhanced settings screen with 3D neumorphic design, Appearance, Features, Help, and auto-lock monitoring
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+import 'package:sreerajp_authenticator/config/locale_config.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/providers/locale_provider.dart';
+import 'package:sreerajp_authenticator/screens/language_settings_screen.dart';
+
 import '../providers/theme_provider.dart';
 import '../providers/settings_provider.dart';
 import '../utils/theme.dart';
@@ -31,6 +37,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = context.watch<ThemeProvider>();
+    final locales = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context);
+    final appName = context.read<AppConfig>().appName.resolve(
+      Localizations.localeOf(context).languageCode,
+    );
+    final languageValue = locales.isSystem
+        ? l10n.labelLanguageSystem
+        : LocaleConfig.endonyms[locales.selection]!;
 
     // ✅ Monitor lock state and auto-pop when locked
     return Consumer<SettingsProvider>(
@@ -45,12 +59,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Settings')),
+          appBar: AppBar(title: Text(l10n.titleSettings)),
           body: ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
               // Appearance Section
-              _buildSectionHeader('Appearance', theme),
+              _buildSectionHeader(l10n.titleAppearance, theme),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -63,21 +77,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Stack(
                       children: [
                         _buildGlossyOverlay(theme),
-                        _build3DListTile(
-                          context: context,
-                          icon: Icons.palette_outlined,
-                          title: 'Appearance',
-                          subtitle: _getAppearanceSubtitle(
-                            themeProvider.themeMode,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const AppearanceScreen(),
+                        Column(
+                          children: [
+                            _build3DListTile(
+                              context: context,
+                              icon: Icons.palette_outlined,
+                              title: l10n.titleAppearance,
+                              subtitle: _getAppearanceSubtitle(
+                                l10n,
+                                themeProvider.themeMode,
                               ),
-                            );
-                          },
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const AppearanceScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                color: theme.dividerColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            Semantics(
+                              label: l10n.descLanguageRowA11y(languageValue),
+                              excludeSemantics: true,
+                              button: true,
+                              child: _build3DListTile(
+                                context: context,
+                                icon: Icons.translate,
+                                title: l10n.titleLanguage,
+                                subtitle: languageValue,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const LanguageSettingsScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -88,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
 
               // Security Section
-              _buildSectionHeader('Security', theme),
+              _buildSectionHeader(l10n.titleSecurity, theme),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -107,8 +157,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.lock_outlined,
-                              title: 'Security Settings',
-                              subtitle: 'Configure app lock and biometric',
+                              title: l10n.titleSecuritySettings,
+                              subtitle: l10n.descSecuritySettingsEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -132,8 +182,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.backup_outlined,
-                              title: 'Backup & Restore',
-                              subtitle: 'Export or import your accounts',
+                              title: l10n.titleBackupRestore,
+                              subtitle: l10n.descBackupRestoreEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -157,8 +207,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.label_outlined,
-                              title: 'Manage Tags',
-                              subtitle: 'Edit, rename, or cleanup account tags',
+                              title: l10n.titleManageTags,
+                              subtitle: l10n.descManageTagsEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -182,9 +232,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.sync_outlined,
-                              title: 'Sync to Another Device',
-                              subtitle:
-                                  'Transfer accounts via Wi-Fi or Optical Air-Gap',
+                              title: l10n.titleSyncDevice,
+                              subtitle: l10n.descSyncDeviceEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -208,11 +257,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.timer_outlined,
-                              title: 'Sync Host Timeout',
-                              subtitle:
-                                  'Stop hosting after '
-                                  '${settingsProvider.syncHostIdleTimeout}s '
-                                  'if no device connects',
+                              title: l10n.titleSyncHostTimeout,
+                              subtitle: l10n.descSyncHostTimeoutEntry(
+                                settingsProvider.syncHostIdleTimeout,
+                              ),
                               onTap: () => _showSyncTimeoutDialog(
                                 context,
                                 settingsProvider,
@@ -232,8 +280,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.admin_panel_settings_outlined,
-                              title: 'Permissions',
-                              subtitle: 'View app permissions and status',
+                              title: l10n.titlePermissions,
+                              subtitle: l10n.descPermissionsEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -254,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
 
               // Explore & Information Section
-              _buildSectionHeader('Explore & Support', theme),
+              _buildSectionHeader(l10n.titleExploreSupport, theme),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -272,9 +320,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.stars_outlined,
-                              title: 'Features',
-                              subtitle:
-                                  'Explore all features of SreerajP Authenticator',
+                              title: l10n.titleFeatures,
+                              subtitle: l10n.descFeaturesEntry(appName),
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -298,9 +345,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.help_outline,
-                              title: 'Help',
-                              subtitle:
-                                  'Guides, troubleshooting, and sync details',
+                              title: l10n.titleHelp,
+                              subtitle: l10n.descHelpEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -324,8 +370,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _build3DListTile(
                               context: context,
                               icon: Icons.info_outlined,
-                              title: 'About',
-                              subtitle: 'Version, author, and license details',
+                              title: l10n.titleAbout,
+                              subtitle: l10n.descAboutEntry,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -458,10 +504,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) async {
     const options = [30, 60, 120, 300, 600];
     final current = settingsProvider.syncHostIdleTimeout;
+    final l10n = AppLocalizations.of(context);
     final selected = await showDialog<int>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Sync Host Timeout'),
+        title: Text(l10n.titleSyncHostTimeout),
         children: [
           for (final seconds in options)
             SimpleDialogOption(
@@ -476,7 +523,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  Text('$seconds seconds'),
+                  Text(l10n.labelSecondsCount(seconds)),
                 ],
               ),
             ),
@@ -488,14 +535,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  String _getAppearanceSubtitle(ThemeMode mode) {
+  String _getAppearanceSubtitle(AppLocalizations l10n, ThemeMode mode) {
     switch (mode) {
       case ThemeMode.system:
-        return 'Theme mode: System default';
+        return l10n.descAppearanceThemeMode(l10n.labelThemeSystem);
       case ThemeMode.light:
-        return 'Theme mode: Light';
+        return l10n.descAppearanceThemeMode(l10n.labelThemeLight);
       case ThemeMode.dark:
-        return 'Theme mode: Dark';
+        return l10n.descAppearanceThemeMode(l10n.labelThemeDark);
     }
   }
 

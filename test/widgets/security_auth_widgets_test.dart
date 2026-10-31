@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sreerajp_authenticator/config/locale_config.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sreerajp_authenticator/providers/settings_provider.dart';
@@ -34,7 +35,11 @@ void main() {
             value: settingsProvider,
           ),
         ],
-        child: MaterialApp(home: child),
+        child: MaterialApp(
+          localizationsDelegates: LocaleConfig.localizationsDelegates,
+          supportedLocales: LocaleConfig.supportedLocales,
+          home: child,
+        ),
       ),
     );
     addTearDown(() async {
@@ -139,14 +144,14 @@ void main() {
       await pumpWithProviders(tester, settingsProvider, const LockScreen());
 
       expect(
-        find.text('Use your Phone Screen Lock or enter your App PIN'),
+        find.text('Use your phone screen lock or enter your App PIN'),
         findsOneWidget,
       );
-      expect(find.text('Use Phone Screen Lock'), findsOneWidget);
+      expect(find.text('Use phone lock'), findsOneWidget);
     },
   );
 
-  testWidgets('phone-lock-only legacy users unlock via Phone Screen Lock', (
+  testWidgets('phone-lock-only users unlock via Phone Screen Lock', (
     tester,
   ) async {
     var authenticateCalls = 0;
@@ -169,8 +174,7 @@ void main() {
     });
     SharedPreferences.setMockInitialValues({
       'app_lock_enabled': true,
-      'require_authentication': true,
-      'lock_type': 'device_lock',
+      'phone_lock_quick_unlock_enabled': true,
     });
     final settingsProvider = SettingsProvider();
     await settingsProvider.initialized;
@@ -179,8 +183,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(settingsProvider.hasPinSet, isFalse);
-    expect(settingsProvider.needsMandatoryPinMigrationSync, isFalse);
-    expect(find.text('Use Phone Screen Lock'), findsOneWidget);
+    expect(find.text('Use phone lock'), findsOneWidget);
     expect(authenticateCalls, greaterThanOrEqualTo(1));
   });
 

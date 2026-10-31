@@ -1,6 +1,6 @@
 # Change Log — Standardize App Name to SreerajP Authenticator
 
-**Plan File:** [plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md](file:///l:/Android/SreerajP_Authenticator/plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md)
+**Plan File:** [plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md](../plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md)
 
 ## Summary of Changes
 Standardized the application display name and references to `SreerajP Authenticator` (and `SreerajP Authenticator Dev` for dev flavor) across configurations, platform native manifests, runners, screens, tests, and documentation:
@@ -29,26 +29,26 @@ Standardized the application display name and references to `SreerajP Authentica
 ---
 
 ## Files Modified
-- [assets/config/app_config.json](file:///l:/Android/SreerajP_Authenticator/assets/config/app_config.json)
-- [lib/config/app_config.dart](file:///l:/Android/SreerajP_Authenticator/lib/config/app_config.dart)
-- [lib/utils/constants.dart](file:///l:/Android/SreerajP_Authenticator/lib/utils/constants.dart)
-- [lib/screens/home_screen.dart](file:///l:/Android/SreerajP_Authenticator/lib/screens/home_screen.dart)
-- [lib/main.dart](file:///l:/Android/SreerajP_Authenticator/lib/main.dart)
-- [android/app/build.gradle.kts](file:///l:/Android/SreerajP_Authenticator/android/app/build.gradle.kts)
-- [ios/Runner/Info.plist](file:///l:/Android/SreerajP_Authenticator/ios/Runner/Info.plist)
-- [web/manifest.json](file:///l:/Android/SreerajP_Authenticator/web/manifest.json)
-- [web/index.html](file:///l:/Android/SreerajP_Authenticator/web/index.html)
-- [windows/runner/Runner.rc](file:///l:/Android/SreerajP_Authenticator/windows/runner/Runner.rc)
-- [windows/runner/main.cpp](file:///l:/Android/SreerajP_Authenticator/windows/runner/main.cpp)
-- [test/config/app_flavor_config_test.dart](file:///l:/Android/SreerajP_Authenticator/test/config/app_flavor_config_test.dart)
-- [README.md](file:///l:/Android/SreerajP_Authenticator/README.md)
-- [docs/architecture.md](file:///l:/Android/SreerajP_Authenticator/docs/architecture.md)
-- [docs/release_process.md](file:///l:/Android/SreerajP_Authenticator/docs/release_process.md)
-- [docs/security.md](file:///l:/Android/SreerajP_Authenticator/docs/security.md)
-- [docs/feature_analysis_and_roadmap.md](file:///l:/Android/SreerajP_Authenticator/docs/feature_analysis_and_roadmap.md)
-- [AGENTS.md](file:///l:/Android/SreerajP_Authenticator/AGENTS.md)
-- [CLAUDE.md](file:///l:/Android/SreerajP_Authenticator/CLAUDE.md)
-- [plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md](file:///l:/Android/SreerajP_Authenticator/plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md)
+- [assets/config/app_config.json](../assets/config/app_config.json)
+- [lib/config/app_config.dart](../lib/config/app_config.dart)
+- [lib/utils/constants.dart](../lib/utils/constants.dart)
+- [lib/screens/home_screen.dart](../lib/screens/home_screen.dart)
+- [lib/main.dart](../lib/main.dart)
+- [android/app/build.gradle.kts](../android/app/build.gradle.kts)
+- [ios/Runner/Info.plist](../ios/Runner/Info.plist)
+- [web/manifest.json](../web/manifest.json)
+- [web/index.html](../web/index.html)
+- [windows/runner/Runner.rc](../windows/runner/Runner.rc)
+- [windows/runner/main.cpp](../windows/runner/main.cpp)
+- [test/config/app_flavor_config_test.dart](../test/config/app_flavor_config_test.dart)
+- [README.md](../README.md)
+- [docs/architecture.md](../docs/architecture.md)
+- [docs/release_process.md](../docs/release_process.md)
+- [docs/security.md](../docs/security.md)
+- [docs/feature_analysis_and_roadmap.md](../docs/feature_analysis_and_roadmap.md)
+- [AGENTS.md](../AGENTS.md)
+- [CLAUDE.md](../CLAUDE.md)
+- [plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md](../plans/20260819_202100_standardize-app-name-to-sreerajp-authenticator.md)
 
 ---
 

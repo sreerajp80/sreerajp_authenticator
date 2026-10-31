@@ -2,7 +2,8 @@
 
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 class AdvancedSettingsCard extends StatelessWidget {
   final bool isEditing;
@@ -35,6 +36,7 @@ class AdvancedSettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Card(
       child: Padding(
@@ -46,7 +48,7 @@ class AdvancedSettingsCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'ADVANCED SETTINGS',
+                    l10n.titleAdvancedSettings.toUpperCase(),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -60,8 +62,8 @@ class AdvancedSettingsCard extends StatelessWidget {
                     color: theme.colorScheme.primary,
                     onPressed: onAdvancedEditTap,
                     tooltip: isAppLockEnabled
-                        ? 'Unlock to view and edit'
-                        : 'Enable app lock first',
+                        ? l10n.tooltipUnlockToEdit
+                        : l10n.tooltipEnableAppLockFirst,
                   ),
                 if (isEditing && isAdvancedUnlocked)
                   const Icon(Icons.lock_open, color: Colors.green),
@@ -100,11 +102,10 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Digits: ',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                Text(
-                                  '\u25CF\u25CF',
+                                  l10n.labelMaskedValue(
+                                    l10n.labelDigits,
+                                    '\u25CF\u25CF',
+                                  ),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     letterSpacing: 2,
                                   ),
@@ -121,11 +122,10 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Period: ',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                Text(
-                                  '\u25CF\u25CF seconds',
+                                  l10n.labelMaskedValue(
+                                    l10n.labelPeriodSeconds,
+                                    l10n.labelSecondsMasked('\u25CF\u25CF'),
+                                  ),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     letterSpacing: 2,
                                   ),
@@ -142,11 +142,10 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Algorithm: ',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                Text(
-                                  '\u25CF\u25CF\u25CF\u25CF\u25CF',
+                                  l10n.labelMaskedValue(
+                                    l10n.labelAlgorithm,
+                                    '\u25CF\u25CF\u25CF\u25CF\u25CF',
+                                  ),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     letterSpacing: 2,
                                   ),
@@ -165,8 +164,8 @@ class AdvancedSettingsCard extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Text(
                                   isAppLockEnabled
-                                      ? 'Tap to unlock and view settings'
-                                      : 'Enable app lock to edit',
+                                      ? l10n.descTapToUnlockSettings
+                                      : l10n.descEnableAppLockToEdit,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: theme.colorScheme.primary,
@@ -187,11 +186,12 @@ class AdvancedSettingsCard extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<int>(
+                    isExpanded: true,
                     value: digits,
-                    decoration: const InputDecoration(
-                      labelText: 'Digits',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.numbers),
+                    decoration: InputDecoration(
+                      labelText: l10n.labelDigits,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.numbers),
                     ),
                     items: const [
                       DropdownMenuItem(value: 6, child: Text('6')),
@@ -203,15 +203,22 @@ class AdvancedSettingsCard extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<int>(
+                    isExpanded: true,
                     value: period,
-                    decoration: const InputDecoration(
-                      labelText: 'Period (seconds)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.timer),
+                    decoration: InputDecoration(
+                      labelText: l10n.labelPeriodSeconds,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.timer),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 30, child: Text('30 seconds')),
-                      DropdownMenuItem(value: 60, child: Text('60 seconds')),
+                    items: [
+                      DropdownMenuItem(
+                        value: 30,
+                        child: Text(l10n.labelSecondsCount(30)),
+                      ),
+                      DropdownMenuItem(
+                        value: 60,
+                        child: Text(l10n.labelSecondsCount(60)),
+                      ),
                     ],
                     onChanged: onPeriodChanged,
                   ),
@@ -219,11 +226,12 @@ class AdvancedSettingsCard extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: algorithm,
-                    decoration: const InputDecoration(
-                      labelText: 'Algorithm',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock),
+                    decoration: InputDecoration(
+                      labelText: l10n.labelAlgorithm,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock),
                     ),
                     items: const [
                       DropdownMenuItem(value: 'SHA1', child: Text('SHA-1')),

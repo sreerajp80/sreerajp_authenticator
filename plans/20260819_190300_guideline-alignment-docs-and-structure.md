@@ -1,6 +1,6 @@
 # Plan: Guideline Alignment for Project Structure, Documentation, and Code
 
-**Status:** COMPLETED
+**Status:** completed
 **Date:** 2026-08-19
 
 ## 1. Issue Description
@@ -16,7 +16,7 @@ An audit of the repository against these guidelines surfaced the following align
    - Syncing commands, paths, and metadata between `AGENTS.md` and `CLAUDE.md`.
 
 2. **Absolute Link & Drive Letter Clean-up in `docs/`:**
-   - Multiple documents (`docs/architecture.md`, `docs/security.md`, `docs/release_process.md`, `docs/feature_analysis_and_roadmap.md`) contain obsolete `/l:/Android/SreerajP_Authenticator/...` and `file:///l:/...` paths.
+   - Multiple documents (`docs/architecture.md`, `docs/security.md`, `docs/release_process.md`, `docs/feature_analysis_and_roadmap.md`) contain obsolete `<absolute-path>` and `<absolute-link>` paths.
    - Per `DOCS_FOLDER_GUIDELINE.md` and `flutter_project_engineering_standard.md` §21.1.1, all cross-links must use relative markdown paths.
 
 3. **Version & Metadata Synchronization in `docs/`:**
@@ -49,13 +49,13 @@ An audit of the repository against these guidelines surfaced the following align
 ### Documentation (`docs/`)
 
 #### `docs/architecture.md`
-- Replace `/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/...` and `file:///l:/...` with clean relative paths (e.g. `../pubspec.yaml`, `../lib/main.dart`, `../lib/services/database_service.dart`).
+- Replace `<absolute-path>` and `<absolute-link>` with clean relative paths (e.g. `../pubspec.yaml`, `../lib/main.dart`, `../lib/services/database_service.dart`).
 
 #### `docs/security.md`
-- Replace `/l:/Android/SreerajP_Authenticator/sreerajp_authenticator/...` with relative paths (`../lib/...`, `../android/...`, `release_process.md`).
+- Replace `<absolute-path>` with relative paths (`../lib/...`, `../android/...`, `release_process.md`).
 
 #### `docs/release_process.md`
-- Replace `/l:/Android/SreerajP_Authenticator/...` with relative paths.
+- Replace `<absolute-path>` with relative paths.
 - Update version references from `2.4.0+1` to `2.8.2+23`.
 - Update build split debug info symbols paths to `build/symbols/android-prod/`.
 
@@ -66,7 +66,7 @@ An audit of the repository against these guidelines surfaced the following align
 - Update Section 1 current release version to `2.8.2+23`.
 
 #### `docs/feature_analysis_and_roadmap.md`
-- Replace all `file:///l:/...` absolute links with relative paths (`../lib/...`, `../pubspec.yaml`, etc.).
+- Replace all `<absolute-link>` absolute links with relative paths (`../lib/...`, `../pubspec.yaml`, etc.).
 
 ---
 

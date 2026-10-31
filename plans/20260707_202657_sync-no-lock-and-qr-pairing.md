@@ -50,7 +50,7 @@ Two problems reported by the user on the "Sync to another device" flow:
 2. `lib/services/p2p_sync_service.dart` (app-agnostic core; unit-tested)
    - Add `static String buildSyncQrPayload({required String ipAddress, required int port, required String code})`
      that returns a compact URI, e.g.
-     `spauth://sync?v=1&ip=192.168.1.42&port=54321&code=ABCD...`.
+     `spauth://sync?v=1&ip=<device-ip>&port=54321&code=ABCD...`.
    - Add `static ({String ipAddress, int port, String code}) parseSyncQrPayload(String raw)`
      that parses and validates such a URI, normalizing the code with the existing
      `normalizeCode`. Throws `P2pSyncException` (safe message, no secrets) on any

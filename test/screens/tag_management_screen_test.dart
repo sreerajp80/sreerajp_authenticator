@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sreerajp_authenticator/config/locale_config.dart';
 import 'package:provider/provider.dart';
 import 'package:sreerajp_authenticator/providers/account_provider.dart';
 import 'package:sreerajp_authenticator/screens/tag_management_screen.dart';
 import 'package:sreerajp_authenticator/services/database_service.dart';
-import 'package:sreerajp_authenticator/utils/constants.dart';
 
 import '../providers/provider_test_helpers.dart';
 
@@ -12,12 +12,7 @@ void main() {
   configureProviderTestBindings();
 
   setUp(() async {
-    await setUpProviderTestEnvironment(
-      sharedPreferences: const {
-        AppConstants.aesMigrationKey: true,
-        AppConstants.gcmMigrationKey: true,
-      },
-    );
+    await setUpProviderTestEnvironment(sharedPreferences: const {});
   });
 
   tearDown(() async {
@@ -26,6 +21,9 @@ void main() {
 
   Widget buildTestableWidget(AccountsProvider provider) {
     return MaterialApp(
+      localizationsDelegates: LocaleConfig.localizationsDelegates,
+      supportedLocales: LocaleConfig.supportedLocales,
+
       home: ChangeNotifierProvider<AccountsProvider>.value(
         value: provider,
         child: const TagManagementScreen(),
@@ -46,7 +44,7 @@ void main() {
       await tester.pumpWidget(buildTestableWidget(provider));
       await tester.pump();
 
-      expect(find.text('Manage Tags'), findsOneWidget);
+      expect(find.text('Manage tags'), findsOneWidget);
       expect(find.text('No tags found'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());

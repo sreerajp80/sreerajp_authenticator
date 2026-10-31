@@ -2,8 +2,11 @@
 // Author: Sreeraj P
 // Description: User-facing guide for AES-256-GCM vault encryption, Keystore, FLAG_SECURE, and offline privacy
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../../providers/settings_provider.dart';
 
 class VaultSecurityHelpScreen extends StatelessWidget {
@@ -13,6 +16,10 @@ class VaultSecurityHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        final appName = context.read<AppConfig>().appName.resolve(
+          Localizations.localeOf(context).languageCode,
+        );
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,67 +29,45 @@ class VaultSecurityHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Vault Security & Privacy')),
+          appBar: AppBar(title: Text(l10n.helpVault01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'SreerajP Authenticator is engineered with a strict zero-trust, offline-first security model. Your seed keys are encrypted with hardware-backed encryption and never touch any remote servers.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpVault02(appName)),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.enhanced_encryption_outlined,
-                title: 'AES-256-GCM Hardware Vault',
+                title: l10n.helpVault03,
                 children: [
-                  _Bullet(
-                    'All OTP secrets, seed keys, and custom parameters are encrypted with AES-256 in Galois/Counter Mode (GCM), providing authenticated encryption with integrity verification.',
-                  ),
-                  _Bullet(
-                    'The encryption master key is generated on-device and sealed in the hardware-backed Android Keystore / FlutterSecureStorage.',
-                  ),
-                  _Bullet(
-                    'No plaintext secret or raw seed is ever written to the SQLite database on disk.',
-                  ),
+                  _Bullet(l10n.helpVault04),
+                  _Bullet(l10n.helpVault05),
+                  _Bullet(l10n.helpVault06),
                 ],
               ),
 
               _Section(
                 icon: Icons.screenshot_outlined,
-                title: 'Screenshot Guard (FLAG_SECURE)',
+                title: l10n.helpVault07,
                 children: [
-                  _Bullet(
-                    'The app permanently enforces FLAG_SECURE at the OS window level.',
-                  ),
-                  _Bullet(
-                    'This blocks screenshots, video captures, and malicious screen scrapers from recording your 2FA tokens.',
-                  ),
-                  _Bullet(
-                    'When switching apps, the Android Recent Tasks view shows a blank/obscured screen to prevent casual shoulder surfing.',
-                  ),
+                  _Bullet(l10n.helpVault08),
+                  _Bullet(l10n.helpVault09),
+                  _Bullet(l10n.helpVault10),
                 ],
               ),
 
               _Section(
                 icon: Icons.wifi_off_outlined,
-                title: 'Zero Cloud & Zero Telemetry',
+                title: l10n.helpVault11,
                 children: [
-                  _Bullet(
-                    'The app has no backend server, no login portal, and no advertising or analytics SDKs.',
-                  ),
-                  _Bullet(
-                    'No tokens, logs, device identifiers, or usage telemetry ever leave your device.',
-                  ),
-                  _Bullet(
-                    'All operations—including QR scanning, OTP computation, and backup export—are completed entirely offline.',
-                  ),
+                  _Bullet(l10n.helpVault12),
+                  _Bullet(l10n.helpVault13),
+                  _Bullet(l10n.helpVault14),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Security Principle: True privacy means no telemetry. Your authentication secrets belong to you alone.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpVault15),
             ],
           ),
         );

@@ -1,0 +1,3758 @@
+{
+  "@@locale": "en",
+  "descSplashLoading": "Securing your accounts...",
+  "@descSplashLoading": {
+    "description": "Splash screen text shown while the app starts."
+  },
+  "titleSettings": "Settings",
+  "@titleSettings": {
+    "description": "Settings screen app-bar title. Keep to one or two words."
+  },
+  "titleAppearance": "Appearance",
+  "@titleAppearance": {
+    "description": "Appearance screen title and Settings section header. Keep short."
+  },
+  "titleSecurity": "Security",
+  "@titleSecurity": {
+    "description": "Settings section header for security items. Keep short."
+  },
+  "titleExploreSupport": "Explore & support",
+  "@titleExploreSupport": {
+    "description": "Settings section header for Features, Help and About. Keep short."
+  },
+  "titleLanguage": "Language",
+  "@titleLanguage": {
+    "description": "Language row in Settings and language screen title. Keep short."
+  },
+  "titleSecuritySettings": "Security settings",
+  "@titleSecuritySettings": {
+    "description": "Settings row title that opens the security screen. Keep short."
+  },
+  "descSecuritySettingsEntry": "Configure app lock and biometric",
+  "@descSecuritySettingsEntry": {
+    "description": "Subtitle of the Security settings row."
+  },
+  "titleBackupRestore": "Backup & restore",
+  "@titleBackupRestore": {
+    "description": "Settings row title that opens backup and restore. Keep short."
+  },
+  "descBackupRestoreEntry": "Export or import your accounts",
+  "@descBackupRestoreEntry": {
+    "description": "Subtitle of the Backup & restore row."
+  },
+  "titleManageTags": "Manage tags",
+  "@titleManageTags": {
+    "description": "Settings row title that opens tag management. Keep short."
+  },
+  "descManageTagsEntry": "Edit, rename, or clean up account tags",
+  "@descManageTagsEntry": {
+    "description": "Subtitle of the Manage tags row."
+  },
+  "titleSyncDevice": "Sync devices",
+  "@titleSyncDevice": {
+    "description": "Settings row title that opens device sync (Wi-Fi or optical). Keep short."
+  },
+  "descSyncDeviceEntry": "Transfer accounts via Wi-Fi or Optical Air-Gap",
+  "@descSyncDeviceEntry": {
+    "description": "Subtitle of the Sync devices row."
+  },
+  "titleSyncHostTimeout": "Sync host timeout",
+  "@titleSyncHostTimeout": {
+    "description": "Settings row and dialog title for the Wi-Fi sync host idle timeout. Keep short."
+  },
+  "descSyncHostTimeoutEntry": "Stop hosting after {seconds} s if no device connects",
+  "@descSyncHostTimeoutEntry": {
+    "description": "Subtitle of the Sync host timeout row. {seconds} is a number of seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "labelSecondsCount": "{seconds} seconds",
+  "@labelSecondsCount": {
+    "description": "An option in the sync host timeout dialog. {seconds} is 30 or more.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "titlePermissions": "Permissions",
+  "@titlePermissions": {
+    "description": "Settings row title that opens the permissions screen. Keep short."
+  },
+  "descPermissionsEntry": "View app permissions and status",
+  "@descPermissionsEntry": {
+    "description": "Subtitle of the Permissions row."
+  },
+  "titleFeatures": "Features",
+  "@titleFeatures": {
+    "description": "Settings row title and About section title for the feature list. Keep short."
+  },
+  "descFeaturesEntry": "Explore all features of {appName}",
+  "@descFeaturesEntry": {
+    "description": "Subtitle of the Features row. {appName} is the app name in the active language.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "titleHelp": "Help",
+  "@titleHelp": {
+    "description": "Settings row title that opens Help. Keep short."
+  },
+  "descHelpEntry": "Guides, troubleshooting, and sync details",
+  "@descHelpEntry": {
+    "description": "Subtitle of the Help row."
+  },
+  "titleAbout": "About",
+  "@titleAbout": {
+    "description": "About screen title, Settings row title and About section title. Keep short."
+  },
+  "descAboutEntry": "Version, author, and license details",
+  "@descAboutEntry": {
+    "description": "Subtitle of the About row."
+  },
+  "descAppearanceThemeMode": "Theme mode: {mode}",
+  "@descAppearanceThemeMode": {
+    "description": "Subtitle of the Appearance row in Settings. {mode} is one of labelThemeSystem, labelThemeLight, labelThemeDark.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "titleThemeMode": "Theme mode",
+  "@titleThemeMode": {
+    "description": "Theme mode row and screen title. Keep short."
+  },
+  "titleThemeInformation": "Theme information",
+  "@titleThemeInformation": {
+    "description": "Section header on the Appearance screen. Keep short."
+  },
+  "titleVisualDesign": "Visual design system",
+  "@titleVisualDesign": {
+    "description": "Card title on the Appearance screen. Keep short."
+  },
+  "descVisualDesign": "{appName} uses an offline-first 3D neumorphic theme with vibrant token countdown rings and high-contrast accessibility.",
+  "@descVisualDesign": {
+    "description": "Card body on the Appearance screen. {appName} is the app name in the active language.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "descThemeSummarySystem": "System default (follows OS settings)",
+  "@descThemeSummarySystem": {
+    "description": "Theme mode row subtitle when the theme follows the system."
+  },
+  "descThemeSummaryLight": "Light theme",
+  "@descThemeSummaryLight": {
+    "description": "Theme mode row subtitle when the light theme is chosen."
+  },
+  "descThemeSummaryDark": "Dark theme",
+  "@descThemeSummaryDark": {
+    "description": "Theme mode row subtitle when the dark theme is chosen."
+  },
+  "titleSelectThemeMode": "Select theme mode",
+  "@titleSelectThemeMode": {
+    "description": "Section header on the Theme mode screen. Keep short."
+  },
+  "labelThemeSystem": "System default",
+  "@labelThemeSystem": {
+    "description": "Theme option: follow the device theme. Keep short."
+  },
+  "descThemeSystem": "Automatically follow your device system theme",
+  "@descThemeSystem": {
+    "description": "Subtitle of the System default theme option."
+  },
+  "labelThemeLight": "Light theme",
+  "@labelThemeLight": {
+    "description": "Theme option: light. Keep short."
+  },
+  "descThemeLight": "Clean, high-contrast light appearance",
+  "@descThemeLight": {
+    "description": "Subtitle of the Light theme option."
+  },
+  "labelThemeDark": "Dark theme",
+  "@labelThemeDark": {
+    "description": "Theme option: dark. Keep short."
+  },
+  "descThemeDark": "Comfortable dark appearance for low-light environments",
+  "@descThemeDark": {
+    "description": "Subtitle of the Dark theme option."
+  },
+  "titleCurrentStatus": "Current status",
+  "@titleCurrentStatus": {
+    "description": "Section header on the Theme mode screen. Keep short."
+  },
+  "labelActiveDark": "Active: dark",
+  "@labelActiveDark": {
+    "description": "Status line: the dark appearance is in use now. Keep short."
+  },
+  "labelActiveLight": "Active: light",
+  "@labelActiveLight": {
+    "description": "Status line: the light appearance is in use now. Keep short."
+  },
+  "descThemeStatusSystem": "Follows your device system-wide dark mode preference.",
+  "@descThemeStatusSystem": {
+    "description": "Status explanation when the theme follows the system."
+  },
+  "descThemeStatusLight": "Always stays in light appearance mode.",
+  "@descThemeStatusLight": {
+    "description": "Status explanation when the light theme is chosen."
+  },
+  "descThemeStatusDark": "Always stays in dark appearance mode.",
+  "@descThemeStatusDark": {
+    "description": "Status explanation when the dark theme is chosen."
+  },
+  "titleSelectLanguage": "Select language",
+  "@titleSelectLanguage": {
+    "description": "Section header on the Language screen. Keep short."
+  },
+  "labelLanguageSystem": "System default",
+  "@labelLanguageSystem": {
+    "description": "Language option: follow the device language. Keep short."
+  },
+  "descLanguageSystem": "Use the device language when it is English, Malayalam or Sanskrit; otherwise English",
+  "@descLanguageSystem": {
+    "description": "Subtitle of the System default language option."
+  },
+  "labelLanguageNameEn": "English",
+  "@labelLanguageNameEn": {
+    "description": "The name of the English language, written in the active UI language. Shown under the endonym."
+  },
+  "labelLanguageNameMl": "Malayalam",
+  "@labelLanguageNameMl": {
+    "description": "The name of the Malayalam language, written in the active UI language. Shown under the endonym."
+  },
+  "labelLanguageNameSa": "Sanskrit",
+  "@labelLanguageNameSa": {
+    "description": "The name of the Sanskrit language, written in the active UI language. Shown under the endonym."
+  },
+  "descLanguageRowA11y": "Language: {value}",
+  "@descLanguageRowA11y": {
+    "description": "Screen-reader label for the Language row in Settings. {value} is the current choice.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "labelVersionNumber": "Version {version}",
+  "@labelVersionNumber": {
+    "description": "Version line under the app name on the About screen. {version} is like 2.9.3.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "labelEnvProduction": "Production",
+  "@labelEnvProduction": {
+    "description": "About-screen chip: this is the production build. Keep short."
+  },
+  "labelEnvDevelopment": "Development",
+  "@labelEnvDevelopment": {
+    "description": "About-screen chip: this is the development build. Keep short."
+  },
+  "descFeatureQr": "QR code scanning",
+  "@descFeatureQr": {
+    "description": "About-screen feature list item."
+  },
+  "descFeatureEncrypted": "Encrypted storage",
+  "@descFeatureEncrypted": {
+    "description": "About-screen feature list item."
+  },
+  "descFeatureBackup": "Backup & restore",
+  "@descFeatureBackup": {
+    "description": "About-screen feature list item."
+  },
+  "descFeatureOrganize": "Account organization",
+  "@descFeatureOrganize": {
+    "description": "About-screen feature list item."
+  },
+  "descFeatureBiometric": "Biometric authentication",
+  "@descFeatureBiometric": {
+    "description": "About-screen feature list item."
+  },
+  "descFeatureDarkMode": "Dark mode support",
+  "@descFeatureDarkMode": {
+    "description": "About-screen feature list item."
+  },
+  "titleDeveloper": "Developer",
+  "@titleDeveloper": {
+    "description": "About-screen section header above the details rows. Keep short."
+  },
+  "titleLinks": "Links",
+  "@titleLinks": {
+    "description": "About-screen section header above the links. Keep short."
+  },
+  "titlePrivacyPolicy": "Privacy policy",
+  "@titlePrivacyPolicy": {
+    "description": "About-screen link and dialog title. Keep short."
+  },
+  "titlePrivacyStorage": "Data storage",
+  "@titlePrivacyStorage": {
+    "description": "Heading inside the privacy dialog. Keep short."
+  },
+  "descPrivacyStorage": "All your account data is stored on your device and encrypted. The app has no server and needs no account.",
+  "@descPrivacyStorage": {
+    "description": "Privacy dialog paragraph about data storage."
+  },
+  "titlePrivacyPermissions": "Permissions",
+  "@titlePrivacyPermissions": {
+    "description": "Heading inside the privacy dialog. Keep short."
+  },
+  "descPrivacyPermissions": "• Camera: Used for scanning QR codes\n• Local network: Used only for Wi-Fi sync between your own devices\n• Biometric: Optional, for app lock authentication\n\nBackup files are chosen with the system file picker, so no storage permission is needed.",
+  "@descPrivacyPermissions": {
+    "description": "Privacy dialog bullet list of permissions. Keep the bullets and line breaks."
+  },
+  "titlePrivacySecurity": "Security",
+  "@titlePrivacySecurity": {
+    "description": "Heading inside the privacy dialog. Keep short."
+  },
+  "descPrivacySecurity": "Your secrets are encrypted using AES-256 encryption. They leave your device only when you start a Wi-Fi sync, an optical transfer or a backup export, and they are encrypted each time.",
+  "@descPrivacySecurity": {
+    "description": "Privacy dialog paragraph about security."
+  },
+  "actionClose": "Close",
+  "@actionClose": {
+    "description": "Dialog button that closes the dialog. Keep to one word."
+  },
+  "titleOpenSourceLicenses": "Open source licenses",
+  "@titleOpenSourceLicenses": {
+    "description": "About-screen link that opens the licence list. Keep short."
+  },
+  "descCopyright": "© 2026 Sreeraj P. All rights reserved.",
+  "@descCopyright": {
+    "description": "Copyright line at the bottom of the About screen and on the licence page."
+  },
+  "aboutDetailAuthor": "Author",
+  "@aboutDetailAuthor": {
+    "description": "About-screen row label for the author (app_config.json key 'author')."
+  },
+  "aboutDetailEmail": "Email",
+  "@aboutDetailEmail": {
+    "description": "About-screen row label for the contact email (key 'email')."
+  },
+  "aboutDetailWebsite": "Website",
+  "@aboutDetailWebsite": {
+    "description": "About-screen row label for the website (key 'website')."
+  },
+  "aboutDetailPrivacyPolicy": "Privacy policy",
+  "@aboutDetailPrivacyPolicy": {
+    "description": "About-screen row label for the privacy policy link (key 'privacyPolicy')."
+  },
+  "aboutDetailLicense": "License",
+  "@aboutDetailLicense": {
+    "description": "About-screen row label for the licence (key 'license')."
+  },
+  "aboutDetailAiUsed": "AI used",
+  "@aboutDetailAiUsed": {
+    "description": "About-screen row label for the AI tools used to build the app (key 'aiUsed')."
+  },
+  "aboutDetailIdeUsed": "IDE used",
+  "@aboutDetailIdeUsed": {
+    "description": "About-screen row label for the code editors used (key 'ideUsed')."
+  },
+  "madeWithLove": "Made with {heart} in India",
+  "@madeWithLove": {
+    "description": "About-screen signature badge. {heart} is drawn as a red heart icon. Text from docs/PROJECT_PROFILE.md §5.",
+    "placeholders": {
+      "heart": {
+        "type": "String"
+      }
+    }
+  },
+  "madeWithLoveA11y": "Made with love in India",
+  "@madeWithLoveA11y": {
+    "description": "Screen-reader text for the About badge."
+  },
+  "actionOk": "OK",
+  "@actionOk": {
+    "description": "Dialog button that accepts a message. Keep to one word."
+  },
+  "actionCancel": "Cancel",
+  "@actionCancel": {
+    "description": "Dialog button that cancels. Keep to one word."
+  },
+  "actionCopy": "Copy",
+  "@actionCopy": {
+    "description": "Button that copies text to the clipboard. Keep to one word."
+  },
+  "errorPhoneLockFailed": "Phone screen lock failed",
+  "@errorPhoneLockFailed": {
+    "description": "Lock screen error: the phone screen lock check did not pass."
+  },
+  "errorPhoneLockCanceled": "Phone screen lock was canceled",
+  "@errorPhoneLockCanceled": {
+    "description": "Lock screen error: the user closed the phone screen lock prompt."
+  },
+  "errorPhoneLockLockedOut": "Phone screen lock is temporarily locked out",
+  "@errorPhoneLockLockedOut": {
+    "description": "Lock screen error: too many failed tries on the phone screen lock."
+  },
+  "errorPhoneLockUnavailable": "Phone screen lock is not available on this device",
+  "@errorPhoneLockUnavailable": {
+    "description": "Lock screen error: the device has no screen lock."
+  },
+  "errorPhoneLockUnverified": "Unable to verify phone screen lock",
+  "@errorPhoneLockUnverified": {
+    "description": "Lock screen error: an unexpected error during the phone screen lock check."
+  },
+  "descPinRequiredIdle": "App PIN required after 1 hour",
+  "@descPinRequiredIdle": {
+    "description": "Lock screen banner: the app PIN is needed because an hour passed."
+  },
+  "descPinRequiredReboot": "App PIN required after device restart",
+  "@descPinRequiredReboot": {
+    "description": "Lock screen banner: the app PIN is needed because the phone restarted."
+  },
+  "descPinRequiredFailures": "App PIN required after 3 failed phone lock attempts",
+  "@descPinRequiredFailures": {
+    "description": "Lock screen banner: the app PIN is needed after 3 failed phone lock tries."
+  },
+  "descPinRequiredLockdown": "Lockdown mode is on. Enter your App PIN",
+  "@descPinRequiredLockdown": {
+    "description": "Lock screen banner: lockdown mode needs the app PIN."
+  },
+  "descUnlockPhoneOnly": "Use your phone screen lock",
+  "@descUnlockPhoneOnly": {
+    "description": "Lock screen instruction."
+  },
+  "descUnlockPhoneOrPin": "Use your phone screen lock or enter your App PIN",
+  "@descUnlockPhoneOrPin": {
+    "description": "Lock screen instruction."
+  },
+  "descUnlockPinOnly": "Enter your App PIN",
+  "@descUnlockPinOnly": {
+    "description": "Lock screen instruction."
+  },
+  "descUnlockWithPhone": "Use your phone screen lock to unlock",
+  "@descUnlockWithPhone": {
+    "description": "Lock screen instruction when only the phone lock is offered."
+  },
+  "errorPinEmpty": "Please enter your App PIN",
+  "@errorPinEmpty": {
+    "description": "PIN field error when the field is empty."
+  },
+  "errorPinLockedOut": "Too many failed attempts. Try again in {seconds} seconds.",
+  "@errorPinLockedOut": {
+    "description": "PIN field error during a lockout. {seconds} is a number of seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "errorPinIncorrectRemaining": "Incorrect App PIN. Attempts left: {count}",
+  "@errorPinIncorrectRemaining": {
+    "description": "PIN field error. {count} is the number of tries left (1 or more).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorPinIncorrect": "Incorrect App PIN",
+  "@errorPinIncorrect": {
+    "description": "PIN field error when no tries are left before a lockout."
+  },
+  "titleNoRecoveryKey": "No recovery key",
+  "@titleNoRecoveryKey": {
+    "description": "Dialog title. Keep short."
+  },
+  "descNoRecoveryKey": "No recovery key was set up for this App PIN. Unfortunately, there is no way to recover access without it.\n\nYou can reinstall the app, but all accounts will be lost.",
+  "@descNoRecoveryKey": {
+    "description": "Dialog body when the user forgot the PIN and has no recovery key."
+  },
+  "titleEnterRecoveryKey": "Enter recovery key",
+  "@titleEnterRecoveryKey": {
+    "description": "Dialog title. Keep short."
+  },
+  "descEnterRecoveryKey": "Enter the recovery key you saved when setting up your App PIN.",
+  "@descEnterRecoveryKey": {
+    "description": "Dialog body."
+  },
+  "labelRecoveryKey": "Recovery key",
+  "@labelRecoveryKey": {
+    "description": "Text field label. Keep short."
+  },
+  "errorRecoveryKeyInvalid": "Invalid recovery key",
+  "@errorRecoveryKeyInvalid": {
+    "description": "Snackbar when the recovery key is wrong."
+  },
+  "actionRecover": "Recover",
+  "@actionRecover": {
+    "description": "Dialog button that checks the recovery key. Keep to one word."
+  },
+  "labelNewPin": "New App PIN",
+  "@labelNewPin": {
+    "description": "Text field label. Keep short."
+  },
+  "descPinDigitsHint": "4–6 digits",
+  "@descPinDigitsHint": {
+    "description": "Helper text under the new PIN field."
+  },
+  "labelConfirmPin": "Confirm App PIN",
+  "@labelConfirmPin": {
+    "description": "Text field label. Keep short."
+  },
+  "errorPinTooShort": "App PIN must be at least 4 digits",
+  "@errorPinTooShort": {
+    "description": "Snackbar error."
+  },
+  "errorPinMismatch": "App PINs do not match",
+  "@errorPinMismatch": {
+    "description": "Snackbar error."
+  },
+  "actionSavePin": "Save App PIN",
+  "@actionSavePin": {
+    "description": "Dialog button. Keep short."
+  },
+  "titleSetNewPin": "Set new App PIN",
+  "@titleSetNewPin": {
+    "description": "Dialog title. Keep short."
+  },
+  "descSetNewPin": "Your old App PIN has been cleared. Please set a new App PIN.",
+  "@descSetNewPin": {
+    "description": "Dialog body."
+  },
+  "titleRecoveryKey": "Recovery key",
+  "@titleRecoveryKey": {
+    "description": "Dialog title that shows a new recovery key. Keep short."
+  },
+  "descRecoveryKeySave": "Save this recovery key in a safe place. It is the only way to regain access if you forget your App PIN.",
+  "@descRecoveryKeySave": {
+    "description": "Dialog body."
+  },
+  "descRecoveryKeyCopied": "Recovery key copied. It is cleared from the clipboard after 60 seconds.",
+  "@descRecoveryKeyCopied": {
+    "description": "Snackbar after copying the recovery key."
+  },
+  "descRecoveryKeyOnce": "This key will NOT be shown again.",
+  "@descRecoveryKeyOnce": {
+    "description": "Warning under a new recovery key."
+  },
+  "actionSavedIt": "I've saved it",
+  "@actionSavedIt": {
+    "description": "Dialog button: the user saved the recovery key. Keep short."
+  },
+  "titleEnterYourPin": "Enter your App PIN",
+  "@titleEnterYourPin": {
+    "description": "Lock screen heading. Keep short."
+  },
+  "titleUseDeviceLock": "Unlock with phone",
+  "@titleUseDeviceLock": {
+    "description": "Lock screen heading when only the phone lock unlocks the app. Keep short."
+  },
+  "titleUnlockApp": "Unlock the app",
+  "@titleUnlockApp": {
+    "description": "Lock screen heading. Keep short."
+  },
+  "labelPinLockedFor": "Locked for {seconds} s",
+  "@labelPinLockedFor": {
+    "description": "PIN field hint during a lockout. {seconds} is a number of seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "labelEnterPin": "Enter App PIN",
+  "@labelEnterPin": {
+    "description": "PIN field hint. Keep short."
+  },
+  "errorTooManyAttempts": "Too many attempts. Try again in {seconds} s",
+  "@errorTooManyAttempts": {
+    "description": "Lockout banner. {seconds} is a number of seconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "actionUnlockWithPin": "Unlock with App PIN",
+  "@actionUnlockWithPin": {
+    "description": "Lock screen button. Keep short."
+  },
+  "actionForgotPin": "Forgot App PIN?",
+  "@actionForgotPin": {
+    "description": "Lock screen link button. Keep short."
+  },
+  "labelCheckingPhoneLock": "Checking phone lock…",
+  "@labelCheckingPhoneLock": {
+    "description": "Button text while the phone lock prompt is open. Keep short."
+  },
+  "actionUsePhoneLock": "Use phone lock",
+  "@actionUsePhoneLock": {
+    "description": "Lock screen button. Keep short."
+  },
+  "labelOr": "or",
+  "@labelOr": {
+    "description": "Separator between two unlock options. One word."
+  },
+  "descAuthReasonBiometric": "Authenticate with biometrics to access your accounts",
+  "@descAuthReasonBiometric": {
+    "description": "Text shown by the system biometric prompt."
+  },
+  "descAuthReasonPhoneLock": "Unlock the authenticator with your phone screen lock",
+  "@descAuthReasonPhoneLock": {
+    "description": "Text shown by the system phone screen lock prompt."
+  },
+  "errorAppLockMisconfigured": "App lock is not properly configured. Please re-enable it.",
+  "@errorAppLockMisconfigured": {
+    "description": "Snackbar when app lock is off but a PIN check was asked for."
+  },
+  "errorAppLockNoMethod": "App lock has no unlock method. Please re-enable it.",
+  "@errorAppLockNoMethod": {
+    "description": "Snackbar when app lock has neither a PIN nor phone lock."
+  },
+  "titleEnterAppPin": "Enter App PIN",
+  "@titleEnterAppPin": {
+    "description": "PIN check dialog title. Keep short."
+  },
+  "descPinRequiredForSensitive": "App PIN is required for sensitive actions and secret access.",
+  "@descPinRequiredForSensitive": {
+    "description": "PIN check dialog body."
+  },
+  "labelAppPin": "App PIN",
+  "@labelAppPin": {
+    "description": "PIN text field label. Keep short."
+  },
+  "actionVerify": "Verify",
+  "@actionVerify": {
+    "description": "PIN check dialog button. Keep to one word."
+  },
+  "descPinPurposeViewSecret": "To view and edit the secret key.",
+  "@descPinPurposeViewSecret": {
+    "description": "PIN check dialog: why the PIN is asked for."
+  },
+  "descPinPurposeAdvanced": "To view and edit the advanced options.",
+  "@descPinPurposeAdvanced": {
+    "description": "PIN check dialog: why the PIN is asked for."
+  },
+  "descPinPurposeSaveChanges": "To save changes to the secret key or advanced options.",
+  "@descPinPurposeSaveChanges": {
+    "description": "PIN check dialog: why the PIN is asked for."
+  },
+  "descPinPurposeDeleteSelected": "To delete the selected accounts.",
+  "@descPinPurposeDeleteSelected": {
+    "description": "PIN check dialog: why the PIN is asked for."
+  },
+  "tooltipCancelSelection": "Cancel selection",
+  "@tooltipCancelSelection": {
+    "description": "Tooltip on the close icon in selection mode. Keep short."
+  },
+  "labelSelectedCount": "{count} selected",
+  "@labelSelectedCount": {
+    "description": "App-bar title in selection mode. {count} is the number of selected accounts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabAccounts": "Accounts",
+  "@tabAccounts": {
+    "description": "Home tab. Keep to one word."
+  },
+  "tabTags": "Tags",
+  "@tabTags": {
+    "description": "Home tab. Keep to one word."
+  },
+  "tooltipSelectAll": "Select all",
+  "@tooltipSelectAll": {
+    "description": "Tooltip. Keep short."
+  },
+  "tooltipDeselectAll": "Deselect all",
+  "@tooltipDeselectAll": {
+    "description": "Tooltip. Keep short."
+  },
+  "tooltipSort": "Sort",
+  "@tooltipSort": {
+    "description": "Tooltip on the sort menu. Keep to one word."
+  },
+  "tooltipSettings": "Settings",
+  "@tooltipSettings": {
+    "description": "Tooltip on the settings icon. Keep to one word."
+  },
+  "descReorderHint": "Long press and drag to reorder accounts",
+  "@descReorderHint": {
+    "description": "Snackbar after choosing manual sort."
+  },
+  "labelSortManual": "Manual",
+  "@labelSortManual": {
+    "description": "Sort menu item. Keep short."
+  },
+  "labelSortIssuer": "By issuer",
+  "@labelSortIssuer": {
+    "description": "Sort menu item. Keep short."
+  },
+  "labelSortAccount": "By account name",
+  "@labelSortAccount": {
+    "description": "Sort menu item. Keep short."
+  },
+  "labelSortDate": "By date added",
+  "@labelSortDate": {
+    "description": "Sort menu item. Keep short."
+  },
+  "descFilteredBy": "Filtered by: {tags}",
+  "@descFilteredBy": {
+    "description": "Home filter bar. {tags} is a comma-separated list of tag names.",
+    "placeholders": {
+      "tags": {
+        "type": "String"
+      }
+    }
+  },
+  "actionClearFilter": "Clear filter",
+  "@actionClearFilter": {
+    "description": "Button that removes the tag filter. Keep short."
+  },
+  "descHomeHint": "Long press to enter multi-select • Drag to reorder.",
+  "@descHomeHint": {
+    "description": "Home hint line."
+  },
+  "actionReassignTags": "Reassign tags",
+  "@actionReassignTags": {
+    "description": "Bottom bar button in selection mode. Keep short."
+  },
+  "actionExportSelected": "Export selected",
+  "@actionExportSelected": {
+    "description": "Bottom bar button in selection mode. Keep short."
+  },
+  "actionDeleteSelected": "Delete selected",
+  "@actionDeleteSelected": {
+    "description": "Bottom bar button in selection mode. Keep short."
+  },
+  "actionEdit": "Edit",
+  "@actionEdit": {
+    "description": "Swipe action. Keep to one word."
+  },
+  "actionDelete": "Delete",
+  "@actionDelete": {
+    "description": "Swipe action and dialog button. Keep to one word."
+  },
+  "titleDeleteAccount": "Delete account",
+  "@titleDeleteAccount": {
+    "description": "Dialog title. Keep short."
+  },
+  "descDeleteAccountConfirm": "Are you sure you want to delete {name}?",
+  "@descDeleteAccountConfirm": {
+    "description": "Dialog body. {name} is the account name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "descAccountDeleted": "{name} deleted",
+  "@descAccountDeleted": {
+    "description": "Snackbar. {name} is the account name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "titleReassignTagsCount": "Reassign tags ({count})",
+  "@titleReassignTagsCount": {
+    "description": "Dialog title. {count} is the number of selected accounts. Keep short.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descReassignTagsHint": "Enter tags separated by commas (e.g. Work, VIP):",
+  "@descReassignTagsHint": {
+    "description": "Dialog hint."
+  },
+  "labelTags": "Tags",
+  "@labelTags": {
+    "description": "Text field label. Keep short."
+  },
+  "labelTagsExample": "Work, Personal",
+  "@labelTagsExample": {
+    "description": "Example text in the tags field. Two sample tag names."
+  },
+  "descReplaceTags": "Replace existing tags (instead of appending)",
+  "@descReplaceTags": {
+    "description": "Checkbox label in the reassign tags dialog."
+  },
+  "descTagsUpdated": "Updated tags for {count} accounts",
+  "@descTagsUpdated": {
+    "description": "Snackbar. {count} is the number of accounts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actionApplyTags": "Apply tags",
+  "@actionApplyTags": {
+    "description": "Dialog button. Keep short."
+  },
+  "titleExportSelectedCount": "Export selected ({count})",
+  "@titleExportSelectedCount": {
+    "description": "Dialog title. {count} is the number of selected accounts. Keep short.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descExportPasswordHint": "Set a password to encrypt this backup file.",
+  "@descExportPasswordHint": {
+    "description": "Dialog body."
+  },
+  "labelPassword": "Password",
+  "@labelPassword": {
+    "description": "Text field label. Keep short."
+  },
+  "labelConfirmPassword": "Confirm password",
+  "@labelConfirmPassword": {
+    "description": "Text field label. Keep short."
+  },
+  "errorPasswordTooShort": "Password must be at least 6 characters",
+  "@errorPasswordTooShort": {
+    "description": "Snackbar error."
+  },
+  "errorPasswordMismatch": "Passwords do not match",
+  "@errorPasswordMismatch": {
+    "description": "Snackbar error."
+  },
+  "descExportedSelected": "Exported {count} selected accounts",
+  "@descExportedSelected": {
+    "description": "Snackbar. {count} is the number of accounts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorExportSelectedFailed": "Failed to export selected accounts",
+  "@errorExportSelectedFailed": {
+    "description": "Snackbar error."
+  },
+  "actionExport": "Export",
+  "@actionExport": {
+    "description": "Dialog button. Keep to one word."
+  },
+  "titleDeleteAccounts": "Delete accounts",
+  "@titleDeleteAccounts": {
+    "description": "Dialog title for deleting several accounts. Keep short."
+  },
+  "descDeleteSelectedConfirm": "Are you sure you want to delete {count} accounts? This action cannot be undone.",
+  "@descDeleteSelectedConfirm": {
+    "description": "Dialog body. {count} is the number of accounts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorAuthFailedDeleteCanceled": "Authentication failed. Deletion canceled.",
+  "@errorAuthFailedDeleteCanceled": {
+    "description": "Snackbar error."
+  },
+  "descAccountsDeleted": "{count} accounts deleted",
+  "@descAccountsDeleted": {
+    "description": "Snackbar. {count} is the number of accounts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actionDeleteCount": "Delete ({count})",
+  "@actionDeleteCount": {
+    "description": "Dialog button. {count} is the number of accounts. Keep short.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "emptyNoAccountsFound": "No accounts found",
+  "@emptyNoAccountsFound": {
+    "description": "Home empty state title when a search has no results."
+  },
+  "emptyNoAccountsYet": "No accounts yet",
+  "@emptyNoAccountsYet": {
+    "description": "Home empty state title when there are no accounts."
+  },
+  "emptyTryDifferentSearch": "Try a different search term",
+  "@emptyTryDifferentSearch": {
+    "description": "Home empty state hint after a search with no results."
+  },
+  "emptyAddFirstAccount": "Tap the + button to add your first account",
+  "@emptyAddFirstAccount": {
+    "description": "Home empty state hint when there are no accounts."
+  },
+  "emptyLongPressTip": "Tip: Long press + button for more options",
+  "@emptyLongPressTip": {
+    "description": "Home empty state tip."
+  },
+  "labelQrScanner": "QR scanner",
+  "@labelQrScanner": {
+    "description": "Add-account menu item title. Keep short."
+  },
+  "descScanQrCode": "Scan QR code",
+  "@descScanQrCode": {
+    "description": "Add-account menu item subtitle."
+  },
+  "labelManualEntry": "Manual entry",
+  "@labelManualEntry": {
+    "description": "Add-account menu item title. Keep short."
+  },
+  "descEnterDetailsManually": "Enter details manually",
+  "@descEnterDetailsManually": {
+    "description": "Add-account menu item subtitle."
+  },
+  "labelSearchAccounts": "Search accounts…",
+  "@labelSearchAccounts": {
+    "description": "Home search field hint. Keep short."
+  },
+  "titleTagCloud": "Tag cloud",
+  "@titleTagCloud": {
+    "description": "Tags tab heading. Keep short."
+  },
+  "descTagCloud": "Tap any tag to view matching accounts",
+  "@descTagCloud": {
+    "description": "Tags tab subtitle."
+  },
+  "actionManageTags": "Manage tags",
+  "@actionManageTags": {
+    "description": "Tooltip of the icon-only button that opens tag management. Keep short."
+  },
+  "labelSearchTags": "Search tags…",
+  "@labelSearchTags": {
+    "description": "Tag search field hint. Keep short."
+  },
+  "descActiveFilter": "Active filter: {tags}",
+  "@descActiveFilter": {
+    "description": "Tags tab filter line. {tags} is a comma-separated list like #work, #bank.",
+    "placeholders": {
+      "tags": {
+        "type": "String"
+      }
+    }
+  },
+  "actionClear": "Clear",
+  "@actionClear": {
+    "description": "Button that clears the tag filter. Keep to one word."
+  },
+  "emptyNoTagsYet": "No tags created yet",
+  "@emptyNoTagsYet": {
+    "description": "Tags tab empty title."
+  },
+  "emptyNoTagsMatching": "No tags matching \"{query}\"",
+  "@emptyNoTagsMatching": {
+    "description": "Tags tab empty title after a search. {query} is the search text.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyAddTagsHint": "Add tags when creating or editing an account",
+  "@emptyAddTagsHint": {
+    "description": "Tags tab empty hint."
+  },
+  "emptyTryDifferentKeyword": "Try searching for a different keyword",
+  "@emptyTryDifferentKeyword": {
+    "description": "Tags tab empty hint after a search."
+  },
+  "labelAllTags": "All tags",
+  "@labelAllTags": {
+    "description": "Filter chip that shows all accounts. Keep short."
+  },
+  "titleAppLockRequired": "App lock required",
+  "@titleAppLockRequired": {
+    "description": "Dialog title. Keep short."
+  },
+  "descAppLockRequiredSecret": "To edit the secret key, please enable app lock from Security settings first.",
+  "@descAppLockRequiredSecret": {
+    "description": "Dialog body."
+  },
+  "descAppLockRequiredAdvanced": "To edit advanced options, please enable app lock from Security settings first.",
+  "@descAppLockRequiredAdvanced": {
+    "description": "Dialog body."
+  },
+  "descAppLockRequiredSave": "To save changes to sensitive fields (secret key or advanced options), please enable app lock from Security settings first.",
+  "@descAppLockRequiredSave": {
+    "description": "Dialog body."
+  },
+  "actionOpenSecurity": "Open security",
+  "@actionOpenSecurity": {
+    "description": "Dialog button that opens the security settings. Keep short."
+  },
+  "descSecretUnlocked": "Secret key unlocked",
+  "@descSecretUnlocked": {
+    "description": "Snackbar."
+  },
+  "descAdvancedUnlocked": "Advanced settings unlocked",
+  "@descAdvancedUnlocked": {
+    "description": "Snackbar."
+  },
+  "descAccountUpdated": "Account updated successfully",
+  "@descAccountUpdated": {
+    "description": "Snackbar."
+  },
+  "descAccountAdded": "Account added successfully",
+  "@descAccountAdded": {
+    "description": "Snackbar."
+  },
+  "errorSaveAccountFailed": "Could not save the account. Please try again.",
+  "@errorSaveAccountFailed": {
+    "description": "Snackbar error when saving an account fails."
+  },
+  "errorSecretRequired": "Secret key is required",
+  "@errorSecretRequired": {
+    "description": "Form validation error."
+  },
+  "errorSecretNotBase32": "Invalid secret key. Must be Base32 encoded",
+  "@errorSecretNotBase32": {
+    "description": "Form validation error."
+  },
+  "errorSecretTooShort": "Secret key is too short",
+  "@errorSecretTooShort": {
+    "description": "Form validation error."
+  },
+  "titleEditAccount": "Edit account",
+  "@titleEditAccount": {
+    "description": "Screen title. Keep short."
+  },
+  "titleAddAccount": "Add account",
+  "@titleAddAccount": {
+    "description": "Screen title. Keep short."
+  },
+  "tooltipScanQr": "Scan QR code",
+  "@tooltipScanQr": {
+    "description": "Tooltip on the QR icon. Keep short."
+  },
+  "actionUpdateAccount": "Update account",
+  "@actionUpdateAccount": {
+    "description": "Save button when editing. Keep short."
+  },
+  "actionAddAccount": "Add account",
+  "@actionAddAccount": {
+    "description": "Save button when adding. Keep short."
+  },
+  "errorQrInvalid": "This QR code is not a valid authenticator code.",
+  "@errorQrInvalid": {
+    "description": "Snackbar when a scanned QR code is not an otpauth code."
+  },
+  "errorQrNoSecret": "The secret key is missing from this QR code.",
+  "@errorQrNoSecret": {
+    "description": "Snackbar when a scanned QR code has no secret."
+  },
+  "errorAddAccountFailed": "Could not add the account. Please try again.",
+  "@errorAddAccountFailed": {
+    "description": "Snackbar when adding an account fails for another reason."
+  },
+  "descAccountAddedName": "Account added: {name}",
+  "@descAccountAddedName": {
+    "description": "Snackbar. {name} is the issuer and account name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "titleAddAccountManually": "Add account manually",
+  "@titleAddAccountManually": {
+    "description": "Dialog title. Keep short."
+  },
+  "labelAccountNameRequired": "Account name *",
+  "@labelAccountNameRequired": {
+    "description": "Required text field label. Keep short."
+  },
+  "descAccountNameHint": "Enter account name",
+  "@descAccountNameHint": {
+    "description": "Text field hint."
+  },
+  "labelSecretKeyRequired": "Secret key *",
+  "@labelSecretKeyRequired": {
+    "description": "Required text field label. Keep short."
+  },
+  "descSecretKeyHint": "Enter secret key",
+  "@descSecretKeyHint": {
+    "description": "Text field hint."
+  },
+  "labelIssuerOptional": "Issuer (optional)",
+  "@labelIssuerOptional": {
+    "description": "Text field label. Keep short."
+  },
+  "descIssuerHint": "e.g., Google",
+  "@descIssuerHint": {
+    "description": "Text field hint with an example service name."
+  },
+  "errorNameAndSecretRequired": "Account name and secret key are required",
+  "@errorNameAndSecretRequired": {
+    "description": "Snackbar error."
+  },
+  "actionAdd": "Add",
+  "@actionAdd": {
+    "description": "Dialog button. Keep to one word."
+  },
+  "titleScanQrCode": "Scan QR code",
+  "@titleScanQrCode": {
+    "description": "Screen title. Keep short."
+  },
+  "tooltipToggleFlash": "Toggle flash",
+  "@tooltipToggleFlash": {
+    "description": "Tooltip. Keep short."
+  },
+  "tooltipSwitchCamera": "Switch camera",
+  "@tooltipSwitchCamera": {
+    "description": "Tooltip. Keep short."
+  },
+  "descPositionQr": "Position QR code within frame",
+  "@descPositionQr": {
+    "description": "Instruction over the camera view."
+  },
+  "actionEnterManually": "Enter manually",
+  "@actionEnterManually": {
+    "description": "Button that opens manual entry. Keep short."
+  },
+  "titleAccountInformation": "Account information",
+  "@titleAccountInformation": {
+    "description": "Card section header. Keep short."
+  },
+  "labelAccountName": "Account name *",
+  "@labelAccountName": {
+    "description": "Required text field label. Keep short."
+  },
+  "descAccountNameExample": "e.g., john@example.com",
+  "@descAccountNameExample": {
+    "description": "Text field hint with an example user name."
+  },
+  "errorAccountNameRequired": "Account name is required",
+  "@errorAccountNameRequired": {
+    "description": "Form validation error."
+  },
+  "labelIssuer": "Issuer (optional)",
+  "@labelIssuer": {
+    "description": "Text field label. Keep short."
+  },
+  "descIssuerExample": "e.g., Google, GitHub",
+  "@descIssuerExample": {
+    "description": "Text field hint with example service names."
+  },
+  "labelSecretKey": "Secret key *",
+  "@labelSecretKey": {
+    "description": "Required field label. Keep short."
+  },
+  "labelTapToUnlock": "Tap to unlock",
+  "@labelTapToUnlock": {
+    "description": "Small label under a lock icon. Keep short."
+  },
+  "labelEnableAppLock": "Enable app lock",
+  "@labelEnableAppLock": {
+    "description": "Small label under a lock icon. Keep short."
+  },
+  "descSecretKeyBase32": "Base32 encoded secret",
+  "@descSecretKeyBase32": {
+    "description": "Secret key field hint."
+  },
+  "titleAdvancedSettings": "Advanced settings",
+  "@titleAdvancedSettings": {
+    "description": "Card section header. Keep short."
+  },
+  "tooltipUnlockToEdit": "Unlock to edit",
+  "@tooltipUnlockToEdit": {
+    "description": "Tooltip on a lock icon."
+  },
+  "tooltipEnableAppLockFirst": "Turn on app lock",
+  "@tooltipEnableAppLockFirst": {
+    "description": "Tooltip on a lock icon."
+  },
+  "labelDigits": "Digits",
+  "@labelDigits": {
+    "description": "Label for the number of code digits. Keep short."
+  },
+  "labelPeriodSeconds": "Period (seconds)",
+  "@labelPeriodSeconds": {
+    "description": "Label for the code period. Keep short."
+  },
+  "labelAlgorithm": "Algorithm",
+  "@labelAlgorithm": {
+    "description": "Label for the hash algorithm. Keep short."
+  },
+  "labelMaskedValue": "{label}: {value}",
+  "@labelMaskedValue": {
+    "description": "A hidden setting row, e.g. \"Digits: ●●\". {label} is the setting name, {value} the masked value. Same pattern in every language.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "labelSecondsMasked": "{mask} seconds",
+  "@labelSecondsMasked": {
+    "description": "A hidden period value. {mask} is a row of dots.",
+    "placeholders": {
+      "mask": {
+        "type": "String"
+      }
+    }
+  },
+  "descTapToUnlockSettings": "Tap to unlock and view settings",
+  "@descTapToUnlockSettings": {
+    "description": "Hint under hidden advanced settings."
+  },
+  "descEnableAppLockToEdit": "Enable app lock to edit",
+  "@descEnableAppLockToEdit": {
+    "description": "Hint under hidden advanced settings."
+  },
+  "titleBrowseTags": "Browse existing tags",
+  "@titleBrowseTags": {
+    "description": "Bottom sheet title. Keep short."
+  },
+  "actionClearAll": "Clear all",
+  "@actionClearAll": {
+    "description": "Button that clears the selection. Keep short."
+  },
+  "tooltipClose": "Close",
+  "@tooltipClose": {
+    "description": "Tooltip on a close icon. Keep to one word."
+  },
+  "labelSearchExistingTags": "Search tags…",
+  "@labelSearchExistingTags": {
+    "description": "Search field hint. Keep short."
+  },
+  "emptyNoExistingTags": "No existing tags found",
+  "@emptyNoExistingTags": {
+    "description": "Empty state title."
+  },
+  "emptyTypeNewTags": "Type new tags in the text field to assign them to this entry.",
+  "@emptyTypeNewTags": {
+    "description": "Empty state hint."
+  },
+  "emptyNoMatchingTags": "No matching tags",
+  "@emptyNoMatchingTags": {
+    "description": "Empty state title after a search."
+  },
+  "emptyNoTagsMatchQuery": "No existing tags match \"{query}\".",
+  "@emptyNoTagsMatchQuery": {
+    "description": "Empty state hint. {query} is the search text.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "actionDone": "Done",
+  "@actionDone": {
+    "description": "Button that closes the sheet. Keep to one word."
+  },
+  "actionApplySelected": "Apply ({count})",
+  "@actionApplySelected": {
+    "description": "Button that applies {count} selected tags. Keep short.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descTagsFieldHint": "Comma separated, e.g. Work, Crypto, VIP",
+  "@descTagsFieldHint": {
+    "description": "Tags field hint."
+  },
+  "labelTapToAdd": "Tap to add",
+  "@labelTapToAdd": {
+    "description": "Small hint next to a suggested tag. Keep short."
+  },
+  "tooltipBrowseTags": "Browse existing tags",
+  "@tooltipBrowseTags": {
+    "description": "Tooltip on the browse tags icon. Keep short."
+  },
+  "labelPermCamera": "Camera",
+  "@labelPermCamera": {
+    "description": "Permission name. Keep short."
+  },
+  "descPermCamera": "Used to scan QR codes for adding accounts",
+  "@descPermCamera": {
+    "description": "Why the camera permission is needed."
+  },
+  "labelPermBiometric": "Biometric unlock",
+  "@labelPermBiometric": {
+    "description": "Capability name. Keep short."
+  },
+  "descPermBiometric": "Used for app lock authentication via fingerprint or device credentials",
+  "@descPermBiometric": {
+    "description": "Why biometrics are used."
+  },
+  "labelPermVibration": "Vibration",
+  "@labelPermVibration": {
+    "description": "Capability name. Keep short."
+  },
+  "descPermVibration": "Used for haptic feedback during QR code scanning",
+  "@descPermVibration": {
+    "description": "Why vibration is used."
+  },
+  "labelPermSecureStorage": "Secure storage",
+  "@labelPermSecureStorage": {
+    "description": "Capability name. Keep short."
+  },
+  "descPermSecureStorage": "Uses Android Keystore to securely store encryption keys",
+  "@descPermSecureStorage": {
+    "description": "Why secure storage is used."
+  },
+  "labelPermLocalDatabase": "Local database",
+  "@labelPermLocalDatabase": {
+    "description": "Capability name. Keep short."
+  },
+  "descPermLocalDatabase": "Stores encrypted account data locally on your device",
+  "@descPermLocalDatabase": {
+    "description": "What the local database holds."
+  },
+  "descPermissionsIntro": "This app only requests permissions when needed and never collects data.",
+  "@descPermissionsIntro": {
+    "description": "Banner at the top of the permissions screen."
+  },
+  "titleRuntimePermissions": "Runtime permissions",
+  "@titleRuntimePermissions": {
+    "description": "Section header. Keep short."
+  },
+  "titleBuiltInCapabilities": "Built-in features",
+  "@titleBuiltInCapabilities": {
+    "description": "Section header. Keep short."
+  },
+  "titlePrivacy": "Privacy",
+  "@titlePrivacy": {
+    "description": "Section header. Keep to one word."
+  },
+  "labelNoCloudService": "No cloud service",
+  "@labelNoCloudService": {
+    "description": "Privacy card title. Keep short."
+  },
+  "descNoCloudService": "The app has no server or cloud account. Wi-Fi sync uses only your local network.",
+  "@descNoCloudService": {
+    "description": "Privacy card body."
+  },
+  "labelStatusGranted": "Granted",
+  "@labelStatusGranted": {
+    "description": "Permission status. Keep short."
+  },
+  "labelStatusDenied": "Denied",
+  "@labelStatusDenied": {
+    "description": "Permission status. Keep short."
+  },
+  "labelStatusNotGranted": "Not granted",
+  "@labelStatusNotGranted": {
+    "description": "Permission status. Keep short."
+  },
+  "labelStatusNotRequested": "Not requested",
+  "@labelStatusNotRequested": {
+    "description": "Permission status. Keep short."
+  },
+  "labelBuiltIn": "Built-in",
+  "@labelBuiltIn": {
+    "description": "Badge on a built-in capability. Keep short."
+  },
+  "errorCodeUnavailable": "Code unavailable for {name}",
+  "@errorCodeUnavailable": {
+    "description": "Snackbar when an OTP cannot be generated. {name} is the account name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "descCodeCopied": "Code copied for {name}",
+  "@descCodeCopied": {
+    "description": "Snackbar after copying an OTP. {name} is the account name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "descAppLockEnabledPin": "App lock enabled with App PIN",
+  "@descAppLockEnabledPin": {
+    "description": "Snackbar."
+  },
+  "descAppLockEnabledPhone": "App lock enabled with phone screen lock",
+  "@descAppLockEnabledPhone": {
+    "description": "Snackbar."
+  },
+  "titleDisableAppLock": "Disable app lock",
+  "@titleDisableAppLock": {
+    "description": "Dialog title. Keep short."
+  },
+  "descDisableAppLock": "Disabling app lock removes your App PIN, quick unlock preference, and recovery key.",
+  "@descDisableAppLock": {
+    "description": "Dialog body."
+  },
+  "descAppLockDisabled": "App lock disabled",
+  "@descAppLockDisabled": {
+    "description": "Snackbar."
+  },
+  "titleChooseUnlockMethod": "Choose unlock method",
+  "@titleChooseUnlockMethod": {
+    "description": "Dialog title. Keep short."
+  },
+  "descChooseUnlockMethod": "Pick how you want to unlock the app. App PIN is more secure; phone screen lock is more convenient.",
+  "@descChooseUnlockMethod": {
+    "description": "Dialog body."
+  },
+  "actionPhoneLock": "Phone lock",
+  "@actionPhoneLock": {
+    "description": "Dialog button: choose the phone screen lock. Keep short."
+  },
+  "actionAppPin": "App PIN",
+  "@actionAppPin": {
+    "description": "Dialog button: choose the app PIN. Keep short."
+  },
+  "descAppPinEnabled": "App PIN enabled",
+  "@descAppPinEnabled": {
+    "description": "Snackbar."
+  },
+  "errorEnablePhoneLockFirst": "Enable phone screen lock first, or disable app lock instead.",
+  "@errorEnablePhoneLockFirst": {
+    "description": "Snackbar error."
+  },
+  "titleRemoveAppPin": "Remove App PIN",
+  "@titleRemoveAppPin": {
+    "description": "Dialog title. Keep short."
+  },
+  "descRemoveAppPin": "Your App PIN and recovery key will be deleted. You will unlock the app with phone screen lock only.",
+  "@descRemoveAppPin": {
+    "description": "Dialog body."
+  },
+  "descAppPinRemoved": "App PIN removed",
+  "@descAppPinRemoved": {
+    "description": "Snackbar."
+  },
+  "errorSetAppPinFirst": "Set an App PIN first, or disable app lock instead.",
+  "@errorSetAppPinFirst": {
+    "description": "Snackbar error."
+  },
+  "descQuickUnlockDisabled": "Phone screen lock quick unlock disabled",
+  "@descQuickUnlockDisabled": {
+    "description": "Snackbar."
+  },
+  "descQuickUnlockEnabled": "Phone screen lock quick unlock enabled",
+  "@descQuickUnlockEnabled": {
+    "description": "Snackbar."
+  },
+  "descPhoneLockEnabled": "Phone screen lock enabled",
+  "@descPhoneLockEnabled": {
+    "description": "Snackbar."
+  },
+  "titleAutoLockTimeout": "Auto-lock timeout",
+  "@titleAutoLockTimeout": {
+    "description": "Row and dialog title. Keep short."
+  },
+  "labelLockImmediately": "Immediately",
+  "@labelLockImmediately": {
+    "description": "Auto-lock option. Keep short."
+  },
+  "labelMinutesCount": "{minutes} min",
+  "@labelMinutesCount": {
+    "description": "Auto-lock option, a number of minutes. Keep short.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "titleCurrentPin": "Current App PIN",
+  "@titleCurrentPin": {
+    "description": "Dialog title asking for the current PIN. Keep short."
+  },
+  "descAppPinChanged": "App PIN changed successfully",
+  "@descAppPinChanged": {
+    "description": "Snackbar."
+  },
+  "titleSetAppPin": "Set App PIN",
+  "@titleSetAppPin": {
+    "description": "Dialog title. Keep short."
+  },
+  "titleChangeAppPin": "Change App PIN",
+  "@titleChangeAppPin": {
+    "description": "Dialog title and row title. Keep short."
+  },
+  "descPinRequiredForProtection": "App PIN is required for app protection and all secret access.",
+  "@descPinRequiredForProtection": {
+    "description": "Dialog body."
+  },
+  "actionConfirm": "Confirm",
+  "@actionConfirm": {
+    "description": "Dialog button. Keep to one word."
+  },
+  "titleAppLockSection": "App lock",
+  "@titleAppLockSection": {
+    "description": "Section header. Keep short."
+  },
+  "titleAppPinSection": "App PIN",
+  "@titleAppPinSection": {
+    "description": "Section header. Keep short."
+  },
+  "titlePhoneLockSection": "Phone screen lock",
+  "@titlePhoneLockSection": {
+    "description": "Section header. Keep short."
+  },
+  "titleLockdownSection": "Lockdown",
+  "@titleLockdownSection": {
+    "description": "Section header. Keep short."
+  },
+  "descEnableAppLock": "Protect the app with your App PIN and optional phone screen lock quick unlock",
+  "@descEnableAppLock": {
+    "description": "Switch subtitle."
+  },
+  "labelUseAppPin": "Use App PIN",
+  "@labelUseAppPin": {
+    "description": "Switch title. Keep short."
+  },
+  "descAppPinIsSet": "App PIN is set",
+  "@descAppPinIsSet": {
+    "description": "Switch subtitle."
+  },
+  "descSetPinHint": "Set a 4–6 digit PIN for app protection",
+  "@descSetPinHint": {
+    "description": "Switch subtitle."
+  },
+  "descUpdateAppPin": "Update your App PIN",
+  "@descUpdateAppPin": {
+    "description": "Row subtitle."
+  },
+  "labelResetRecoveryKey": "Reset recovery key",
+  "@labelResetRecoveryKey": {
+    "description": "Row title. Keep short."
+  },
+  "descResetRecoveryKey": "Generate a new recovery key for your App PIN",
+  "@descResetRecoveryKey": {
+    "description": "Row subtitle."
+  },
+  "labelUsePhoneLock": "Use phone lock",
+  "@labelUsePhoneLock": {
+    "description": "Switch title. Keep short."
+  },
+  "descPhoneLockOptional": "Optional quick unlock for opening the app",
+  "@descPhoneLockOptional": {
+    "description": "Switch subtitle."
+  },
+  "descPhoneLockOnly": "Unlock the app with your phone screen lock",
+  "@descPhoneLockOnly": {
+    "description": "Switch subtitle."
+  },
+  "labelLockdownMode": "Lockdown mode",
+  "@labelLockdownMode": {
+    "description": "Switch title. Keep short."
+  },
+  "descLockdownMode": "Disable quick unlock and require your App PIN until you turn this off",
+  "@descLockdownMode": {
+    "description": "Switch subtitle."
+  },
+  "descInfoPhoneOptional": "Phone screen lock is optional quick unlock. App PIN is required for revealing secrets.",
+  "@descInfoPhoneOptional": {
+    "description": "Info card text."
+  },
+  "descInfoPhoneOnly": "Phone screen lock is your only unlock method. Set an App PIN for stronger protection.",
+  "@descInfoPhoneOnly": {
+    "description": "Info card text."
+  },
+  "descInfoPhoneLockTypes": "Phone screen lock may use fingerprint, face, pattern, PIN, or password depending on your device.",
+  "@descInfoPhoneLockTypes": {
+    "description": "Info card text."
+  },
+  "titleSetBackupPassword": "Set backup password",
+  "@titleSetBackupPassword": {
+    "description": "Dialog title. Keep short."
+  },
+  "descSetBackupPassword": "Create a strong password to encrypt your backup. You will need this password to restore your accounts.",
+  "@descSetBackupPassword": {
+    "description": "Dialog body."
+  },
+  "descPasswordMin8": "Minimum 8 characters",
+  "@descPasswordMin8": {
+    "description": "Password field helper text."
+  },
+  "errorPasswordEmpty": "Password cannot be empty",
+  "@errorPasswordEmpty": {
+    "description": "Snackbar error."
+  },
+  "errorPasswordTooShort8": "Password must be at least 8 characters",
+  "@errorPasswordTooShort8": {
+    "description": "Snackbar error."
+  },
+  "actionCreateBackup": "Create backup",
+  "@actionCreateBackup": {
+    "description": "Dialog button. Keep short."
+  },
+  "errorNoAccountsToBackup": "No accounts to back up",
+  "@errorNoAccountsToBackup": {
+    "description": "Snackbar error."
+  },
+  "descBackupCreated": "Encrypted backup created successfully",
+  "@descBackupCreated": {
+    "description": "Snackbar."
+  },
+  "errorBackupCanceledOrFailed": "Backup canceled or failed",
+  "@errorBackupCanceledOrFailed": {
+    "description": "Snackbar error."
+  },
+  "errorBackupFailed": "Could not create the backup. Please try again.",
+  "@errorBackupFailed": {
+    "description": "Snackbar error when creating a backup fails."
+  },
+  "titleRestoreAccounts": "Restore accounts",
+  "@titleRestoreAccounts": {
+    "description": "Dialog title. Keep short."
+  },
+  "descRestoreAccounts": "Import accounts from an encrypted backup file. Existing accounts will not be affected.",
+  "@descRestoreAccounts": {
+    "description": "Dialog body."
+  },
+  "titleEnterBackupPassword": "Backup password",
+  "@titleEnterBackupPassword": {
+    "description": "Dialog title asking for the backup password. Keep short."
+  },
+  "descEnterBackupPassword": "Enter the password you used when creating this backup:",
+  "@descEnterBackupPassword": {
+    "description": "Dialog body."
+  },
+  "actionRestore": "Restore",
+  "@actionRestore": {
+    "description": "Dialog button. Keep to one word."
+  },
+  "errorBackupPassword": "Wrong password, or the backup file is damaged.",
+  "@errorBackupPassword": {
+    "description": "Snackbar error."
+  },
+  "errorBackupInvalid": "This backup has invalid content, so nothing was restored.",
+  "@errorBackupInvalid": {
+    "description": "Snackbar error: the backup opened but its content failed validation."
+  },
+  "errorCameraUnavailable": "The camera is not available. You can enter the details by hand.",
+  "@errorCameraUnavailable": {
+    "description": "Shown in the QR scanner when the camera cannot be opened or permission was denied."
+  },
+  "errorBackupTooLarge": "This file is too large to be a backup.",
+  "@errorBackupTooLarge": {
+    "description": "Snackbar error: the picked file is above the backup size limit."
+  },
+  "errorNoAccountsInBackup": "No accounts found in backup. Check your password and try again.",
+  "@errorNoAccountsInBackup": {
+    "description": "Snackbar error."
+  },
+  "descAccountsRestored": "Accounts restored: {count}",
+  "@descAccountsRestored": {
+    "description": "Snackbar. {count} is the number of accounts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorAccountsLoadFailed": "Could not load your accounts. Do not delete the app or its data yet. Close the app and open it again.",
+  "@errorAccountsLoadFailed": {
+    "description": "Shown on the home screen when the saved accounts could not be read. It must not look like an empty vault."
+  },
+  "errorRestoreFailed": "Could not restore the backup. Please try again.",
+  "@errorRestoreFailed": {
+    "description": "Snackbar error when restoring fails."
+  },
+  "titleBackupCreated": "Backup created",
+  "@titleBackupCreated": {
+    "description": "Dialog title. Keep short."
+  },
+  "descBackupSaved": "Your encrypted backup has been saved successfully.",
+  "@descBackupSaved": {
+    "description": "Dialog body."
+  },
+  "titleImportant": "Important:",
+  "@titleImportant": {
+    "description": "Heading in a dialog. Keep short."
+  },
+  "descBackupTips": "• Store your backup file in a safe location\n• Remember your backup password\n• Without the password, you cannot restore",
+  "@descBackupTips": {
+    "description": "Bullet list in a dialog. Keep the bullets and line breaks."
+  },
+  "actionGotIt": "Got it",
+  "@actionGotIt": {
+    "description": "Dialog button. Keep short."
+  },
+  "actionContinue": "Continue",
+  "@actionContinue": {
+    "description": "Dialog button. Keep to one word."
+  },
+  "descBackupsEncrypted": "All backups are encrypted with a password for maximum security",
+  "@descBackupsEncrypted": {
+    "description": "Info card text."
+  },
+  "titleCreateBackupSection": "Create backup",
+  "@titleCreateBackupSection": {
+    "description": "Section header. Keep short."
+  },
+  "labelCreateEncryptedBackup": "Create backup file",
+  "@labelCreateEncryptedBackup": {
+    "description": "Row title. Keep short."
+  },
+  "descCreateEncryptedBackup": "Export all accounts with password protection",
+  "@descCreateEncryptedBackup": {
+    "description": "Row subtitle."
+  },
+  "titleRestoreBackupSection": "Restore backup",
+  "@titleRestoreBackupSection": {
+    "description": "Section header. Keep short."
+  },
+  "labelRestoreFromBackup": "Restore from backup",
+  "@labelRestoreFromBackup": {
+    "description": "Row title. Keep short."
+  },
+  "descRestoreFromBackup": "Import accounts from encrypted backup file",
+  "@descRestoreFromBackup": {
+    "description": "Row subtitle."
+  },
+  "titleBestPractices": "Best practices",
+  "@titleBestPractices": {
+    "description": "Card title. Keep short."
+  },
+  "descBestPractices": "• Create backups regularly\n• Use a strong, unique password\n• Store backups in multiple secure locations\n• Keep your password in a password manager\n• Test your backups by restoring them",
+  "@descBestPractices": {
+    "description": "Bullet list. Keep the bullets and line breaks."
+  },
+  "descNeverShareBackups": "Never share your backup files or passwords. Anyone with access to both can generate your authentication codes.",
+  "@descNeverShareBackups": {
+    "description": "Warning card text."
+  },
+  "titleRenameTag": "Rename tag",
+  "@titleRenameTag": {
+    "description": "Dialog title. Keep short."
+  },
+  "labelTagName": "Tag name",
+  "@labelTagName": {
+    "description": "Text field label. Keep short."
+  },
+  "descTagNameExample": "e.g. Work, Personal",
+  "@descTagNameExample": {
+    "description": "Text field hint."
+  },
+  "errorTagNameEmpty": "Please enter a tag name",
+  "@errorTagNameEmpty": {
+    "description": "Form validation error."
+  },
+  "errorTagNameSame": "New tag name must be different",
+  "@errorTagNameSame": {
+    "description": "Form validation error."
+  },
+  "actionRename": "Rename",
+  "@actionRename": {
+    "description": "Dialog button. Keep short."
+  },
+  "descTagRenamed": "Renamed #{oldTag} to #{newTag}",
+  "@descTagRenamed": {
+    "description": "Snackbar. {oldTag} and {newTag} are tag names.",
+    "placeholders": {
+      "oldTag": {
+        "type": "String"
+      },
+      "newTag": {
+        "type": "String"
+      }
+    }
+  },
+  "errorRenameTagFailed": "Could not rename the tag. Please try again.",
+  "@errorRenameTagFailed": {
+    "description": "Snackbar error."
+  },
+  "titleDeleteTag": "Delete tag",
+  "@titleDeleteTag": {
+    "description": "Dialog title. Keep short."
+  },
+  "descDeleteTagUsed": "Remove tag \"#{tag}\" from {count} accounts?",
+  "@descDeleteTagUsed": {
+    "description": "Dialog body. {tag} is the tag name, {count} the number of accounts.",
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descDeleteTagUnused": "Delete unused tag \"#{tag}\"?",
+  "@descDeleteTagUnused": {
+    "description": "Dialog body. {tag} is the tag name.",
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "descTagDeleted": "Deleted tag #{tag}",
+  "@descTagDeleted": {
+    "description": "Snackbar. {tag} is the tag name.",
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDeleteTagFailed": "Could not delete the tag. Please try again.",
+  "@errorDeleteTagFailed": {
+    "description": "Snackbar error."
+  },
+  "labelTotalTags": "Total tags",
+  "@labelTotalTags": {
+    "description": "Summary label. Keep short."
+  },
+  "labelAccountsTagged": "Accounts tagged",
+  "@labelAccountsTagged": {
+    "description": "Summary label. Keep short."
+  },
+  "emptyNoTagsFound": "No tags found",
+  "@emptyNoTagsFound": {
+    "description": "Empty state title."
+  },
+  "emptyTagsAppearHere": "Tags added to accounts will appear here",
+  "@emptyTagsAppearHere": {
+    "description": "Empty state hint."
+  },
+  "emptyTryDifferentQuery": "Try a different search query",
+  "@emptyTryDifferentQuery": {
+    "description": "Empty state hint after a search."
+  },
+  "labelAccountCount": "Accounts: {count}",
+  "@labelAccountCount": {
+    "description": "Tag row subtitle. {count} is the number of accounts with this tag.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tooltipRenameTag": "Rename tag",
+  "@tooltipRenameTag": {
+    "description": "Tooltip. Keep short."
+  },
+  "tooltipDeleteTag": "Delete tag",
+  "@tooltipDeleteTag": {
+    "description": "Tooltip. Keep short."
+  },
+  "errorSyncHostTimeout": "No device connected in time; hosting stopped.",
+  "@errorSyncHostTimeout": {
+    "description": "Sync error message."
+  },
+  "errorSyncHostStartFailed": "Could not start hosting. Check that Wi-Fi is on.",
+  "@errorSyncHostStartFailed": {
+    "description": "Sync error message."
+  },
+  "errorSyncNoDevice": "No device is connected to sync with.",
+  "@errorSyncNoDevice": {
+    "description": "Sync error message."
+  },
+  "errorSyncNothingSelected": "Select at least one item to sync.",
+  "@errorSyncNothingSelected": {
+    "description": "Sync error message."
+  },
+  "errorSyncFailed": "Sync failed. Please try again.",
+  "@errorSyncFailed": {
+    "description": "Sync error message."
+  },
+  "errorOpticalStartFailed": "Could not start the optical stream.",
+  "@errorOpticalStartFailed": {
+    "description": "Sync error message."
+  },
+  "errorOpticalDecodeFailed": "Could not read the optical stream.",
+  "@errorOpticalDecodeFailed": {
+    "description": "Sync error message."
+  },
+  "errorSyncNotSyncQr": "This is not a sync QR code.",
+  "@errorSyncNotSyncQr": {
+    "description": "Sync error message."
+  },
+  "errorSyncUnsupportedVersion": "This sync QR code is from a different app version.",
+  "@errorSyncUnsupportedVersion": {
+    "description": "Sync error message."
+  },
+  "errorSyncMissingHost": "The sync QR code has no host address.",
+  "@errorSyncMissingHost": {
+    "description": "Sync error message."
+  },
+  "errorSyncInvalidPort": "The sync QR code has an invalid port.",
+  "@errorSyncInvalidPort": {
+    "description": "Sync error message."
+  },
+  "errorSyncMissingCode": "The sync QR code has no pairing code.",
+  "@errorSyncMissingCode": {
+    "description": "Sync error message."
+  },
+  "errorSyncMalformed": "The other device sent data this app cannot read.",
+  "@errorSyncMalformed": {
+    "description": "Sync error message."
+  },
+  "errorSyncTooManyAccounts": "The other device sent too many accounts.",
+  "@errorSyncTooManyAccounts": {
+    "description": "Sync error message."
+  },
+  "errorSyncFieldTooLarge": "The other device sent a value that is too large.",
+  "@errorSyncFieldTooLarge": {
+    "description": "Sync error message."
+  },
+  "errorSyncPeerGone": "The other device is no longer connected.",
+  "@errorSyncPeerGone": {
+    "description": "Sync error message."
+  },
+  "errorSyncSendFailed": "Could not send the data.",
+  "@errorSyncSendFailed": {
+    "description": "Sync error message."
+  },
+  "errorSyncNoResponse": "No response from the other device.",
+  "@errorSyncNoResponse": {
+    "description": "Sync error message."
+  },
+  "errorSyncInvalidResponse": "Unexpected response from the other device.",
+  "@errorSyncInvalidResponse": {
+    "description": "Sync error message."
+  },
+  "errorSyncConnectionClosed": "The other device closed the connection.",
+  "@errorSyncConnectionClosed": {
+    "description": "Sync error message."
+  },
+  "errorSyncWrongCode": "Incorrect pairing code.",
+  "@errorSyncWrongCode": {
+    "description": "Sync error message."
+  },
+  "errorSyncTimedOut": "The connection timed out.",
+  "@errorSyncTimedOut": {
+    "description": "Sync error message."
+  },
+  "errorSyncConnectFailed": "Could not connect to the other device. Check the IP address, port and Wi-Fi.",
+  "@errorSyncConnectFailed": {
+    "description": "Sync error message."
+  },
+  "errorSyncConnectionError": "Connection error.",
+  "@errorSyncConnectionError": {
+    "description": "Sync error message."
+  },
+  "errorOpticalInvalidFrame": "This is not an optical sync code.",
+  "@errorOpticalInvalidFrame": {
+    "description": "Sync error message."
+  },
+  "errorOpticalUnsupportedVersion": "This optical sync code is from a different app version.",
+  "@errorOpticalUnsupportedVersion": {
+    "description": "Sync error message."
+  },
+  "errorOpticalCorruptedChunk": "A frame was damaged. Keep the camera steady.",
+  "@errorOpticalCorruptedChunk": {
+    "description": "Sync error message."
+  },
+  "errorOpticalChecksum": "A frame failed its check. Keep the camera steady.",
+  "@errorOpticalChecksum": {
+    "description": "Sync error message."
+  },
+  "errorOpticalEmpty": "There is nothing to send.",
+  "@errorOpticalEmpty": {
+    "description": "Sync error message."
+  },
+  "errorOpticalIncomplete": "Not all frames were received.",
+  "@errorOpticalIncomplete": {
+    "description": "Sync error message."
+  },
+  "errorOpticalIntegrity": "The received data failed its integrity check.",
+  "@errorOpticalIntegrity": {
+    "description": "Sync error message."
+  },
+  "errorEnterHostIp": "Enter the host IP address",
+  "@errorEnterHostIp": {
+    "description": "Snackbar error."
+  },
+  "errorEnterPort": "Enter the port shown on the other device",
+  "@errorEnterPort": {
+    "description": "Snackbar error."
+  },
+  "errorEnterPairingCode": "Enter the pairing code",
+  "@errorEnterPairingCode": {
+    "description": "Snackbar error."
+  },
+  "titleSendToDevice": "Send to device",
+  "@titleSendToDevice": {
+    "description": "Screen title while hosting. Keep short."
+  },
+  "descConnectingToHost": "Connecting to host…",
+  "@descConnectingToHost": {
+    "description": "Progress text."
+  },
+  "descReceiving": "Receiving…",
+  "@descReceiving": {
+    "description": "Progress text."
+  },
+  "descP2pInfo": "Wi-Fi sync: both devices on the same Wi-Fi or hotspot. The pairing code never leaves your device.",
+  "@descP2pInfo": {
+    "description": "Info card text."
+  },
+  "labelSendOverWifi": "Send over Wi-Fi",
+  "@labelSendOverWifi": {
+    "description": "Row title. Keep short."
+  },
+  "descSendOverWifi": "Host: share your accounts and settings over local Wi-Fi",
+  "@descSendOverWifi": {
+    "description": "Row subtitle."
+  },
+  "labelReceiveOverWifi": "Receive over Wi-Fi",
+  "@labelReceiveOverWifi": {
+    "description": "Row title. Keep short."
+  },
+  "descReceiveOverWifi": "Join: scan the host QR or enter host IP",
+  "@descReceiveOverWifi": {
+    "description": "Row subtitle."
+  },
+  "descOpticalSectionHeader": "Optical air-gap sync (no Wi-Fi, no network)",
+  "@descOpticalSectionHeader": {
+    "description": "Section header (shown in capitals in English)."
+  },
+  "labelOpticalSend": "Send optical stream",
+  "@labelOpticalSend": {
+    "description": "Row title. Keep short."
+  },
+  "descOpticalSend": "Transmit your accounts as an animated QR stream (12–15 FPS)",
+  "@descOpticalSend": {
+    "description": "Row subtitle."
+  },
+  "labelOpticalReceive": "Scan optical stream",
+  "@labelOpticalReceive": {
+    "description": "Row title. Keep short."
+  },
+  "descOpticalReceive": "Capture an animated QR stream with the camera",
+  "@descOpticalReceive": {
+    "description": "Row subtitle."
+  },
+  "descScanOtherQrHeader": "Scan the QR on the other device",
+  "@descScanOtherQrHeader": {
+    "description": "Section header (shown in capitals in English)."
+  },
+  "actionScanQrCode": "Scan QR code",
+  "@actionScanQrCode": {
+    "description": "Button. Keep short."
+  },
+  "labelOrEnterManually": "or enter manually",
+  "@labelOrEnterManually": {
+    "description": "Divider text. Keep short."
+  },
+  "labelHostIp": "Host IP address",
+  "@labelHostIp": {
+    "description": "Text field label. Keep short."
+  },
+  "labelPort": "Port",
+  "@labelPort": {
+    "description": "Text field label. Keep short."
+  },
+  "labelPairingCode": "Pairing code",
+  "@labelPairingCode": {
+    "description": "Text field label. Keep short."
+  },
+  "actionConnectReceive": "Connect & receive",
+  "@actionConnectReceive": {
+    "description": "Button. Keep short."
+  },
+  "actionBack": "Back",
+  "@actionBack": {
+    "description": "Button that goes back. Keep to one word."
+  },
+  "titleConnected": "Connected",
+  "@titleConnected": {
+    "description": "Status title. Keep short."
+  },
+  "descWaitingForSender": "Waiting for the sender to choose what to share…",
+  "@descWaitingForSender": {
+    "description": "Status text."
+  },
+  "titleSyncComplete": "Sync complete",
+  "@titleSyncComplete": {
+    "description": "Status title. Keep short."
+  },
+  "descSentAccounts": "Accounts sent: {count}",
+  "@descSentAccounts": {
+    "description": "Summary line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descSentSettings": "Settings sent: {count}",
+  "@descSentSettings": {
+    "description": "Summary line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descAddedAccounts": "Accounts added: {count}",
+  "@descAddedAccounts": {
+    "description": "Summary line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descAddedAccountsSkipped": "Accounts added: {count} ({skipped} already present, kept)",
+  "@descAddedAccountsSkipped": {
+    "description": "Summary line. {skipped} is the number of accounts kept as they were.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "descAppliedSettings": "Settings applied: {count}",
+  "@descAppliedSettings": {
+    "description": "Summary line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "descNothingToSync": "Nothing to sync.",
+  "@descNothingToSync": {
+    "description": "Summary line."
+  },
+  "titleSyncFailed": "Sync failed",
+  "@titleSyncFailed": {
+    "description": "Status title. Keep short."
+  },
+  "tabServerDetails": "Server details",
+  "@tabServerDetails": {
+    "description": "Tab. Keep short."
+  },
+  "tabSync": "Sync",
+  "@tabSync": {
+    "description": "Tab. Keep short."
+  },
+  "descReceiveHint": "On the other device, choose “Receive over Wi-Fi” → “Scan QR code”",
+  "@descReceiveHint": {
+    "description": "Hint under the host QR."
+  },
+  "descEnterManuallyHint": "Or enter these manually",
+  "@descEnterManuallyHint": {
+    "description": "Heading over the host details."
+  },
+  "labelHostIpShort": "Host IP",
+  "@labelHostIpShort": {
+    "description": "Info row label. Keep short."
+  },
+  "actionCopyCode": "Copy code",
+  "@actionCopyCode": {
+    "description": "Button. Keep short."
+  },
+  "descPairingCodeCopied": "Pairing code copied. It is cleared from the clipboard after 60 seconds.",
+  "@descPairingCodeCopied": {
+    "description": "Snackbar."
+  },
+  "actionStopHosting": "Stop hosting",
+  "@actionStopHosting": {
+    "description": "Button. Keep short."
+  },
+  "descClientConnected": "A device is connected. Open the Sync tab to choose what to share.",
+  "@descClientConnected": {
+    "description": "Status text."
+  },
+  "descWaitingForClient": "Waiting for the other device to connect…",
+  "@descWaitingForClient": {
+    "description": "Status text."
+  },
+  "descNoClientYet": "No device is connected yet. Open the Server details tab and let the other device scan the QR or enter the code.",
+  "@descNoClientYet": {
+    "description": "Hint text."
+  },
+  "titleNewClientPhone": "New phone",
+  "@titleNewClientPhone": {
+    "description": "Section header. Keep short."
+  },
+  "descFullSync": "Send everything — all accounts and app settings — to a phone that is setting up for the first time. Device-specific items (app lock, PIN, phone-lock unlock, recovery key) are not sent.",
+  "@descFullSync": {
+    "description": "Section body."
+  },
+  "actionFullSync": "Full sync",
+  "@actionFullSync": {
+    "description": "Button. Keep short."
+  },
+  "titleSyncToPhone": "Sync to a phone",
+  "@titleSyncToPhone": {
+    "description": "Section header. Keep short."
+  },
+  "descSelectiveSync": "For a phone that already has the app with its own data. Choose what to add:",
+  "@descSelectiveSync": {
+    "description": "Section body."
+  },
+  "labelSyncAccounts": "Accounts",
+  "@labelSyncAccounts": {
+    "description": "Checkbox label. Keep short."
+  },
+  "labelSyncSettings": "Settings",
+  "@labelSyncSettings": {
+    "description": "Checkbox label. Keep short."
+  },
+  "descSyncSettings": "Theme, auto-lock, and sync timeouts",
+  "@descSyncSettings": {
+    "description": "Checkbox subtitle."
+  },
+  "descNoOverride": "This will not override anything already on the other device. If something matches, the other device keeps its own version — its data is retained.",
+  "@descNoOverride": {
+    "description": "Info text."
+  },
+  "actionSync": "Sync",
+  "@actionSync": {
+    "description": "Button. Keep to one word."
+  },
+  "descSyncing": "Syncing…",
+  "@descSyncing": {
+    "description": "Progress text."
+  },
+  "labelDurationSeconds": "~{seconds} s",
+  "@labelDurationSeconds": {
+    "description": "Estimated time in seconds. Keep short.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "labelDurationMinutes": "~{minutes} min",
+  "@labelDurationMinutes": {
+    "description": "Estimated time in minutes. Keep short.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "labelDurationMinSec": "~{minutes} min {seconds} s",
+  "@labelDurationMinSec": {
+    "description": "Estimated time. Keep short.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "titleOpticalSend": "Optical stream",
+  "@titleOpticalSend": {
+    "description": "Screen title. Keep short."
+  },
+  "titleOpticalScan": "Scan optical stream",
+  "@titleOpticalScan": {
+    "description": "Screen title. Keep short."
+  },
+  "descReconstructing": "Reconstructing accounts…",
+  "@descReconstructing": {
+    "description": "Progress text."
+  },
+  "titleLargeVaultWarning": "Large data warning",
+  "@titleLargeVaultWarning": {
+    "description": "Warning title. Keep short."
+  },
+  "descLargeVault": "This transfer has {chunks} chunks ({duration} estimated). Streaming a lot of data over camera QR can be slow. Consider Wi-Fi sync for a faster transfer.",
+  "@descLargeVault": {
+    "description": "Warning body. {chunks} is a number, {duration} an estimated time like ~30 s.",
+    "placeholders": {
+      "chunks": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "descPointReceiver": "Point the receiving device camera at this animated QR stream. The data is encrypted with the transfer code; no network is used.",
+  "@descPointReceiver": {
+    "description": "Instruction text."
+  },
+  "labelStreamHash": "Stream hash:",
+  "@labelStreamHash": {
+    "description": "Label. Keep short."
+  },
+  "labelEstDuration": "Estimated time:",
+  "@labelEstDuration": {
+    "description": "Label. Keep short."
+  },
+  "labelFramesRendered": "Frames shown:",
+  "@labelFramesRendered": {
+    "description": "Label. Keep short."
+  },
+  "labelFramesValue": "{frame} (chunks: {total})",
+  "@labelFramesValue": {
+    "description": "Frame counter. {frame} and {total} are numbers.",
+    "placeholders": {
+      "frame": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "labelTargetFps": "Target FPS:",
+  "@labelTargetFps": {
+    "description": "Label. Keep short."
+  },
+  "labelFps": "{fps} FPS",
+  "@labelFps": {
+    "description": "Frames per second option. {fps} is a number. Same in every language.",
+    "placeholders": {
+      "fps": {
+        "type": "int"
+      }
+    }
+  },
+  "labelRemaining": "{time} remaining",
+  "@labelRemaining": {
+    "description": "Remaining time. {time} is like ~30 s. Keep short.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "descAlignCamera": "Align the camera with the sending screen…",
+  "@descAlignCamera": {
+    "description": "Receiver status text."
+  },
+  "descReconstructingStream": "Reconstructing the stream…",
+  "@descReconstructingStream": {
+    "description": "Receiver status text."
+  },
+  "descCaptured": "Captured: {solved} / {total} chunks",
+  "@descCaptured": {
+    "description": "Receiver progress. {solved} and {total} are numbers.",
+    "placeholders": {
+      "solved": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "labelSession": "Session: {hash}",
+  "@labelSession": {
+    "description": "Receiver session id. {hash} is a short code.",
+    "placeholders": {
+      "hash": {
+        "type": "String"
+      }
+    }
+  },
+  "titleOpticalComplete": "Optical sync done",
+  "@titleOpticalComplete": {
+    "description": "Status title. Keep short."
+  },
+  "descOpticalComplete": "The accounts were rebuilt from the optical QR stream.",
+  "@descOpticalComplete": {
+    "description": "Status text."
+  },
+  "titleOpticalFailed": "Optical sync failed",
+  "@titleOpticalFailed": {
+    "description": "Status title. Keep short."
+  },
+  "titleScanSyncQr": "Scan sync QR code",
+  "@titleScanSyncQr": {
+    "description": "Screen title. Keep short."
+  },
+  "descScanSenderQr": "Scan the QR shown on the sending device",
+  "@descScanSenderQr": {
+    "description": "Instruction over the camera view."
+  },
+  "descFeatures01": "Core 2FA & OTP tools",
+  "@descFeatures01": {
+    "description": "Features screen: category heading."
+  },
+  "descFeatures02": "Standards-compliant code generation and scanning",
+  "@descFeatures02": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures03": "TOTP time-based codes",
+  "@descFeatures03": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures04": "Generate secure time-based one-time passwords compliant with RFC 6238. Supports 30 or 60 second periods, 6 or 8 digits, and SHA-1, SHA-256 or SHA-512.",
+  "@descFeatures04": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures05": "RFC 6238 standard",
+  "@descFeatures05": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures06": "SHA-1/256/512",
+  "@descFeatures06": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures07": "30 s or 60 s",
+  "@descFeatures07": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures08": "Live ring timer",
+  "@descFeatures08": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures09": "HOTP counter codes",
+  "@descFeatures09": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures10": "Counter-based codes (RFC 4226) from HOTP QR codes. Tap the next code button for each new code. The counter is saved before the code is shown.",
+  "@descFeatures10": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures11": "Add by QR code",
+  "@descFeatures11": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures12": "Counter saved",
+  "@descFeatures12": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures13": "One code per tap",
+  "@descFeatures13": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures14": "Instant QR code scanner",
+  "@descFeatures14": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures15": "Add accounts by pointing your camera at standard 2FA QR codes (otpauth://). Includes a flashlight toggle and instant validation.",
+  "@descFeatures15": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures16": "Fast detection",
+  "@descFeatures16": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures17": "Flashlight support",
+  "@descFeatures17": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures18": "Safe input checks",
+  "@descFeatures18": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures19": "Brand icons",
+  "@descFeatures19": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures20": "Shows a brand logo for common services (Apple, AWS, Binance, Discord, GitHub, Google, Microsoft, Nintendo, Proton, Steam) and colorful initials for all others.",
+  "@descFeatures20": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures21": "10 built-in brands",
+  "@descFeatures21": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures22": "Colorful initials",
+  "@descFeatures22": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures23": "Automatic match",
+  "@descFeatures23": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures24": "Quick copy & countdown",
+  "@descFeatures24": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures25": "Tap any code to copy it to the clipboard with haptic feedback. A circular timer shows how long the code stays valid.",
+  "@descFeatures25": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures26": "One-tap copy",
+  "@descFeatures26": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures27": "Haptic feedback",
+  "@descFeatures27": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures28": "Smooth progress ring",
+  "@descFeatures28": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures29": "Vault security & privacy",
+  "@descFeatures29": {
+    "description": "Features screen: category heading."
+  },
+  "descFeatures30": "Strong encryption, biometrics and zero tracking",
+  "@descFeatures30": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures31": "AES-256-GCM encryption",
+  "@descFeatures31": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures32": "All account secrets are encrypted at rest with AES-256-GCM. The device key is kept in the Android Keystore (hardware-backed on phones that support it).",
+  "@descFeatures32": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures33": "AES-256-GCM",
+  "@descFeatures33": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures34": "Android Keystore",
+  "@descFeatures34": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures35": "No plain text at rest",
+  "@descFeatures35": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures36": "Biometric & screen app lock",
+  "@descFeatures36": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures37": "Lock the app behind your fingerprint, face unlock, your phone screen lock, or an App PIN. Keeps your codes safe from people who pick up your phone.",
+  "@descFeatures37": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures38": "Fingerprint / face",
+  "@descFeatures38": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures39": "Phone lock fallback",
+  "@descFeatures39": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures40": "Fast unlock",
+  "@descFeatures40": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures41": "Automatic lock",
+  "@descFeatures41": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures42": "Locks the app and clears decrypted codes from memory when you switch apps, minimize the app, or let the phone sleep.",
+  "@descFeatures42": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures43": "Background auto-lock",
+  "@descFeatures43": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures44": "Memory cleanup",
+  "@descFeatures44": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures45": "Configurable timeout",
+  "@descFeatures45": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures46": "Screenshot guard (FLAG_SECURE)",
+  "@descFeatures46": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures47": "On by default. Blocks screenshots, screen recording and recent-apps thumbnails, so your codes cannot be captured from the screen.",
+  "@descFeatures47": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures48": "FLAG_SECURE",
+  "@descFeatures48": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures49": "No recents preview",
+  "@descFeatures49": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures50": "No screen capture",
+  "@descFeatures50": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures51": "Offline & zero telemetry",
+  "@descFeatures51": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures52": "Works fully on your device: no internet backend, cloud login, analytics, crash reporting or tracking. Wi-Fi sync uses only your local network.",
+  "@descFeatures52": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures53": "Fully offline",
+  "@descFeatures53": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures54": "No analytics",
+  "@descFeatures54": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures55": "No cloud accounts",
+  "@descFeatures55": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures56": "Secrets stay encrypted",
+  "@descFeatures56": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures57": "Organization & productivity",
+  "@descFeatures57": {
+    "description": "Features screen: category heading."
+  },
+  "descFeatures58": "Group, search and manage your accounts",
+  "@descFeatures58": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures59": "Multi-tag labels",
+  "@descFeatures59": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures60": "Give any account several tags (for example Work, Personal, Finance). Filter the account list by tag with one tap on the filter bar.",
+  "@descFeatures60": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures61": "Many tags per account",
+  "@descFeatures61": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures62": "Tag chips",
+  "@descFeatures62": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures63": "One-tap filtering",
+  "@descFeatures63": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures64": "Tag cloud",
+  "@descFeatures64": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures65": "A tag cloud shows all your tags and how many accounts use each. Tap a tag to show only its accounts.",
+  "@descFeatures65": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures66": "Visual tag view",
+  "@descFeatures66": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures67": "Account counts",
+  "@descFeatures67": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures68": "Fast navigation",
+  "@descFeatures68": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures69": "Live search",
+  "@descFeatures69": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures70": "Find any account by typing its name, user name, service or tag; results update as you type.",
+  "@descFeatures70": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures71": "Real-time search",
+  "@descFeatures71": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures72": "Names & tags",
+  "@descFeatures72": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures73": "Instant results",
+  "@descFeatures73": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures74": "Ordering & editing",
+  "@descFeatures74": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures75": "Put your accounts in the order you like, and change account names, services or code settings when needed.",
+  "@descFeatures75": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures76": "Drag to reorder",
+  "@descFeatures76": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures77": "Edit details",
+  "@descFeatures77": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures78": "Batch actions",
+  "@descFeatures78": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures79": "Sync, air-gap & backups",
+  "@descFeatures79": {
+    "description": "Features screen: category heading."
+  },
+  "descFeatures80": "Move accounts safely and export encrypted backups",
+  "@descFeatures80": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures81": "Wi-Fi sync",
+  "@descFeatures81": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures82": "Move accounts between two devices on your local Wi-Fi. A pairing code shown as a QR code protects the transfer; the data is encrypted with a key made from that code. No internet is used.",
+  "@descFeatures82": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures83": "Local Wi-Fi only",
+  "@descFeatures83": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures84": "Encrypted transfer",
+  "@descFeatures84": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures85": "No cloud",
+  "@descFeatures85": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures86": "Optical air-gap sync",
+  "@descFeatures86": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures87": "Move accounts to an offline device with an animated series of QR codes, without Wi-Fi or Bluetooth. The QR codes are encrypted with a one-time code that you type.",
+  "@descFeatures87": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures88": "No network",
+  "@descFeatures88": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures89": "Animated QR stream",
+  "@descFeatures89": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures90": "Encrypted stream",
+  "@descFeatures90": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures91": "Encrypted backups",
+  "@descFeatures91": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures92": "Export all your accounts to an encrypted backup file protected by your own password (AES-256 with a PBKDF2 key).",
+  "@descFeatures92": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures93": "AES-256 encrypted",
+  "@descFeatures93": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures94": "Password protected",
+  "@descFeatures94": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures95": "Portable file",
+  "@descFeatures95": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures96": "Safe import",
+  "@descFeatures96": {
+    "description": "Features screen: heading."
+  },
+  "descFeatures97": "Import backups or receive sync data safely. Existing accounts are kept and new ones are added; nothing is overwritten.",
+  "@descFeatures97": {
+    "description": "Features screen: feature description."
+  },
+  "descFeatures98": "Add-only merge",
+  "@descFeatures98": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures99": "Duplicate protection",
+  "@descFeatures99": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures100": "Import summary",
+  "@descFeatures100": {
+    "description": "Features screen: feature highlight chip."
+  },
+  "descFeatures101": "Features",
+  "@descFeatures101": {
+    "description": "Features screen: text."
+  },
+  "descFeatures102": "{appName} features",
+  "@descFeatures102": {
+    "description": "Features screen: text. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "descFeatures103": "Explore every security safeguard and code tool built into the app.",
+  "@descFeatures103": {
+    "description": "Features screen: text."
+  },
+  "helpHome01": "Help center",
+  "@helpHome01": {
+    "description": "Help center home: text."
+  },
+  "helpHome02": "Authentication & setup",
+  "@helpHome02": {
+    "description": "Help center home: section heading (shown in capitals)."
+  },
+  "helpHome03": "Getting started & adding accounts",
+  "@helpHome03": {
+    "description": "Help center home: heading."
+  },
+  "helpHome04": "How to scan QR codes, add secret keys by hand, and use your 2FA codes.",
+  "@helpHome04": {
+    "description": "Help center home: heading."
+  },
+  "helpHome05": "Time sync & code drift",
+  "@helpHome05": {
+    "description": "Help center home: heading."
+  },
+  "helpHome06": "Fixing rejected codes, phone clock offsets, and HOTP counter codes.",
+  "@helpHome06": {
+    "description": "Help center home: heading."
+  },
+  "helpHome07": "Tags & account organization",
+  "@helpHome07": {
+    "description": "Help center home: heading."
+  },
+  "helpHome08": "Adding tags, filtering accounts, the tag cloud, and managing tags.",
+  "@helpHome08": {
+    "description": "Help center home: heading."
+  },
+  "helpHome09": "Security & vault protection",
+  "@helpHome09": {
+    "description": "Help center home: section heading (shown in capitals)."
+  },
+  "helpHome10": "Biometric & app lock",
+  "@helpHome10": {
+    "description": "Help center home: heading."
+  },
+  "helpHome11": "Fingerprint and face unlock, phone screen lock fallback, and auto-lock rules.",
+  "@helpHome11": {
+    "description": "Help center home: heading."
+  },
+  "helpHome12": "Vault & screenshot guard",
+  "@helpHome12": {
+    "description": "Help center home: heading."
+  },
+  "helpHome13": "Android Keystore key storage, FLAG_SECURE screen protection, and offline privacy.",
+  "@helpHome13": {
+    "description": "Help center home: heading."
+  },
+  "helpHome14": "Sync & backups",
+  "@helpHome14": {
+    "description": "Help center home: section heading (shown in capitals)."
+  },
+  "helpHome15": "Wi-Fi sync",
+  "@helpHome15": {
+    "description": "Help center home: heading."
+  },
+  "helpHome16": "Direct device-to-device transfer over local Wi-Fi, encrypted with a key from the pairing code.",
+  "@helpHome16": {
+    "description": "Help center home: heading."
+  },
+  "helpHome17": "Optical air-gap transfer",
+  "@helpHome17": {
+    "description": "Help center home: heading."
+  },
+  "helpHome18": "Move accounts to an offline device with animated QR codes.",
+  "@helpHome18": {
+    "description": "Help center home: heading."
+  },
+  "helpHome19": "Encrypted backup & restore",
+  "@helpHome19": {
+    "description": "Help center home: heading."
+  },
+  "helpHome20": "Making password-protected backup files and restoring accounts on a new phone.",
+  "@helpHome20": {
+    "description": "Help center home: heading."
+  },
+  "helpHome21": "Frequently asked questions",
+  "@helpHome21": {
+    "description": "Help center home: section heading (shown in capitals)."
+  },
+  "helpHome22": "FAQs & troubleshooting",
+  "@helpHome22": {
+    "description": "Help center home: heading."
+  },
+  "helpHome23": "Short answers about codes, backups, permissions and moving to a new phone.",
+  "@helpHome23": {
+    "description": "Help center home: heading."
+  },
+  "helpHome24": "Help center & guides",
+  "@helpHome24": {
+    "description": "Help center home: text."
+  },
+  "helpHome25": "Guides and answers for every feature of {appName}.",
+  "@helpHome25": {
+    "description": "Help center home: text. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpStart01": "Getting started",
+  "@helpStart01": {
+    "description": "Help: getting started: text."
+  },
+  "helpStart02": "{appName} makes two-factor (2FA) codes that protect your online accounts. All codes are made on your device without an internet connection.",
+  "@helpStart02": {
+    "description": "Help: getting started: intro paragraph. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpStart03": "Adding an account with a QR code",
+  "@helpStart03": {
+    "description": "Help: getting started: heading."
+  },
+  "helpStart04": "On the service (for example Google, GitHub, Amazon), open its security or 2FA settings and choose to set up an authenticator app.",
+  "@helpStart04": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart05": "In {appName}, tap the “+” button on the home screen and choose “{qrScanner}”.",
+  "@helpStart05": {
+    "description": "Help: getting started: bullet point. {appName} = the app name, {qrScanner} = the current name of that menu item or button.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      },
+      "qrScanner": {
+        "type": "String"
+      }
+    }
+  },
+  "helpStart06": "Point the camera at the QR code on your computer or other screen. The account is checked and added right away.",
+  "@helpStart06": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart07": "Adding an account by hand",
+  "@helpStart07": {
+    "description": "Help: getting started: heading."
+  },
+  "helpStart08": "If you cannot scan a QR code, choose “{manualEntry}” from the add menu.",
+  "@helpStart08": {
+    "description": "Help: getting started: bullet point. {manualEntry} = the current name of that menu item or button.",
+    "placeholders": {
+      "manualEntry": {
+        "type": "String"
+      }
+    }
+  },
+  "helpStart09": "Enter the account name (for example your email or user name) and the issuer (for example GitHub, Google).",
+  "@helpStart09": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart10": "Paste the secret key (Base32) that the service gives you.",
+  "@helpStart10": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart11": "Under advanced settings you can set the algorithm (SHA1, SHA256, SHA512), digits (6 or 8) and period (30 or 60 seconds).",
+  "@helpStart11": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart12": "Using your 2FA codes",
+  "@helpStart12": {
+    "description": "Help: getting started: heading."
+  },
+  "helpStart13": "Time-based (TOTP) codes change every 30 seconds by default. The countdown ring shows how long the code stays valid.",
+  "@helpStart13": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart14": "Tap any account to copy its current code to the clipboard.",
+  "@helpStart14": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart15": "Paste the code into the sign-in screen of the website or service.",
+  "@helpStart15": {
+    "description": "Help: getting started: bullet point."
+  },
+  "helpStart16": "Tip: Always keep the backup recovery codes from your online services in a safe place, in case you lose your phone.",
+  "@helpStart16": {
+    "description": "Help: getting started: tip box."
+  },
+  "helpTime01": "Time sync & code drift",
+  "@helpTime01": {
+    "description": "Help: time sync: text."
+  },
+  "helpTime02": "TOTP codes depend on the exact time on your phone. If the clock is even a few seconds wrong, websites may reject your codes.",
+  "@helpTime02": {
+    "description": "Help: time sync: intro paragraph."
+  },
+  "helpTime03": "How TOTP time works",
+  "@helpTime03": {
+    "description": "Help: time sync: heading."
+  },
+  "helpTime04": "A time-based code is made from your secret key and the current time, counted in 30-second steps.",
+  "@helpTime04": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime05": "Your phone and the server must agree on the time in UTC. Changing your time zone does not affect UTC.",
+  "@helpTime05": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime06": "Fixing rejected codes",
+  "@helpTime06": {
+    "description": "Help: time sync: heading."
+  },
+  "helpTime07": "Open your phone settings and go to System → Date & time.",
+  "@helpTime07": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime08": "Turn on “Set time automatically” and “Set time zone automatically”.",
+  "@helpTime08": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime09": "If they are already on, turn them off and on again to make the phone fetch the network time now.",
+  "@helpTime09": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime10": "HOTP counter codes",
+  "@helpTime10": {
+    "description": "Help: time sync: heading."
+  },
+  "helpTime11": "HOTP codes are based on a counter, not on time, so the clock does not matter. Tap the next code button on the account to get a new code.",
+  "@helpTime11": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime12": "Each tap uses up one code. Tap only when you need a code: the service may reject codes if you skip too many.",
+  "@helpTime12": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime13": "A restored backup or a copy on a second device can hold an older counter. If the service rejects a code, tap a few more times to catch up.",
+  "@helpTime13": {
+    "description": "Help: time sync: bullet point."
+  },
+  "helpTime14": "Tip: Most rejected codes come from a wrong phone clock. Automatic network time fixes this for good.",
+  "@helpTime14": {
+    "description": "Help: time sync: tip box."
+  },
+  "helpTags01": "Tags & organization",
+  "@helpTags01": {
+    "description": "Help: tags: text."
+  },
+  "helpTags02": "Tags put your 2FA accounts into your own groups, such as Work, Personal, Banking or Social, so you can filter them easily.",
+  "@helpTags02": {
+    "description": "Help: tags: intro paragraph."
+  },
+  "helpTags03": "Adding tags to accounts",
+  "@helpTags03": {
+    "description": "Help: tags: heading."
+  },
+  "helpTags04": "When adding or editing an account, type tag names separated by commas (for example “Work, Cloud, Tech”).",
+  "@helpTags04": {
+    "description": "Help: tags: bullet point."
+  },
+  "helpTags05": "While you type, the app suggests tags you already use, so names stay the same.",
+  "@helpTags05": {
+    "description": "Help: tags: bullet point."
+  },
+  "helpTags06": "Tap “{browseTags}” to pick from all tags already in use.",
+  "@helpTags06": {
+    "description": "Help: tags: bullet point. {browseTags} = the current name of that menu item or button.",
+    "placeholders": {
+      "browseTags": {
+        "type": "String"
+      }
+    }
+  },
+  "helpTags07": "Filtering by tag",
+  "@helpTags07": {
+    "description": "Help: tags: heading."
+  },
+  "helpTags08": "The tag bar on the home screen shows your tags as chips you can tap.",
+  "@helpTags08": {
+    "description": "Help: tags: bullet point."
+  },
+  "helpTags09": "Tap a tag chip to show only its accounts. Tap “{allTags}” to clear the filter.",
+  "@helpTags09": {
+    "description": "Help: tags: bullet point. {allTags} = the current name of that menu item or button.",
+    "placeholders": {
+      "allTags": {
+        "type": "String"
+      }
+    }
+  },
+  "helpTags10": "Switch to the tag cloud to see all tags and how many accounts each has.",
+  "@helpTags10": {
+    "description": "Help: tags: bullet point."
+  },
+  "helpTags11": "Managing tags",
+  "@helpTags11": {
+    "description": "Help: tags: heading."
+  },
+  "helpTags12": "Go to {settings} → {manageTags} to rename or delete a tag for all accounts at once. Renaming a tag to an existing name merges the two.",
+  "@helpTags12": {
+    "description": "Help: tags: bullet point. {settings} = the current name of that menu item or button, {manageTags} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "manageTags": {
+        "type": "String"
+      }
+    }
+  },
+  "helpTags13": "Renaming a tag updates every account that has it.",
+  "@helpTags13": {
+    "description": "Help: tags: bullet point."
+  },
+  "helpTags14": "Deleting a tag removes the label from accounts; the accounts themselves stay.",
+  "@helpTags14": {
+    "description": "Help: tags: bullet point."
+  },
+  "helpTags15": "Tip: Short tag names (for example “Work”, “Finance”) look best in the filter bar.",
+  "@helpTags15": {
+    "description": "Help: tags: tip box."
+  },
+  "helpLock01": "Biometric & app lock",
+  "@helpLock01": {
+    "description": "Help: biometric and app lock: text."
+  },
+  "helpLock02": "{appName} can protect your codes with your fingerprint or face, your phone screen lock, or an App PIN.",
+  "@helpLock02": {
+    "description": "Help: biometric and app lock: intro paragraph. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpLock03": "How app lock works",
+  "@helpLock03": {
+    "description": "Help: biometric and app lock: heading."
+  },
+  "helpLock04": "When it is on in {settings} → {security}, the app asks you to unlock whenever you open it or come back to it.",
+  "@helpLock04": {
+    "description": "Help: biometric and app lock: bullet point. {settings} = the current name of that menu item or button, {security} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "security": {
+        "type": "String"
+      }
+    }
+  },
+  "helpLock05": "Decrypted codes stay in memory only while the app is open and unlocked.",
+  "@helpLock05": {
+    "description": "Help: biometric and app lock: bullet point."
+  },
+  "helpLock06": "Automatic lock",
+  "@helpLock06": {
+    "description": "Help: biometric and app lock: heading."
+  },
+  "helpLock07": "As soon as you leave the app, switch apps, or lock the phone screen, the app locks. While it is open, it also locks after the auto-lock timeout.",
+  "@helpLock07": {
+    "description": "Help: biometric and app lock: bullet point."
+  },
+  "helpLock08": "Decrypted codes are removed from memory, so someone who picks up the phone cannot read them.",
+  "@helpLock08": {
+    "description": "Help: biometric and app lock: bullet point."
+  },
+  "helpLock09": "Fallback & phone lock",
+  "@helpLock09": {
+    "description": "Help: biometric and app lock: heading."
+  },
+  "helpLock10": "If your fingerprint or face is not recognized (for example wet fingers or low light), you can use your phone screen lock PIN, pattern or password.",
+  "@helpLock10": {
+    "description": "Help: biometric and app lock: bullet point."
+  },
+  "helpLock11": "The check is done by Android itself. {appName} never sees or stores your biometric data or phone passcode.",
+  "@helpLock11": {
+    "description": "Help: biometric and app lock: bullet point. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpLock12": "Tip: Set a secure screen lock in your phone settings for the best protection.",
+  "@helpLock12": {
+    "description": "Help: biometric and app lock: tip box."
+  },
+  "helpVault01": "Vault security & privacy",
+  "@helpVault01": {
+    "description": "Help: vault security: text."
+  },
+  "helpVault02": "{appName} is built to work offline and trust no server. Your secret keys are encrypted on your device and never sent to any remote server.",
+  "@helpVault02": {
+    "description": "Help: vault security: intro paragraph. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpVault03": "AES-256-GCM encryption",
+  "@helpVault03": {
+    "description": "Help: vault security: heading."
+  },
+  "helpVault04": "All secrets and code settings are encrypted with AES-256 in GCM mode, which also detects any change to the data.",
+  "@helpVault04": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault05": "The encryption key is made on your device and kept in the Android Keystore (hardware-backed on phones that support it).",
+  "@helpVault05": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault06": "No secret is ever written to the database as plain text.",
+  "@helpVault06": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault07": "Screenshot guard (FLAG_SECURE)",
+  "@helpVault07": {
+    "description": "Help: vault security: heading."
+  },
+  "helpVault08": "By default, the app turns on Android FLAG_SECURE for its window. You can turn it off in Security settings.",
+  "@helpVault08": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault09": "This blocks screenshots, screen recording and screen-reading apps from capturing your codes.",
+  "@helpVault09": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault10": "In the recent-apps view, the app shows a blank screen, so people nearby cannot see your codes.",
+  "@helpVault10": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault11": "No cloud, no telemetry",
+  "@helpVault11": {
+    "description": "Help: vault security: heading."
+  },
+  "helpVault12": "The app has no server, no login and no advertising or analytics code.",
+  "@helpVault12": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault13": "Your secrets and codes are never sent to any server. The app sends no logs, device IDs or usage data.",
+  "@helpVault13": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault14": "Everything, including QR scanning, code generation and backup export, runs offline. Only Wi-Fi sync uses your local network.",
+  "@helpVault14": {
+    "description": "Help: vault security: bullet point."
+  },
+  "helpVault15": "Privacy first: your authentication secrets belong to you alone.",
+  "@helpVault15": {
+    "description": "Help: vault security: tip box."
+  },
+  "helpWifi01": "Wi-Fi sync",
+  "@helpWifi01": {
+    "description": "Help: Wi-Fi sync: text."
+  },
+  "helpWifi02": "Wi-Fi sync moves your 2FA accounts directly between two phones on the same Wi-Fi network. The data is encrypted, and no cloud service is involved.",
+  "@helpWifi02": {
+    "description": "Help: Wi-Fi sync: intro paragraph."
+  },
+  "helpWifi03": "How Wi-Fi sync works",
+  "@helpWifi03": {
+    "description": "Help: Wi-Fi sync: heading."
+  },
+  "helpWifi04": "Step 1: Connect both devices to the same Wi-Fi network.",
+  "@helpWifi04": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi05": "Step 2: On the sending device, open {settings} → {syncDevices} → “{sendOverWifi}”. It shows a pairing QR code and a pairing code.",
+  "@helpWifi05": {
+    "description": "Help: Wi-Fi sync: bullet point. {settings} = the current name of that menu item or button, {syncDevices} = the current name of that menu item or button, {sendOverWifi} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "syncDevices": {
+        "type": "String"
+      },
+      "sendOverWifi": {
+        "type": "String"
+      }
+    }
+  },
+  "helpWifi06": "Step 3: On the receiving device, tap “{receiveOverWifi}” and scan the pairing QR code (or type the details).",
+  "@helpWifi06": {
+    "description": "Help: Wi-Fi sync: bullet point. {receiveOverWifi} = the current name of that menu item or button.",
+    "placeholders": {
+      "receiveOverWifi": {
+        "type": "String"
+      }
+    }
+  },
+  "helpWifi07": "Step 4: The devices connect, and the sender chooses what to share.",
+  "@helpWifi07": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi08": "Encryption",
+  "@helpWifi08": {
+    "description": "Help: Wi-Fi sync: heading."
+  },
+  "helpWifi09": "The data is encrypted with AES-256-GCM, using a key made (with PBKDF2) from the pairing code shown on the screen.",
+  "@helpWifi09": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi10": "Someone watching your Wi-Fi traffic cannot read your 2FA secrets without the pairing code.",
+  "@helpWifi10": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi11": "The pairing code is never sent over the network; you move it yourself, by scanning or typing.",
+  "@helpWifi11": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi12": "Safe merging",
+  "@helpWifi12": {
+    "description": "Help: Wi-Fi sync: heading."
+  },
+  "helpWifi13": "Sync only adds accounts. Nothing on the receiving device is deleted or replaced.",
+  "@helpWifi13": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi14": "Accounts that already exist on the receiving device are skipped.",
+  "@helpWifi14": {
+    "description": "Help: Wi-Fi sync: bullet point."
+  },
+  "helpWifi15": "Tip: Keep both devices awake and on the same Wi-Fi until the transfer finishes.",
+  "@helpWifi15": {
+    "description": "Help: Wi-Fi sync: tip box."
+  },
+  "helpOptical01": "Optical air-gap transfer",
+  "@helpOptical01": {
+    "description": "Help: optical transfer: text."
+  },
+  "helpOptical02": "Optical transfer moves your accounts to an offline device with an animated series of QR codes, without Wi-Fi, Bluetooth or cables.",
+  "@helpOptical02": {
+    "description": "Help: optical transfer: intro paragraph."
+  },
+  "helpOptical03": "What is an air gap?",
+  "@helpOptical03": {
+    "description": "Help: optical transfer: heading."
+  },
+  "helpOptical04": "An air-gapped device has no network connection at all (no Wi-Fi, Bluetooth or mobile data; Airplane Mode on).",
+  "@helpOptical04": {
+    "description": "Help: optical transfer: bullet point."
+  },
+  "helpOptical05": "The data travels only as light, from screen to camera, so there is no network to listen to. The QR codes are encrypted, and the key comes from a code that is never shown on the sending screen.",
+  "@helpOptical05": {
+    "description": "Help: optical transfer: bullet point."
+  },
+  "helpOptical06": "How to do an optical transfer",
+  "@helpOptical06": {
+    "description": "Help: optical transfer: heading."
+  },
+  "helpOptical07": "Step 1: On the receiving device, go to {settings} → {syncDevices} → “{scanOptical}”. It shows a one-time transfer code.",
+  "@helpOptical07": {
+    "description": "Help: optical transfer: bullet point. {settings}, {syncDevices}, {scanOptical} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "syncDevices": {
+        "type": "String"
+      },
+      "scanOptical": {
+        "type": "String"
+      }
+    }
+  },
+  "helpOptical08": "Step 2: On the sending device, choose “{sendOptical}” and type that code. Your accounts are encrypted with it and shown as a looping series of QR codes.",
+  "@helpOptical08": {
+    "description": "Help: optical transfer: bullet point. {sendOptical} = the current name of that menu item or button.",
+    "placeholders": {
+      "sendOptical": {
+        "type": "String"
+      }
+    }
+  },
+  "helpOptical09": "Step 3: On the receiving device, tap “{startScanning}” and point the camera at the sending screen.",
+  "@helpOptical09": {
+    "description": "Help: optical transfer: bullet point. {startScanning} = the current name of that menu item or button.",
+    "placeholders": {
+      "startScanning": {
+        "type": "String"
+      }
+    }
+  },
+  "helpOptical10": "Step 4: The receiver collects all parts. When every part is read and the code matches, the accounts are imported. With a wrong code, nothing is imported.",
+  "@helpOptical10": {
+    "description": "Help: optical transfer: bullet point."
+  },
+  "helpOptical11": "Speed tips",
+  "@helpOptical11": {
+    "description": "Help: optical transfer: heading."
+  },
+  "helpOptical12": "You can set the speed on the sender to 10, 12 or 15 frames per second; use a slower speed if the camera misses frames.",
+  "@helpOptical12": {
+    "description": "Help: optical transfer: bullet point."
+  },
+  "helpOptical13": "Hold both devices steady in good light, and avoid reflections or glare on the screen.",
+  "@helpOptical13": {
+    "description": "Help: optical transfer: bullet point."
+  },
+  "helpOptical14": "Tip: Optical sync suits a dedicated offline backup phone kept in a safe place.",
+  "@helpOptical14": {
+    "description": "Help: optical transfer: tip box."
+  },
+  "helpBackup01": "Encrypted backup & restore",
+  "@helpBackup01": {
+    "description": "Help: backup and restore: text."
+  },
+  "helpBackup02": "Backups protect you if your phone is damaged or lost, or when you move to a new phone. Every backup file is encrypted with a password you choose.",
+  "@helpBackup02": {
+    "description": "Help: backup and restore: intro paragraph."
+  },
+  "helpBackup03": "Creating an encrypted backup",
+  "@helpBackup03": {
+    "description": "Help: backup and restore: heading."
+  },
+  "helpBackup04": "Go to {settings} → {backupRestore} → tap “{createBackup}”.",
+  "@helpBackup04": {
+    "description": "Help: backup and restore: bullet point. {settings} = the current name of that menu item or button, {backupRestore} = the current name of that menu item or button, {createBackup} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "backupRestore": {
+        "type": "String"
+      },
+      "createBackup": {
+        "type": "String"
+      }
+    }
+  },
+  "helpBackup05": "Choose a strong backup password. The app makes an AES-256 key from it with PBKDF2 (300,000 iterations) to encrypt the file.",
+  "@helpBackup05": {
+    "description": "Help: backup and restore: bullet point."
+  },
+  "helpBackup06": "Save the encrypted .aes backup file on your device, a USB drive, or your own offline archive.",
+  "@helpBackup06": {
+    "description": "Help: backup and restore: bullet point."
+  },
+  "helpBackup07": "Password safety & recovery",
+  "@helpBackup07": {
+    "description": "Help: backup and restore: heading."
+  },
+  "helpBackup08": "Your backup password is never stored or sent anywhere. You must remember it or keep it written down safely.",
+  "@helpBackup08": {
+    "description": "Help: backup and restore: bullet point."
+  },
+  "helpBackup09": "Because {appName} works fully offline, there is no “forgot password” or server reset. A lost backup password cannot be recovered.",
+  "@helpBackup09": {
+    "description": "Help: backup and restore: bullet point. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpBackup10": "Restoring a backup",
+  "@helpBackup10": {
+    "description": "Help: backup and restore: heading."
+  },
+  "helpBackup11": "Go to {settings} → {backupRestore} → tap “{restoreBackup}”.",
+  "@helpBackup11": {
+    "description": "Help: backup and restore: bullet point. {settings} = the current name of that menu item or button, {backupRestore} = the current name of that menu item or button, {restoreBackup} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "backupRestore": {
+        "type": "String"
+      },
+      "restoreBackup": {
+        "type": "String"
+      }
+    }
+  },
+  "helpBackup12": "Pick your backup file and enter the password you used when you made it.",
+  "@helpBackup12": {
+    "description": "Help: backup and restore: bullet point."
+  },
+  "helpBackup13": "The app checks the file and adds new accounts to the ones you have; nothing you have is deleted.",
+  "@helpBackup13": {
+    "description": "Help: backup and restore: bullet point."
+  },
+  "helpBackup14": "Tip: Make a fresh backup whenever you add important new 2FA accounts.",
+  "@helpBackup14": {
+    "description": "Help: backup and restore: tip box."
+  },
+  "helpFaq01": "FAQs & troubleshooting",
+  "@helpFaq01": {
+    "description": "Help: FAQ: text."
+  },
+  "helpFaq02": "Quick answers about 2FA codes, recovery, security and common problems.",
+  "@helpFaq02": {
+    "description": "Help: FAQ: intro paragraph."
+  },
+  "helpFaq03": "2FA codes",
+  "@helpFaq03": {
+    "description": "Help: FAQ: heading."
+  },
+  "helpFaq04": "Why do websites reject my codes?",
+  "@helpFaq04": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq05": "Usually the phone clock is wrong. Open your phone settings → Date & time and turn on “Set time automatically”, so the clock matches UTC.",
+  "@helpFaq05": {
+    "description": "Help: FAQ: answer."
+  },
+  "helpFaq06": "Can I copy a code with one tap?",
+  "@helpFaq06": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq07": "Yes. Tap the account on the home screen; its code is copied to the clipboard and a short message confirms it.",
+  "@helpFaq07": {
+    "description": "Help: FAQ: answer."
+  },
+  "helpFaq08": "How are HOTP codes different from TOTP codes?",
+  "@helpFaq08": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq09": "TOTP codes change every 30 seconds based on time. HOTP codes change only when you tap the next code button, and each tap uses up one code.",
+  "@helpFaq09": {
+    "description": "Help: FAQ: answer."
+  },
+  "helpFaq10": "Security & privacy",
+  "@helpFaq10": {
+    "description": "Help: FAQ: heading."
+  },
+  "helpFaq11": "Why is the app blank when I switch apps?",
+  "@helpFaq11": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq12": "The screenshot guard, on by default, turns on Android FLAG_SECURE. It stops screen recorders and the recent-apps view from capturing your codes.",
+  "@helpFaq12": {
+    "description": "Help: FAQ: answer."
+  },
+  "helpFaq13": "Does {appName} send any data online?",
+  "@helpFaq13": {
+    "description": "Help: FAQ: question. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpFaq14": "No. {appName} works offline. It has no analytics, tracking or cloud service. Your data leaves the device only when you start a Wi-Fi sync on your local network, an optical transfer, or a backup export.",
+  "@helpFaq14": {
+    "description": "Help: FAQ: answer. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpFaq15": "What if my fingerprint or face is not recognized?",
+  "@helpFaq15": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq16": "You can unlock with your phone screen lock PIN, pattern or password, or with your App PIN.",
+  "@helpFaq16": {
+    "description": "Help: FAQ: answer."
+  },
+  "helpFaq17": "Backups & moving phones",
+  "@helpFaq17": {
+    "description": "Help: FAQ: heading."
+  },
+  "helpFaq18": "How do I move my accounts to a new phone?",
+  "@helpFaq18": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq19": "Use “{syncDevices}” over local Wi-Fi, scan an optical QR stream, or export an encrypted backup on the old phone and restore it on the new one.",
+  "@helpFaq19": {
+    "description": "Help: FAQ: answer. {syncDevices} = the current name of that menu item or button.",
+    "placeholders": {
+      "syncDevices": {
+        "type": "String"
+      }
+    }
+  },
+  "helpFaq20": "What if I forget my backup password?",
+  "@helpFaq20": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq21": "Backups use AES-256 encryption and there is no server, so a lost backup password cannot be recovered. Keep it written down safely.",
+  "@helpFaq21": {
+    "description": "Help: FAQ: answer."
+  },
+  "helpFaq22": "Will restoring a backup erase my accounts?",
+  "@helpFaq22": {
+    "description": "Help: FAQ: question."
+  },
+  "helpFaq23": "No. {appName} only adds accounts. Your existing accounts stay, and duplicates are skipped.",
+  "@helpFaq23": {
+    "description": "Help: FAQ: answer. {appName} = the app name.",
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "helpFaq24": "Need more help? Read the other guides in Help, or check your permissions in {settings} → {permissions}.",
+  "@helpFaq24": {
+    "description": "Help: FAQ: tip box. {settings} = the current name of that menu item or button, {permissions} = the current name of that menu item or button.",
+    "placeholders": {
+      "settings": {
+        "type": "String"
+      },
+      "permissions": {
+        "type": "String"
+      }
+    }
+  },
+  "titleTransferCode": "Transfer code",
+  "@titleTransferCode": {
+    "description": "Optical sync: heading above the one-time transfer code, and the label of the field where it is typed."
+  },
+  "descTransferCodeShow": "Type this code on the sending device, then tap the button below. Do not show this code to anyone else.",
+  "@descTransferCodeShow": {
+    "description": "Optical sync, receiving device: instruction under the transfer code."
+  },
+  "actionStartScanning": "Start scanning",
+  "@actionStartScanning": {
+    "description": "Optical sync, receiving device: button that opens the camera after the code was typed on the sender."
+  },
+  "descTransferCodeEnter": "Type the transfer code shown on the receiving device. The QR stream is encrypted with it.",
+  "@descTransferCodeEnter": {
+    "description": "Optical sync, sending device: text in the dialog that asks for the transfer code."
+  },
+  "actionStartSending": "Start sending",
+  "@actionStartSending": {
+    "description": "Optical sync, sending device: dialog button that starts the encrypted QR stream."
+  },
+  "errorTransferCodeLength": "Type all {count} characters of the code.",
+  "@errorTransferCodeLength": {
+    "description": "Optical sync, sending device: field error when the typed code is too short or too long. {count} = number of characters.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorOpticalWrongCode": "The code did not match. On the sending device, stop and type the code again.",
+  "@errorOpticalWrongCode": {
+    "description": "Optical sync, receiving device: error when the stream could not be decrypted with this transfer code."
+  },
+  "errorOpticalCodeInvalid": "The transfer code is not valid. Start again and type the code shown on the receiving device.",
+  "@errorOpticalCodeInvalid": {
+    "description": "Optical sync, sending device: error when the typed transfer code is not well formed."
+  },
+  "tooltipNextCode": "Next code",
+  "@tooltipNextCode": {
+    "description": "Account tile on the home screen: tooltip of the icon button that makes the next HOTP code."
+  },
+  "descHotpTapForCode": "Tap the next code button first.",
+  "@descHotpTapForCode": {
+    "description": "Account tile on the home screen: message when an HOTP code is copied before one was made."
+  },
+  "errorHotpNextFailed": "Could not get the next code.",
+  "@errorHotpNextFailed": {
+    "description": "Account tile on the home screen: error when the next HOTP code could not be made or saved."
+  },
+  "tooltipShowPassword": "Show password",
+  "@tooltipShowPassword": {
+    "description": "Tooltip of the eye button in a password field, while the password is hidden."
+  },
+  "tooltipHidePassword": "Hide password",
+  "@tooltipHidePassword": {
+    "description": "Tooltip of the eye button in a password field, while the password is shown."
+  },
+  "tooltipClearSearch": "Clear search",
+  "@tooltipClearSearch": {
+    "description": "Tooltip of the button that clears a search field."
+  },
+  "tooltipShowCode": "Show code",
+  "@tooltipShowCode": {
+    "description": "Account tile: tooltip of the eye button while the code is hidden."
+  },
+  "tooltipHideCode": "Hide code",
+  "@tooltipHideCode": {
+    "description": "Account tile: tooltip of the eye button while the code is shown."
+  },
+  "tooltipAddAccount": "Add account",
+  "@tooltipAddAccount": {
+    "description": "Home screen: tooltip and screen reader name of the round add button."
+  },
+  "tooltipAddOptions": "More ways to add",
+  "@tooltipAddOptions": {
+    "description": "Home screen: screen reader hint for a long press on the add button, which opens the options menu."
+  },
+  "descCodeHidden": "Code hidden",
+  "@descCodeHidden": {
+    "description": "Account tile: what a screen reader says instead of reading out the asterisks of a hidden code."
+  },
+  "titleScreenPrivacySection": "Screen privacy",
+  "@titleScreenPrivacySection": {
+    "description": "Security screen: section heading above the screenshot switch."
+  },
+  "labelBlockScreenshots": "Block screenshots",
+  "@labelBlockScreenshots": {
+    "description": "Security screen: switch title. On by default."
+  },
+  "descBlockScreenshots": "Stops screenshots, screen recording and recent-apps previews from showing your codes",
+  "@descBlockScreenshots": {
+    "description": "Security screen: switch subtitle."
+  },
+  "titleAllowScreenshots": "Allow screenshots?",
+  "@titleAllowScreenshots": {
+    "description": "Warning dialog title, shown before screenshot blocking is turned off."
+  },
+  "descAllowScreenshotsWarning": "Your codes and secrets can then appear in screenshots, screen recordings and the recent-apps view. Other apps may also be able to capture them.",
+  "@descAllowScreenshotsWarning": {
+    "description": "Warning dialog body, shown before screenshot blocking is turned off."
+  },
+  "errorBlockScreenshotsFailed": "Could not change the screenshot setting",
+  "@errorBlockScreenshotsFailed": {
+    "description": "Message shown when the screenshot setting could not be applied."
+  },
+  "titleDataSection": "Data",
+  "@titleDataSection": {
+    "description": "Security screen section heading. Keep short."
+  },
+  "labelDeleteAllData": "Delete all data",
+  "@labelDeleteAllData": {
+    "description": "Security screen row that starts deleting all app data. Keep short."
+  },
+  "descDeleteAllDataEntry": "Remove every account and setting from this device",
+  "@descDeleteAllDataEntry": {
+    "description": "Subtitle of the Delete all data row."
+  },
+  "titleDeleteAllData": "Delete all data?",
+  "@titleDeleteAllData": {
+    "description": "Warning dialog title, shown before all app data is deleted. Keep short."
+  },
+  "descDeleteAllDataWarning": "This removes all your accounts, your App PIN, your recovery key and your settings from this device. It cannot be undone. Without a backup, you may lose access to your accounts.\n\nBackup files you saved elsewhere are not deleted.",
+  "@descDeleteAllDataWarning": {
+    "description": "Warning dialog body, shown before all app data is deleted."
+  },
+  "descDeleteAllDataUnderstand": "I understand this cannot be undone",
+  "@descDeleteAllDataUnderstand": {
+    "description": "Checkbox in the warning, shown only when the phone has no lock and no App PIN is set."
+  },
+  "actionDeleteAll": "Delete all",
+  "@actionDeleteAll": {
+    "description": "Button that confirms deleting all app data. Keep short."
+  },
+  "descAuthReasonDeleteAllData": "Confirm to delete all data",
+  "@descAuthReasonDeleteAllData": {
+    "description": "Reason shown in the system phone-lock prompt before all app data is deleted."
+  },
+  "descPinPurposeDeleteAllData": "To delete all data.",
+  "@descPinPurposeDeleteAllData": {
+    "description": "Why the App PIN is asked for, shown in the PIN dialog."
+  },
+  "descAllDataDeleted": "All data deleted",
+  "@descAllDataDeleted": {
+    "description": "Message shown after all app data was deleted."
+  },
+  "errorDeleteAllDataFailed": "Some data could not be deleted. Please try again.",
+  "@errorDeleteAllDataFailed": {
+    "description": "Message shown when part of the delete failed."
+  }
+}

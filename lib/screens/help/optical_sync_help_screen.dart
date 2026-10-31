@@ -2,8 +2,10 @@
 // Author: Sreeraj P
 // Description: User-facing guide for Optical Air-Gap sync via animated QR code series
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../providers/settings_provider.dart';
 
 class OpticalSyncHelpScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class OpticalSyncHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,64 +25,50 @@ class OpticalSyncHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Optical Air-Gap Transfer')),
+          appBar: AppBar(title: Text(l10n.helpOptical01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'Optical Air-Gap Transfer allows you to move your entire 2FA vault to an offline or air-gapped device using an animated sequence of high-density QR codes without Wi-Fi, Bluetooth, or cables.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpOptical02),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.qr_code_2_outlined,
-                title: 'What is an Optical Air-Gap?',
+                title: l10n.helpOptical03,
                 children: [
-                  _Bullet(
-                    'An air-gapped device is completely disconnected from all wireless networks (no Wi-Fi, no Bluetooth, no cellular, and in Airplane Mode).',
-                  ),
-                  _Bullet(
-                    'Optical transfer uses only visible light (screen to camera lens) as the physical data conduit, making network eavesdropping physically impossible.',
-                  ),
+                  _Bullet(l10n.helpOptical04),
+                  _Bullet(l10n.helpOptical05),
                 ],
               ),
 
               _Section(
                 icon: Icons.play_circle_outline,
-                title: 'How to Perform an Optical Transfer',
+                title: l10n.helpOptical06,
                 children: [
                   _Bullet(
-                    'Step 1: On the sending device, go to Settings -> Sync to Another Device -> tap the "Air-Gap Optical Transfer" option.',
+                    l10n.helpOptical07(
+                      l10n.titleSettings,
+                      l10n.titleSyncDevice,
+                      l10n.labelOpticalReceive,
+                    ),
                   ),
-                  _Bullet(
-                    'Step 2: The sender compresses and encodes your encrypted vault into an animated looping series of multi-frame QR codes.',
-                  ),
-                  _Bullet(
-                    'Step 3: On the receiving device, open the Optical QR Scanner and aim the camera at the sender screen.',
-                  ),
-                  _Bullet(
-                    'Step 4: The scanner automatically captures and reassembles all data frames. Once all parts are read, the vault is imported and verified.',
-                  ),
+                  _Bullet(l10n.helpOptical08(l10n.labelOpticalSend)),
+                  _Bullet(l10n.helpOptical09(l10n.actionStartScanning)),
+                  _Bullet(l10n.helpOptical10),
                 ],
               ),
 
               _Section(
                 icon: Icons.tune_outlined,
-                title: 'Frame Rate & Speed Tips',
+                title: l10n.helpOptical11,
                 children: [
-                  _Bullet(
-                    'You can adjust frame speed (e.g. 250ms to 500ms per frame) on the sender depending on camera performance.',
-                  ),
-                  _Bullet(
-                    'Hold both devices steady under good ambient lighting and avoid strong screen reflections or glare.',
-                  ),
+                  _Bullet(l10n.helpOptical12),
+                  _Bullet(l10n.helpOptical13),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: Optical sync is ideal for transferring tokens to a dedicated offline backup phone kept in a safe.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpOptical14),
             ],
           ),
         );

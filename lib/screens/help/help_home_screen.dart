@@ -1,9 +1,12 @@
 // File Path: sreerajp_authenticator/lib/screens/help/help_home_screen.dart
 // Author: Sreeraj P
-// Description: Help Center and knowledge base hub for SreerajP Authenticator with auto-lock monitoring
+// Description: Help Center and knowledge base hub for Sreeraj P Authenticator with auto-lock monitoring
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+
 import '../../providers/settings_provider.dart';
 import 'backup_help_screen.dart';
 import 'biometrics_help_screen.dart';
@@ -23,6 +26,7 @@ class HelpHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -32,109 +36,96 @@ class HelpHomeScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Help Center')),
+          appBar: AppBar(title: Text(l10n.helpHome01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
               _buildHeaderCard(context),
               const SizedBox(height: 20),
 
-              _buildSectionHeader(
-                context,
-                'Authentication & Setup',
-                Icons.key_outlined,
-              ),
+              _buildSectionHeader(context, l10n.helpHome02, Icons.key_outlined),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.qr_code_scanner_outlined,
-                title: 'Getting Started & Adding Accounts',
-                subtitle:
-                    'How to scan QR codes, add secret keys manually, and verify your 2FA codes.',
+                title: l10n.helpHome03,
+                subtitle: l10n.helpHome04,
                 onTap: () => _push(context, const GettingStartedHelpScreen()),
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.access_time_outlined,
-                title: 'Time Synchronization & Code Drift',
-                subtitle:
-                    'Fixing invalid codes, device clock offsets, and understanding HOTP event counters.',
+                title: l10n.helpHome05,
+                subtitle: l10n.helpHome06,
                 onTap: () => _push(context, const TimeSyncHelpScreen()),
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.label_outline,
-                title: 'Tags & Account Organization',
-                subtitle:
-                    'Assigning custom tags, filtering accounts, tag cloud view, and batch tag management.',
+                title: l10n.helpHome07,
+                subtitle: l10n.helpHome08,
                 onTap: () => _push(context, const TagManagementHelpScreen()),
               ),
               const SizedBox(height: 22),
 
               _buildSectionHeader(
                 context,
-                'Security & Vault Protection',
+                l10n.helpHome09,
                 Icons.security_outlined,
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.fingerprint_outlined,
-                title: 'Biometric & App Lock Details',
-                subtitle:
-                    'Fingerprint and face unlock, device screen lock PIN fallback, and auto-lock rules.',
+                title: l10n.helpHome10,
+                subtitle: l10n.helpHome11,
                 onTap: () => _push(context, const BiometricsHelpScreen()),
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.enhanced_encryption_outlined,
-                title: 'AES-256 Vault & Screenshot Guard',
-                subtitle:
-                    'Hardware-backed encryption keys, FLAG_SECURE window protection, and offline privacy.',
+                title: l10n.helpHome12,
+                subtitle: l10n.helpHome13,
                 onTap: () => _push(context, const VaultSecurityHelpScreen()),
               ),
               const SizedBox(height: 22),
 
               _buildSectionHeader(
                 context,
-                'Sync & Backups',
+                l10n.helpHome14,
                 Icons.sync_alt_outlined,
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.wifi_tethering_outlined,
-                title: 'Local Wi-Fi P2P Device Sync',
-                subtitle:
-                    'Direct device-to-device account transfer over local Wi-Fi with end-to-end encryption.',
+                title: l10n.helpHome15,
+                subtitle: l10n.helpHome16,
                 onTap: () => _push(context, const P2PSyncHelpScreen()),
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.qr_code_2_outlined,
-                title: 'Optical Air-Gap Transfer',
-                subtitle:
-                    'Transfer accounts to completely air-gapped devices using animated QR code streams.',
+                title: l10n.helpHome17,
+                subtitle: l10n.helpHome18,
                 onTap: () => _push(context, const OpticalSyncHelpScreen()),
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.backup_outlined,
-                title: 'Encrypted Backup & Restore',
-                subtitle:
-                    'Exporting password-protected backup files and restoring tokens on a new phone.',
+                title: l10n.helpHome19,
+                subtitle: l10n.helpHome20,
                 onTap: () => _push(context, const BackupHelpScreen()),
               ),
               const SizedBox(height: 22),
 
               _buildSectionHeader(
                 context,
-                'Frequently Asked Questions',
+                l10n.helpHome21,
                 Icons.question_answer_outlined,
               ),
               const SizedBox(height: 10),
               _HelpTopicCard(
                 icon: Icons.help_outline,
-                title: 'FAQs & Troubleshooting Guide',
-                subtitle:
-                    'Direct answers to common questions about code issues, backups, permissions, and migration.',
+                title: l10n.helpHome22,
+                subtitle: l10n.helpHome23,
                 onTap: () =>
                     _push(context, const FaqTroubleshootingHelpScreen()),
               ),
@@ -151,6 +142,10 @@ class HelpHomeScreen extends StatelessWidget {
 
   Widget _buildHeaderCard(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final appName = context.read<AppConfig>().appName.resolve(
+      Localizations.localeOf(context).languageCode,
+    );
     final isDark = theme.brightness == Brightness.dark;
 
     return Card(
@@ -205,14 +200,14 @@ class HelpHomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Help Center & Knowledge Base',
+                    l10n.helpHome24,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Browse in-depth guides and solutions for all features of SreerajP Authenticator.',
+                    l10n.helpHome25(appName),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.35,
@@ -239,12 +234,14 @@ class HelpHomeScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text(
-            title.toUpperCase(),
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.6,
+          Flexible(
+            child: Text(
+              title.toUpperCase(),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+              ),
             ),
           ),
         ],

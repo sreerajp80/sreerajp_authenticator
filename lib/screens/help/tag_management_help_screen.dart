@@ -2,8 +2,10 @@
 // Author: Sreeraj P
 // Description: User-facing guide for tags, tag cloud, filtering, and tag management
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../providers/settings_provider.dart';
 
 class TagManagementHelpScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class TagManagementHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,67 +25,47 @@ class TagManagementHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Tags & Organization')),
+          appBar: AppBar(title: Text(l10n.helpTags01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'Tags let you organize your 2FA accounts into custom categories like Work, Personal, Banking, Social, and Crypto for effortless filtering.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpTags02),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.label_outline,
-                title: 'Assigning Tags to Accounts',
+                title: l10n.helpTags03,
                 children: [
-                  _Bullet(
-                    'When adding or editing an account, enter tag names separated by commas (e.g. "Work, Cloud, Tech").',
-                  ),
-                  _Bullet(
-                    'The tag autocomplete dropdown suggests existing tags as you type, ensuring consistent naming.',
-                  ),
-                  _Bullet(
-                    'Tap "Browse existing tags" to pick from a list of all tags currently in use across your vault.',
-                  ),
+                  _Bullet(l10n.helpTags04),
+                  _Bullet(l10n.helpTags05),
+                  _Bullet(l10n.helpTags06(l10n.tooltipBrowseTags)),
                 ],
               ),
 
               _Section(
                 icon: Icons.filter_alt_outlined,
-                title: 'Filtering by Tag',
+                title: l10n.helpTags07,
                 children: [
-                  _Bullet(
-                    'The top tag bar on the home screen displays all your tags as clickable chips.',
-                  ),
-                  _Bullet(
-                    'Tap any tag chip to instantly display only accounts matching that tag. Tap "All" to reset the filter.',
-                  ),
-                  _Bullet(
-                    'You can switch to the Tag Cloud view for an interactive visual representation of all active tags and account counts.',
-                  ),
+                  _Bullet(l10n.helpTags08),
+                  _Bullet(l10n.helpTags09(l10n.labelAllTags)),
+                  _Bullet(l10n.helpTags10),
                 ],
               ),
 
               _Section(
                 icon: Icons.edit_attributes_outlined,
-                title: 'Tag Management Hub',
+                title: l10n.helpTags11,
                 children: [
                   _Bullet(
-                    'Navigate to Settings -> Manage Tags to rename, merge, or delete tags across all accounts in a single action.',
+                    l10n.helpTags12(l10n.titleSettings, l10n.titleManageTags),
                   ),
-                  _Bullet(
-                    'Renaming a tag automatically updates all accounts that carry that tag.',
-                  ),
-                  _Bullet(
-                    'Deleting a tag removes the label from accounts without deleting the accounts themselves.',
-                  ),
+                  _Bullet(l10n.helpTags13),
+                  _Bullet(l10n.helpTags14),
                 ],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: Use concise tag names (e.g. "Work", "Finance") for the cleanest display on the home screen filter bar.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpTags15),
             ],
           ),
         );

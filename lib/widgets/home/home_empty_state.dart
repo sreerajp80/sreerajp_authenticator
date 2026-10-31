@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../utils/theme.dart';
 
 class HomeEmptyState extends StatelessWidget {
@@ -10,6 +12,7 @@ class HomeEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Center(
@@ -42,7 +45,9 @@ class HomeEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            searchQuery.isNotEmpty ? 'No accounts found' : 'No accounts yet',
+            searchQuery.isNotEmpty
+                ? l10n.emptyNoAccountsFound
+                : l10n.emptyNoAccountsYet,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: isDark ? const Color(0xFFE1E4E8) : const Color(0xFF1A1A2E),
@@ -51,8 +56,8 @@ class HomeEmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             searchQuery.isNotEmpty
-                ? 'Try a different search term'
-                : 'Tap the + button to add your first account',
+                ? l10n.emptyTryDifferentSearch
+                : l10n.emptyAddFirstAccount,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: isDark ? const Color(0xFF8B949E) : const Color(0xFF6B7280),
             ),
@@ -91,7 +96,7 @@ class HomeEmptyState extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Tip: Long press + button for more options',
+                  l10n.emptyLongPressTip,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? const Color(0xFFB1BAC4) : AppTheme.deepBlue,

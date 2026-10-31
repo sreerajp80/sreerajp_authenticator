@@ -9,7 +9,6 @@ class AppConstants {
   static const int aesKeySize = 32;
   static const int gcmNonceSize = 12;
   static const int gcmNonceBase64Length = 16;
-  static const int cbcIvBase64Length = 24;
   static const int saltSize = 16;
   static const int pbkdf2Iterations = 300000;
   static const int pbkdf2IterationsPin = 100000;
@@ -29,16 +28,10 @@ class AppConstants {
   static const String recoveryKeyHashKey = 'recovery_key_hash';
   static const String recoveryKeySaltKey = 'recovery_key_salt';
 
-  // ─── Migration Flags (SharedPreferences) ───────────────────────────────────
-
-  static const String aesMigrationKey = 'aes_migration_v1_complete';
-  static const String gcmMigrationKey = 'gcm_migration_v2_complete';
-
   // ─── Database ──────────────────────────────────────────────────────────────
 
   static const String databaseName = 'authenticator.db';
   static const int databaseVersion = 4;
-  static const String accountsTable = 'accounts';
 
   // ─── OTP ───────────────────────────────────────────────────────────────────
 
@@ -47,11 +40,6 @@ class AppConstants {
   static const int minSecretLength = 16;
 
   // ─── Account / OTP Defaults ────────────────────────────────────────────────
-
-  static const int defaultDigits = 6;
-  static const int defaultPeriod = 30;
-  static const String defaultAlgorithm = 'SHA1';
-  static const int defaultSortOrder = 0;
 
   /// Default account sort on the home screen: alphabetical by issuer.
   /// Allowed values: 'manual', 'issuer', 'account', 'date'.
@@ -84,8 +72,6 @@ class AppConstants {
   // ─── Backup / Export ───────────────────────────────────────────────────────
 
   static const String backupVersion = '2.0';
-  static const String encryptedBackupExtension = 'aes';
-  static const String jsonBackupExtension = 'json';
 
   // ─── P2P LAN Sync ──────────────────────────────────────────────────────────
 
@@ -100,10 +86,24 @@ class AppConstants {
   static const int syncMaxAccounts = 5000;
   static const int syncMaxFieldLength = 4096;
 
+  // Largest backup file accepted before it is read (same as the sync payload cap).
+  static const int backupMaxFileBytes = syncMaxPayloadLine;
+
+  // How long copied secrets stay on the clipboard.
+  static const Duration clipboardClearDefault = Duration(seconds: 30);
+  static const Duration clipboardClearLong = Duration(seconds: 60);
+
   // Pairing code: 64 chars from a 31-symbol alphabet (no 0/O/1/I/L) ≈ 320 bits.
   static const int syncPairingCodeLength = 64;
   static const int syncPairingCodeGroup = 8; // display grouping
   static const String syncPairingAlphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+
+  // Optical sync: one-time transfer code (12 chars ~ 59 bits), shown on the
+  // receiver and typed on the sender, so a recording of the stream alone
+  // cannot be decrypted.
+  static const int opticalTransferCodeLength = 12;
+  static const int opticalTransferCodeGroup = 4;
+  static const int opticalFrameVersion = 2;
 
   // Sync QR: a versioned, offline-only URI encoding the host IP, port, and
   // pairing code so the receiving device can scan instead of typing. The QR is
@@ -134,7 +134,7 @@ class AppConstants {
   // how long the client waits for that payload before giving up.
   static const Duration syncPayloadWaitTimeout = Duration(minutes: 10);
 
-  // Sync payload shape. In addition to 'accounts' and 'groups', the payload may
+  // Sync payload shape. In addition to 'accounts', the payload may
   // carry a small 'settings' object and a 'syncMode' marker so the receiver can
   // apply settings with the right semantics (overwrite for a full sync to a new
   // client; fill-only / never-override for an incremental sync).
@@ -142,10 +142,6 @@ class AppConstants {
   static const String syncPayloadKeySyncMode = 'syncMode';
   static const String syncModeFull = 'full';
   static const String syncModeIncremental = 'incremental';
-
-  // Category identifiers used by the selective (incremental) sync UI and payload.
-  static const String syncCategoryAccounts = 'accounts';
-  static const String syncCategorySettings = 'settings';
 
   // ─── Optical Air-Gap Sync ──────────────────────────────────────────────────
 
@@ -163,70 +159,10 @@ class AppConstants {
 
   // ─── App / Branding (flavor-dependent) ─────────────────────────────────────
 
-  static const String appNameProd = 'SreerajP Authenticator';
-  static const String appNameDev = 'SreerajP Authenticator Dev';
+  static const String appNameProd = 'Sreeraj P Authenticator';
+  static const String appNameDev = 'Sreeraj P Authenticator Dev';
   static const String environmentNameProd = 'Production';
   static const String environmentNameDev = 'Development';
   static const String bannerLabelProd = 'PROD';
   static const String bannerLabelDev = 'DEV';
-
-  // ─── About Screen ──────────────────────────────────────────────────────────
-
-  static const String licensesLegalese =
-      '© 2026 Sreeraj P. All rights reserved.';
-  static const String aboutSectionTitle = 'About';
-  static const String aboutDescription =
-      'A secure and reliable two-factor authentication app that helps protect your online accounts. Generate time-based one-time passwords (TOTP) and counter-based passwords (HOTP) with support for multiple algorithms.';
-  static const String featuresSectionTitle = 'Features';
-  static const String qrScanningFeature = 'QR code scanning';
-  static const String encryptedStorageFeature = 'Encrypted storage';
-  static const String backupRestoreFeature = 'Backup & restore';
-  static const String accountOrganizationFeature = 'Account organization';
-  static const String biometricAuthFeature = 'Biometric authentication';
-  static const String darkModeFeature = 'Dark mode support';
-  static const String linksSectionTitle = 'LINKS';
-  static const String privacyPolicyTitle = 'Privacy Policy';
-  static const String privacyPolicyStorageTitle = 'Data Storage';
-  static const String privacyPolicyStorageDescription =
-      'All your account data is stored locally on your device and is encrypted using industry-standard encryption algorithms. We do not collect, transmit, or store any of your data on external servers.';
-  static const String privacyPolicyPermissionsTitle = 'Permissions';
-  static const String privacyPolicyPermissionsDescription =
-      '• Camera: Used for scanning QR codes\n'
-      '• Storage: Used for backup and restore functionality\n'
-      '• Biometric: Optional, for app lock authentication';
-  static const String privacyPolicySecurityTitle = 'Security';
-  static const String privacyPolicySecurityDescription =
-      'Your secrets are encrypted using AES-256 encryption. The app does not require internet access and works completely offline, ensuring your authentication codes never leave your device.';
-  static const String closeButtonText = 'Close';
-  static const String openSourceLicensesTitle = 'Open Source Licenses';
-  static const String developerSectionTitle = 'DEVELOPER';
-  static const String designConceptLabel = 'Design & Concept';
-  static const String aiUsedLabel = 'AI Used';
-  static const String developerEmailLabel = 'Developer Email';
-  static const String developerName = 'Sreeraj P';
-  static const String developerEmail = 'sreerajp@zohomail.in';
-  static const String aiUsedValue = 'Claude 4.5, 4.6 & 4.8 and ChatGPT';
-  static const List<AboutInfoEntry> developerInfo = <AboutInfoEntry>[
-    AboutInfoEntry(designConceptLabel, developerName),
-    AboutInfoEntry(aiUsedLabel, aiUsedValue),
-    AboutInfoEntry(developerEmailLabel, developerEmail),
-  ];
-  static const String copyrightText = '© 2026 Sreeraj P. All rights reserved.';
-  static const String footerText = 'Made with ❤️ in India';
-
-  static String get developerInitials {
-    final parts = developerName
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .take(2);
-
-    return parts.map((part) => part[0]).join().toUpperCase();
-  }
-}
-
-class AboutInfoEntry {
-  final String label;
-  final String value;
-
-  const AboutInfoEntry(this.label, this.value);
 }

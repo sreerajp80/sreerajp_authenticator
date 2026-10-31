@@ -6,13 +6,20 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/auth_service.dart';
+import '../services/data_wipe_service.dart';
 import '../services/device_state_service.dart';
 import '../services/otp_service.dart';
+import '../utils/app_logger.dart';
 import '../utils/constants.dart';
+import '../utils/screen_protection.dart';
+
+/// Which unlock instruction the lock screen shows. The screen turns it into
+/// localized text (providers hold no UI text).
+enum UnlockInstruction { phoneLockOnly, phoneLockOrPin, pinOnly }
 
 enum PinRequiredReason {
   none,
@@ -24,16 +31,12 @@ enum PinRequiredReason {
 
 class SettingsProvider extends ChangeNotifier {
   static const String _keyAppLockEnabled = 'app_lock_enabled';
-  static const String _keyBiometricEnabled = 'biometric_enabled';
   static const String _keyPhoneLockQuickUnlockEnabled =
       'phone_lock_quick_unlock_enabled';
   static const String _keyAutoLockTimeout = 'auto_lock_timeout';
-  static const String _keyExportFormat = 'export_format';
   static const String _keySortBy = 'sort_by';
   static const String _keyThemeMode = 'theme_mode';
-  static const String _keyRequireAuth = 'require_authentication';
   static const String _keyLastActiveTime = 'last_active_time';
-  static const String _keyLegacyLockType = 'lock_type';
   static const String _keyLastStrongAuthAtMs = 'last_strong_auth_at_ms';
   static const String _keyQuickUnlockFailureCount =
       'quick_unlock_failure_count';
@@ -42,6 +45,12 @@ class SettingsProvider extends ChangeNotifier {
   static const String _keyPinRequiredReason = 'pin_required_reason';
   static const String _keySyncHostIdleTimeout = 'sync_host_idle_timeout';
   static const String _legacyKeyAppLockPin = 'app_lock_pin';
+  static const String _keyBlockScreenshots = 'block_screenshots';
+
+  /// The saved screenshot choice. A missing value means blocked. Stays on this
+  /// device: it is not part of sync or backup settings.
+  static bool readBlockScreenshots(SharedPreferences prefs) =>
+      prefs.getBool(_keyBlockScreenshots) ?? true;
 
   final AuthService _authService = AuthService();
   final DeviceStateService _deviceStateService = DeviceStateService();
@@ -50,18 +59,16 @@ class SettingsProvider extends ChangeNotifier {
   bool _isPhoneLockQuickUnlockEnabled = false;
   int _autoLockTimeout = 60;
   int _syncHostIdleTimeout = AppConstants.syncHostIdleTimeoutDefault;
-  String _exportFormat = 'json';
   String _sortBy = AppConstants.defaultSortBy;
   ThemeMode _themeMode = ThemeMode.system;
-  bool _requireAuthentication = false;
   bool _isDarkMode = false;
   bool _isLocked = false;
   bool _hasPinSet = false;
-  bool _needsMandatoryPinMigration = false;
   int _lastActiveTime = 0;
   int _lastStrongAuthAtMs = 0;
   int _quickUnlockFailureCount = 0;
   bool _lockdownEnabled = false;
+  bool _blockScreenshots = true;
   int? _lastKnownBootCount;
   int? _currentBootCount;
   PinRequiredReason _pinRequiredReason = PinRequiredReason.none;
@@ -71,59 +78,31 @@ class SettingsProvider extends ChangeNotifier {
 
   bool get isAppLockEnabled => _isAppLockEnabled;
   bool get phoneLockQuickUnlockEnabled => _isPhoneLockQuickUnlockEnabled;
-  bool get isBiometricEnabled => _isPhoneLockQuickUnlockEnabled;
   int get autoLockTimeout => _autoLockTimeout;
   int get syncHostIdleTimeout => _syncHostIdleTimeout;
-  String get exportFormat => _exportFormat;
   String get sortBy => _sortBy;
   ThemeMode get themeMode => _themeMode;
-  bool get requireAuthentication => _requireAuthentication;
   bool get isDarkMode => _isDarkMode;
   bool get isLocked => _isLocked;
   bool get hasPinSet => _hasPinSet;
-  String get lockType =>
-      _isPhoneLockQuickUnlockEnabled ? 'device_lock' : 'app_pin';
-  bool get isBackupInProgress => _isBackupInProgress;
-  bool get isSyncInProgress => _isSyncInProgress;
   bool get lockdownEnabled => _lockdownEnabled;
+  bool get blockScreenshots => _blockScreenshots;
   PinRequiredReason get pinRequiredReason => _pinRequiredReason;
-  bool get adaptiveAuthAvailable => _isAppLockEnabled && _hasPinSet;
-  bool get hasQuickUnlockAvailable => _isPhoneLockQuickUnlockEnabled;
-  bool get needsMandatoryPinMigrationSync => _needsMandatoryPinMigration;
   bool get hasAnyUnlockMethod => _hasPinSet || _isPhoneLockQuickUnlockEnabled;
   bool get requiresAppPinForUnlock => _hasPinSet && !canUsePhoneLockQuickUnlock;
   bool get canUsePhoneLockQuickUnlock =>
       _isAppLockEnabled &&
-      !_needsMandatoryPinMigration &&
       _isPhoneLockQuickUnlockEnabled &&
       _pinRequiredReason == PinRequiredReason.none;
 
-  String get unlockInstructionText {
-    if (_needsMandatoryPinMigration) {
-      return 'Use your Phone Screen Lock to set up your App PIN';
-    }
+  UnlockInstruction get unlockInstruction {
     if (canUsePhoneLockQuickUnlock) {
       if (!_hasPinSet) {
-        return 'Use your Phone Screen Lock';
+        return UnlockInstruction.phoneLockOnly;
       }
-      return 'Use your Phone Screen Lock or enter your App PIN';
+      return UnlockInstruction.phoneLockOrPin;
     }
-    return 'Enter your App PIN';
-  }
-
-  String get pinRequiredMessage {
-    switch (_pinRequiredReason) {
-      case PinRequiredReason.idleTimeout:
-        return 'App PIN required after 1 hour';
-      case PinRequiredReason.reboot:
-        return 'App PIN required after device restart';
-      case PinRequiredReason.quickUnlockFailures:
-        return 'App PIN required after 3 failed phone lock attempts';
-      case PinRequiredReason.lockdown:
-        return 'Lockdown mode is on. Enter your App PIN';
-      case PinRequiredReason.none:
-        return '';
-    }
+    return UnlockInstruction.pinOnly;
   }
 
   void setBackupInProgress(bool value) {
@@ -167,13 +146,12 @@ class SettingsProvider extends ChangeNotifier {
       prefs.getInt(_keySyncHostIdleTimeout) ??
           AppConstants.syncHostIdleTimeoutDefault,
     );
-    _exportFormat = prefs.getString(_keyExportFormat) ?? 'json';
     _sortBy = _normalizeSortBy(prefs.getString(_keySortBy));
-    _requireAuthentication = prefs.getBool(_keyRequireAuth) ?? false;
     _lastActiveTime = prefs.getInt(_keyLastActiveTime) ?? 0;
     _lastStrongAuthAtMs = prefs.getInt(_keyLastStrongAuthAtMs) ?? 0;
     _quickUnlockFailureCount = prefs.getInt(_keyQuickUnlockFailureCount) ?? 0;
     _lockdownEnabled = prefs.getBool(_keyLockdownEnabled) ?? false;
+    _blockScreenshots = readBlockScreenshots(prefs);
     _lastKnownBootCount = prefs.getInt(_keyLastKnownBootCount);
     _pinRequiredReason = _reasonFromString(
       prefs.getString(_keyPinRequiredReason),
@@ -185,31 +163,12 @@ class SettingsProvider extends ChangeNotifier {
 
     _hasPinSet = await _authService.hasPin();
 
-    final hasQuickUnlockPref = prefs.containsKey(
-      _keyPhoneLockQuickUnlockEnabled,
-    );
-    final legacyBiometricEnabled = prefs.getBool(_keyBiometricEnabled) ?? false;
-    final legacyLockType = prefs.getString(_keyLegacyLockType);
-
-    if (hasQuickUnlockPref) {
-      _isPhoneLockQuickUnlockEnabled =
-          prefs.getBool(_keyPhoneLockQuickUnlockEnabled) ?? false;
-    } else {
-      _isPhoneLockQuickUnlockEnabled =
-          legacyLockType == 'device_lock' || legacyBiometricEnabled;
-      await prefs.setBool(
-        _keyPhoneLockQuickUnlockEnabled,
-        _isPhoneLockQuickUnlockEnabled,
-      );
-    }
-
-    _needsMandatoryPinMigration = false;
+    _isPhoneLockQuickUnlockEnabled =
+        prefs.getBool(_keyPhoneLockQuickUnlockEnabled) ?? false;
 
     if (_isAppLockEnabled && !hasAnyUnlockMethod) {
       _isAppLockEnabled = false;
-      _requireAuthentication = false;
       await prefs.setBool(_keyAppLockEnabled, false);
-      await prefs.setBool(_keyRequireAuth, false);
     }
 
     final themeModeIndex = prefs.getInt(_keyThemeMode) ?? 0;
@@ -283,21 +242,15 @@ class SettingsProvider extends ChangeNotifier {
         (_themeMode == ThemeMode.system && brightness == Brightness.dark);
   }
 
-  Future<void> setLockType(String type) async {
-    await setPhoneLockQuickUnlockEnabled(type == 'device_lock');
-  }
-
   Future<void> setAppLockEnabled(bool enabled) async {
     if (enabled && !_hasPinSet && !_isPhoneLockQuickUnlockEnabled) {
       return;
     }
 
     _isAppLockEnabled = enabled;
-    _requireAuthentication = enabled;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyAppLockEnabled, enabled);
-    await prefs.setBool(_keyRequireAuth, enabled);
 
     if (!enabled) {
       _isPhoneLockQuickUnlockEnabled = false;
@@ -306,7 +259,6 @@ class SettingsProvider extends ChangeNotifier {
       _quickUnlockFailureCount = 0;
       _lastKnownBootCount = null;
       _pinRequiredReason = PinRequiredReason.none;
-      _needsMandatoryPinMigration = false;
       await prefs.setBool(_keyPhoneLockQuickUnlockEnabled, false);
       await setAppLockPin(null);
       await setLocked(false);
@@ -326,20 +278,51 @@ class SettingsProvider extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyPhoneLockQuickUnlockEnabled, enabled);
-    await prefs.setBool(_keyBiometricEnabled, enabled);
 
     await reevaluateUnlockPolicy(notify: false);
     notifyListeners();
-  }
-
-  Future<void> setBiometricEnabled(bool enabled) async {
-    await setPhoneLockQuickUnlockEnabled(enabled);
   }
 
   Future<void> setLockdownEnabled(bool enabled) async {
     _lockdownEnabled = enabled;
     await reevaluateUnlockPolicy(notify: false);
     notifyListeners();
+  }
+
+  /// Applies the change to the window first, and saves it only if that worked.
+  Future<void> setBlockScreenshots(bool enabled) async {
+    if (enabled) {
+      await enableScreenProtection();
+    } else {
+      await disableScreenProtection();
+    }
+    _blockScreenshots = enabled;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyBlockScreenshots, enabled);
+
+    notifyListeners();
+  }
+
+  /// Deletes all app data, then reads the settings back from the now empty
+  /// stores, so memory matches what is really left. Screenshot blocking returns
+  /// to on. Returns false if something could not be deleted or protection could
+  /// not be turned back on; the user can try again.
+  Future<bool> deleteAllData({DataWipeService? wipeService}) async {
+    _stopAutoLockTimer();
+    var success = await (wipeService ?? DataWipeService()).wipeAll();
+    OTPService.clearCache();
+
+    await _loadSettings();
+    if (_blockScreenshots) {
+      try {
+        await enableScreenProtection();
+      } catch (e) {
+        AppLogger.error('Could not turn screen protection back on', e);
+        success = false;
+      }
+    }
+    return success;
   }
 
   Future<void> setAutoLockTimeout(int seconds) async {
@@ -365,15 +348,6 @@ class SettingsProvider extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_keySyncHostIdleTimeout, _syncHostIdleTimeout);
-
-    notifyListeners();
-  }
-
-  Future<void> setExportFormat(String format) async {
-    _exportFormat = format;
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyExportFormat, format);
 
     notifyListeners();
   }
@@ -479,12 +453,10 @@ class SettingsProvider extends ChangeNotifier {
     if (pin != null) {
       await _authService.setPin(pin);
       _hasPinSet = true;
-      _needsMandatoryPinMigration = false;
       await handleSuccessfulAppPinUnlock(notify: false);
     } else {
       await _authService.clearPin();
       _hasPinSet = false;
-      _needsMandatoryPinMigration = false;
       _lastStrongAuthAtMs = 0;
       _quickUnlockFailureCount = 0;
       _lastKnownBootCount = null;
@@ -532,9 +504,6 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<bool> hasRecoveryKey() => _authService.hasRecoveryKey();
 
-  Future<bool> needsMandatoryPinMigration() async =>
-      _needsMandatoryPinMigration;
-
   Future<void> handleQuickUnlockResult(LocalAuthResult result) async {
     if (result.outcome == LocalAuthOutcome.success) {
       _quickUnlockFailureCount = 0;
@@ -571,7 +540,7 @@ class SettingsProvider extends ChangeNotifier {
 
     _currentBootCount ??= await _deviceStateService.getBootCount();
 
-    if (_needsMandatoryPinMigration || !_hasPinSet) {
+    if (!_hasPinSet) {
       _pinRequiredReason = PinRequiredReason.none;
     } else if (_lockdownEnabled) {
       _pinRequiredReason = PinRequiredReason.lockdown;
@@ -617,8 +586,7 @@ class SettingsProvider extends ChangeNotifier {
     if (_isBackupInProgress) return;
     if (_isSyncInProgress) return;
 
-    if (_isAppLockEnabled &&
-        (hasAnyUnlockMethod || _needsMandatoryPinMigration)) {
+    if (_isAppLockEnabled && hasAnyUnlockMethod) {
       await _updateLastActiveTime();
       _stopAutoLockTimer();
 
@@ -632,7 +600,7 @@ class SettingsProvider extends ChangeNotifier {
     if (_isBackupInProgress) return;
     if (_isSyncInProgress) return;
     if (!_isAppLockEnabled) return;
-    if (!hasAnyUnlockMethod && !_needsMandatoryPinMigration) return;
+    if (!hasAnyUnlockMethod) return;
 
     final currentTime = DateTime.now().millisecondsSinceEpoch;
     final timeDiff = (currentTime - _lastActiveTime) ~/ 1000;
@@ -651,7 +619,7 @@ class SettingsProvider extends ChangeNotifier {
       return;
     }
 
-    if (!hasAnyUnlockMethod && !_needsMandatoryPinMigration) {
+    if (!hasAnyUnlockMethod) {
       return;
     }
 
@@ -692,8 +660,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   void checkAndLockApp() {
-    if (_isAppLockEnabled &&
-        (hasAnyUnlockMethod || _needsMandatoryPinMigration)) {
+    if (_isAppLockEnabled && hasAnyUnlockMethod) {
       _checkAutoLock();
     }
   }

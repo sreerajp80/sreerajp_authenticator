@@ -1,9 +1,9 @@
 # Plan: Mark Completed Features with Green Tick in Feature Analysis & Roadmap
 
-**Status:** Completed
+**Status:** completed
 
 ## Context & Objective
-The user requested to mark the completed features in [`docs/feature_analysis_and_roadmap.md`](file:///l:/Android/SreerajP_Authenticator/docs/feature_analysis_and_roadmap.md) with a green tick (`✅`).
+The user requested to mark the completed features in [`docs/feature_analysis_and_roadmap.md`](../docs/feature_analysis_and_roadmap.md) with a green tick (`✅`).
 
 The completed features currently tracked in the roadmap document are:
 1. **Feature 1:** Optical Air-Gap Sync (High-Density Animated QR Stream)
@@ -25,4 +25,4 @@ The completed features currently tracked in the roadmap document are:
 ## Verification Plan
 
 ### Manual Verification
-- Review [`docs/feature_analysis_and_roadmap.md`](file:///l:/Android/SreerajP_Authenticator/docs/feature_analysis_and_roadmap.md) to ensure markdown formatting, table alignment, and green tick emojis rendered cleanly across all sections.
+- Review [`docs/feature_analysis_and_roadmap.md`](../docs/feature_analysis_and_roadmap.md) to ensure markdown formatting, table alignment, and green tick emojis rendered cleanly across all sections.

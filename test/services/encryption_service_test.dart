@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sreerajp_authenticator/services/encryption_service.dart';
+
 import 'dart:convert';
 
 void main() {
@@ -137,70 +138,6 @@ void main() {
     });
   });
 
-  group('legacy XOR decryption', () {
-    test('decrypts XOR-encrypted data (no colon separator)', () async {
-      // First trigger key creation
-      await encryptionService.encrypt('init');
-      final key = fakeStorage['authenticator_key']!;
-      final keyBytes = base64.decode(key);
-
-      // XOR-encrypt manually
-      const plainText = 'MYSECRETKEY';
-      final plainBytes = utf8.encode(plainText);
-      final xorBytes = List<int>.generate(
-        plainBytes.length,
-        (i) => plainBytes[i] ^ keyBytes[i % keyBytes.length],
-      );
-      final xorEncrypted = base64.encode(xorBytes);
-
-      // Should not contain ':' — triggers legacy path
-      expect(xorEncrypted.contains(':'), isFalse);
-
-      final decrypted = await encryptionService.decrypt(xorEncrypted);
-      expect(decrypted, plainText);
-    });
-  });
-
-  group('migrateToAES', () {
-    test('migrates XOR-encrypted data to AES-GCM', () async {
-      // Create key
-      await encryptionService.encrypt('init');
-      final key = fakeStorage['authenticator_key']!;
-      final keyBytes = base64.decode(key);
-
-      // XOR-encrypt
-      const original = 'MIGRATE_ME';
-      final plainBytes = utf8.encode(original);
-      final xorBytes = List<int>.generate(
-        plainBytes.length,
-        (i) => plainBytes[i] ^ keyBytes[i % keyBytes.length],
-      );
-      final xorEncrypted = base64.encode(xorBytes);
-
-      // Migrate
-      final aesEncrypted = await encryptionService.migrateToAES(xorEncrypted);
-
-      // New format should have colon and 16-char nonce
-      expect(aesEncrypted, contains(':'));
-      final parts = aesEncrypted.split(':');
-      expect(parts[0].length, 16);
-
-      // Decrypts back to original
-      final decrypted = await encryptionService.decrypt(aesEncrypted);
-      expect(decrypted, original);
-    });
-  });
-
-  group('clearAllSecureData', () {
-    test('removes all stored data', () async {
-      await encryptionService.encrypt('something');
-      expect(fakeStorage.isNotEmpty, isTrue);
-
-      await encryptionService.clearAllSecureData();
-      expect(fakeStorage.isEmpty, isTrue);
-    });
-  });
-
   group('error handling', () {
     test('decrypt throws on malformed input', () async {
       // Trigger key creation first
@@ -208,6 +145,20 @@ void main() {
 
       expect(
         () => encryptionService.decrypt('bad:data:extra'),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test('decrypt rejects old formats', () async {
+      await encryptionService.encrypt('init');
+
+      // XOR had no separator; CBC had a 16-byte IV (24 base64 chars).
+      expect(
+        () => encryptionService.decrypt('TUlHUkFURV9NRQ=='),
+        throwsA(isA<Exception>()),
+      );
+      expect(
+        () => encryptionService.decrypt('AAAAAAAAAAAAAAAAAAAAAA==:AAAA'),
         throwsA(isA<Exception>()),
       );
     });

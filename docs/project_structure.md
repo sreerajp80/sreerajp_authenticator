@@ -1,6 +1,6 @@
-# Project Structure — SreerajP Authenticator
+# Project Structure — Sreeraj P Authenticator
 
-This document describes the tracked repository file tree and directory responsibility layout for SreerajP Authenticator. Read this to understand where files live and maintain project layout conventions.
+This document describes the tracked repository file tree and directory responsibility layout for Sreeraj P Authenticator. Read this to understand where files live and maintain project layout conventions.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/guideline.md](guidelines/guideline.md)
 
@@ -15,21 +15,17 @@ sreerajp_authenticator/
 |-- change_log/            Completed change logs (yyyymmdd_hhMMss_<short-slug>.md)
 |-- docs/                  Project documentation and shared Flutter guidelines submodule
 |-- fonts/                 Inter font files declared in pubspec.yaml
-|-- ios/                   iOS runner project and test target
 |-- lib/                   Flutter application source
-|-- linux/                 Linux desktop runner
-|-- macos/                 macOS runner and test target
 |-- plans/                 Change proposals (yyyymmdd_hhMMss_<short-slug>.md)
 |-- test/                  Unit and widget tests mirroring app layers
-|-- web/                   Web runner shell and icons
-|-- windows/               Windows desktop runner
 |-- analysis_options.yaml  Lint and analyzer configuration
 |-- pubspec.yaml           Package manifest, dependencies, assets, and fonts
 |-- pubspec.lock           Resolved package versions
 |-- README.md              Main project overview and usage instructions
 |-- LICENSE                Project license
-|-- AGENTS.md              Repository-specific automation rules
-`-- CLAUDE.md              Agent entry point and canonical project rules
+|-- AGENTS.md              Project rules for AI agents (same content as CLAUDE.md)
+|-- CLAUDE.md              Claude Code entry point and project rules
+`-- GEMINI.md              Pointer for Gemini CLI — imports AGENTS.md
 ```
 
 ---
@@ -39,7 +35,8 @@ sreerajp_authenticator/
 ```text
 docs/
 |-- guidelines/                     Git submodule (https://github.com/sreerajp80/Flutter_Guidelines)
-|-- GUIDELINES_MANIFEST.md          Portable pointer file linking shared guidelines
+|-- GUIDELINES_MANIFEST.md          Portable pointer file linking shared guidelines (copied unchanged)
+|-- PROJECT_PROFILE.md              [Living] Product brief, platforms, stores, languages, identity, About options, tools
 |-- architecture.md                 [Living] Architecture, layers, lifecycle, state, and persistence
 |-- security.md                     [Living] Security rules, threat model, sensitive data, and crypto
 |-- release_process.md              [Living] Build commands, signing, obfuscation, release checklist
@@ -48,7 +45,7 @@ docs/
 |-- dependencies.md                 [Living] Approved baseline and prohibited package constraints
 |-- project_structure.md            [Living] File tree and directory responsibility layout
 |-- implementation_plan.md          [Point-in-time] Phase-by-phase build and compliance roadmap
-|-- implementation_progress.md      [Point-in-time] Live status checklist by phase
+|-- implementation_progress.md      [Living] Status checklist by phase, with a Last updated line
 `-- feature_analysis_and_roadmap.md [Point-in-time] Detailed feature expansion analysis
 ```
 
@@ -96,9 +93,9 @@ lib/
 |   |-- config_service.dart
 |   |-- database_service.dart
 |   |-- device_state_service.dart
+|   |-- data_wipe_service.dart
 |   |-- encryption_service.dart
 |   |-- export_import_service.dart
-|   |-- migration_service.dart
 |   |-- optical_sync_service.dart
 |   |-- otp_service.dart
 |   `-- p2p_sync_service.dart
@@ -134,7 +131,7 @@ lib/
 | `lib/models/` | Core domain data models (`Account` with multi-tag and brand icon integration) |
 | `lib/providers/` | Provider-based state management (`AccountProvider`, `SettingsProvider`, `ThemeProvider`) |
 | `lib/screens/` | Route-level UI screens, help views, and primary user workflows |
-| `lib/services/` | Business logic for authentication, OTP, encryption, storage, migration, optical/P2P sync, brand icons, and import/export |
+| `lib/services/` | Business logic for authentication, OTP, encryption, storage, optical/P2P sync, brand icons, and import/export |
 | `lib/utils/` | Shared technical constants and design theme definitions |
 | `lib/widgets/` | Reusable UI building blocks organized by feature area |
 
@@ -162,7 +159,6 @@ test/
 |   |-- database_service_test.dart
 |   |-- encryption_service_test.dart
 |   |-- export_import_service_test.dart
-|   |-- migration_service_test.dart
 |   |-- optical_sync_service_test.dart
 |   |-- otp_service_test.dart
 |   `-- p2p_sync_service_test.dart

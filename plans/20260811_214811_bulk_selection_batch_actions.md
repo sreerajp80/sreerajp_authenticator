@@ -1,6 +1,6 @@
 # Bulk Selection & Batch Actions Plan
 
-**Status:** Proposed
+**Status:** completed
 
 ## Problem / Feature Statement
 Currently in `SreerajP Authenticator`, account actions (edit, delete, reassign tags) can only be performed individually per account tile. Managing multiple accounts requires repeating actions one by one.

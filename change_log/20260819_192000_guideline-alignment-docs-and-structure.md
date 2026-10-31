@@ -24,7 +24,7 @@ Audited and updated the project structure, root agent instructions (`AGENTS.md` 
 ### Project Documentation (`docs/`)
 
 - **[`docs/architecture.md`](../docs/architecture.md)**:
-  - Replaced obsolete absolute `/l:/Android/...` and `file:///l:/...` links with relative repository paths (`../lib/...`, `release_process.md`).
+  - Replaced obsolete absolute `<absolute-path>` and `<absolute-link>` links with relative repository paths (`../lib/...`, `release_process.md`).
   - Updated debug symbols path to `build/symbols/android-prod/`.
 - **[`docs/security.md`](../docs/security.md)**:
   - Replaced obsolete absolute paths with relative paths (`../lib/...`, `../android/...`, `release_process.md`).
@@ -38,7 +38,7 @@ Audited and updated the project structure, root agent instructions (`AGENTS.md` 
 - **[`docs/implementation_progress.md`](../docs/implementation_progress.md)**:
   - Updated Section 1 current release version to `2.8.2+23`.
 - **[`docs/feature_analysis_and_roadmap.md`](../docs/feature_analysis_and_roadmap.md)**:
-  - Replaced all `file:///l:/...` absolute links across architecture summaries, feature descriptions, and the roadmap table with clean relative links.
+  - Replaced all `<absolute-link>` absolute links across architecture summaries, feature descriptions, and the roadmap table with clean relative links.
 
 ---
 

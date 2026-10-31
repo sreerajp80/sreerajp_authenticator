@@ -1,6 +1,6 @@
 # Change Log — Brand Icons & Multi-Dimensional Tagging System
 
-**Plan File:** [plans/20260801_204700_brand-icons-and-multi-tagging.md](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/plans/20260801_204700_brand-icons-and-multi-tagging.md)
+**Plan File:** [plans/20260801_204700_brand-icons-and-multi-tagging.md](../plans/20260801_204700_brand-icons-and-multi-tagging.md)
 
 ## Summary of Changes
 Implemented Improvement 4 (Bundled Offline Vector Brand Icon Engine) and Improvement 5 (Multi-Dimensional Tagging System):
@@ -32,22 +32,22 @@ Implemented Improvement 4 (Bundled Offline Vector Brand Icon Engine) and Improve
 - `assets/icons/brands/steam.svg`
 - `assets/icons/brands/microsoft.svg`
 - `assets/icons/brands/apple.svg`
-- [lib/services/brand_icon_service.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/brand_icon_service.dart)
-- [lib/widgets/home/home_tag_filter_bar.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets/home/home_tag_filter_bar.dart)
-- [test/services/brand_icon_service_test.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/test/services/brand_icon_service_test.dart)
-- [test/models/account_tags_test.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/test/models/account_tags_test.dart)
+- [lib/services/brand_icon_service.dart](../lib/services/brand_icon_service.dart)
+- [lib/widgets/home/home_tag_filter_bar.dart](../lib/widgets/home/home_tag_filter_bar.dart)
+- [test/services/brand_icon_service_test.dart](../test/services/brand_icon_service_test.dart)
+- [test/models/account_tags_test.dart](../test/models/account_tags_test.dart)
 
 ## Files Modified
-- [pubspec.yaml](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/pubspec.yaml)
-- [lib/utils/constants.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/utils/constants.dart)
-- [lib/models/account.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/models/account.dart)
-- [lib/services/database_service.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/services/database_service.dart)
-- [lib/providers/account_provider.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/providers/account_provider.dart)
-- [lib/widgets/account_tile/account_avatar.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets/account_tile/account_avatar.dart)
-- [lib/widgets/account_tile.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets/account_tile.dart)
-- [lib/widgets/add_account/account_info_card.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/widgets/add_account/account_info_card.dart)
-- [lib/screens/add_account_screen.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/add_account_screen.dart)
-- [lib/screens/home_screen.dart](file:///l:/Android/SreerajP_Authenticator/sreerajp_authenticator/lib/screens/home_screen.dart)
+- [pubspec.yaml](../pubspec.yaml)
+- [lib/utils/constants.dart](../lib/utils/constants.dart)
+- [lib/models/account.dart](../lib/models/account.dart)
+- [lib/services/database_service.dart](../lib/services/database_service.dart)
+- [lib/providers/account_provider.dart](../lib/providers/account_provider.dart)
+- [lib/widgets/account_tile/account_avatar.dart](../lib/widgets/account_tile/account_avatar.dart)
+- [lib/widgets/account_tile.dart](../lib/widgets/account_tile.dart)
+- [lib/widgets/add_account/account_info_card.dart](../lib/widgets/add_account/account_info_card.dart)
+- [lib/screens/add_account_screen.dart](../lib/screens/add_account_screen.dart)
+- [lib/screens/home_screen.dart](../lib/screens/home_screen.dart)
 
 ---
 

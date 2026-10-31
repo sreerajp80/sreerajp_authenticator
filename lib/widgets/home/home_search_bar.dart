@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../utils/theme.dart';
 
 class HomeSearchBar extends StatelessWidget {
@@ -61,7 +63,7 @@ class HomeSearchBar extends StatelessWidget {
           onChanged: onChanged,
           style: theme.textTheme.bodyLarge,
           decoration: InputDecoration(
-            hintText: 'Search accounts...',
+            hintText: AppLocalizations.of(context).labelSearchAccounts,
             hintStyle: TextStyle(color: theme.hintColor.withValues(alpha: 0.7)),
             prefixIcon: Icon(
               Icons.search,
@@ -69,6 +71,7 @@ class HomeSearchBar extends StatelessWidget {
             ),
             suffixIcon: searchQuery.isNotEmpty
                 ? IconButton(
+                    tooltip: AppLocalizations.of(context).tooltipClearSearch,
                     icon: Icon(Icons.clear, color: theme.hintColor),
                     onPressed: onClear,
                   )

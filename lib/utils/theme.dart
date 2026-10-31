@@ -4,15 +4,15 @@
 // Last Modified: 2025 October 12
 // Description: Enhanced theme with vibrant colors and professional 3D neumorphic design
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AppTheme {
   // MODERN VIBRANT COLOR PALETTE
-  static const primaryBlue = Color(0xFF4A90E2);
+  // Dark enough for small text and white-on-blue to pass 4.5 : 1 (§7.2).
+  static const primaryBlue = Color(0xFF2B6CB8);
   static const deepBlue = Color(0xFF2E5C8A);
   static const mintGreen = Color(0xFF6BCF9F);
   static const sageGreen = Color(0xFF5FA575);
-  static const warmCoral = Color(0xFFFF8A80);
   static const lavender = Color(0xFF9C88FF);
   static const goldAccent = Color(0xFFFFD700);
 
@@ -21,18 +21,25 @@ class AppTheme {
   static const warningAmber = Color(0xFFFFA726);
   static const errorCoral = Color(0xFFEF5350);
 
+  // About-screen signature badge heart (guideline.md §1.7)
+  static const heartRed = Color(0xFFE53935);
+
+  // Malayalam and Devanagari (Sanskrit) glyphs are not on every device, so
+  // the bundled Noto fonts are the fallback (engineering standard §8.3.3).
+  static const fontFamilyFallback = <String>[
+    'NotoSansMalayalam',
+    'NotoSansDevanagari',
+  ];
+
   // Background colors
   static const backgroundLight = Color(0xFFF5F7FA);
   static const backgroundWhite = Color(0xFFFDFEFF);
   static const surfaceCard = Color(0xFFFFFFFF);
 
-  // 3D shadow colors
-  static const buttonShadowLight = Color(0xFFD1D9E6);
-  static const buttonHighlight = Color(0xFFFFFFFF);
-
   // LIGHT THEME
   static final lightTheme = ThemeData(
     useMaterial3: true,
+    fontFamilyFallback: fontFamilyFallback,
     brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryBlue,
@@ -123,7 +130,7 @@ class AppTheme {
         borderSide: const BorderSide(color: primaryBlue, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+      hintStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 15),
     ),
 
     textTheme: const TextTheme(
@@ -164,6 +171,7 @@ class AppTheme {
   // DARK THEME
   static final darkTheme = ThemeData(
     useMaterial3: true,
+    fontFamilyFallback: fontFamilyFallback,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryBlue,
@@ -302,236 +310,6 @@ class AppTheme {
                 spreadRadius: -2,
               ),
             ],
-    );
-  }
-
-  // 3D ELEVATED BUTTON DECORATION
-  static BoxDecoration get3DButtonDecoration({
-    required BuildContext context,
-    required Color color,
-    bool isPressed = false,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: isPressed
-            ? [
-                color.withValues(
-                  alpha: (color.a * 0.9).clamp(0.0, 1.0),
-                  red: (color.r * 0.9).clamp(0.0, 1.0),
-                  green: (color.g * 0.9).clamp(0.0, 1.0),
-                  blue: (color.b * 0.9).clamp(0.0, 1.0),
-                ),
-                color.withValues(
-                  alpha: (color.a * 0.8).clamp(0.0, 1.0),
-                  red: (color.r * 0.8).clamp(0.0, 1.0),
-                  green: (color.g * 0.8).clamp(0.0, 1.0),
-                  blue: (color.b * 0.8).clamp(0.0, 1.0),
-                ),
-              ]
-            : [
-                color,
-                color.withValues(alpha: (color.a * 0.85).clamp(0.0, 1.0)),
-              ],
-      ),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
-      boxShadow: isPressed
-          ? [
-              BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                offset: const Offset(1, 2),
-                blurRadius: 4,
-              ),
-            ]
-          : [
-              BoxShadow(
-                color: color.withValues(alpha: 0.4),
-                offset: const Offset(0, 6),
-                blurRadius: 12,
-                spreadRadius: 0,
-              ),
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.15),
-                offset: const Offset(0, 4),
-                blurRadius: 8,
-              ),
-            ],
-    );
-  }
-
-  // 3D SEGMENT BUTTON DECORATION (For theme selector)
-  static BoxDecoration get3DSegmentDecoration({
-    required BuildContext context,
-    required bool isSelected,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    if (isSelected) {
-      // Selected state - vibrant gradient with strong 3D effect
-      return BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [const Color(0xFF64B5F6), const Color(0xFF42A5F5)]
-              : [primaryBlue, deepBlue],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color.fromARGB(255, 92, 91, 91).withValues(alpha: 0.85),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? const Color(0xFF64B5F6) : primaryBlue).withValues(
-              alpha: 0.84,
-            ),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.84 : 0.82),
-            offset: const Offset(0, 2),
-            blurRadius: 6,
-          ),
-        ],
-      );
-    } else {
-      // Unselected state - subtle neumorphic effect
-      return BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1C2333)
-            : const Color.fromARGB(255, 225, 226, 226),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : const Color.fromARGB(255, 49, 49, 49).withValues(alpha: 0.85),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : const Color(0xFFB8C5D6).withValues(alpha: 0.3),
-            offset: const Offset(3, 3),
-            blurRadius: 6,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: isDark
-                ? const Color(0xFF2A3447).withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.7),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
-      );
-    }
-  }
-
-  // 3D LIST TILE CONTAINER
-  static Widget build3DListTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    Widget? trailing,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: isDark
-                ? const Color(0xFF30363D)
-                : const Color(0xFFE5E7EB).withValues(alpha: 0.5),
-            width: 0.5,
-          ),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary.withValues(alpha: 0.15),
-                        theme.colorScheme.primary.withValues(alpha: 0.08),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: theme.colorScheme.primary, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                trailing ??
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.08,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

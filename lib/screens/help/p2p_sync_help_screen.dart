@@ -2,8 +2,10 @@
 // Author: Sreeraj P
 // Description: User-facing guide for local Wi-Fi P2P device-to-device account transfer
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
+
 import '../../providers/settings_provider.dart';
 
 class P2PSyncHelpScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class P2PSyncHelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
+        final l10n = AppLocalizations.of(context);
         if (settingsProvider.isAppLockEnabled && settingsProvider.isLocked) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.canPop(context)) {
@@ -22,67 +25,48 @@ class P2PSyncHelpScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Local Wi-Fi P2P Sync')),
+          appBar: AppBar(title: Text(l10n.helpWifi01)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: const [
-              _Intro(
-                'Local Wi-Fi P2P Sync lets you transfer your 2FA accounts directly between two phones on the same Wi-Fi network with end-to-end encryption and zero cloud middleman.',
-              ),
-              SizedBox(height: 24),
+            children: [
+              _Intro(l10n.helpWifi02),
+              const SizedBox(height: 24),
 
               _Section(
                 icon: Icons.wifi_tethering_outlined,
-                title: 'How P2P Sync Works',
+                title: l10n.helpWifi03,
                 children: [
+                  _Bullet(l10n.helpWifi04),
                   _Bullet(
-                    'Step 1: Connect both devices to the same local Wi-Fi network.',
+                    l10n.helpWifi05(
+                      l10n.titleSettings,
+                      l10n.titleSyncDevice,
+                      l10n.labelSendOverWifi,
+                    ),
                   ),
-                  _Bullet(
-                    'Step 2: On the sending device, open Settings -> Sync to Another Device -> "Host / Send Accounts". The host binds a random local port and generates an out-of-band pairing QR code and PIN.',
-                  ),
-                  _Bullet(
-                    'Step 3: On the receiving device, tap "Connect / Receive Accounts" and scan the host\'s pairing QR code.',
-                  ),
-                  _Bullet(
-                    'Step 4: The two devices establish an encrypted TCP socket session and securely transfer your selected accounts.',
-                  ),
+                  _Bullet(l10n.helpWifi06(l10n.labelReceiveOverWifi)),
+                  _Bullet(l10n.helpWifi07),
                 ],
               ),
 
               _Section(
                 icon: Icons.security_outlined,
-                title: 'End-to-End Encryption',
+                title: l10n.helpWifi08,
                 children: [
-                  _Bullet(
-                    'The sync payload is encrypted with PBKDF2-derived AES-256-GCM using the out-of-band pairing code shown on the screen.',
-                  ),
-                  _Bullet(
-                    'Even if someone is monitoring your local Wi-Fi network traffic, they cannot decrypt or inspect your 2FA seeds.',
-                  ),
-                  _Bullet(
-                    'Opening the sync screen requires unlocking your device, ensuring unauthorized users cannot transmit your vault.',
-                  ),
+                  _Bullet(l10n.helpWifi09),
+                  _Bullet(l10n.helpWifi10),
+                  _Bullet(l10n.helpWifi11),
                 ],
               ),
 
               _Section(
                 icon: Icons.merge_type_outlined,
-                title: 'Safe Account Merging',
-                children: [
-                  _Bullet(
-                    'Syncing only adds and merges accounts. No existing tokens on the receiving device are deleted or replaced.',
-                  ),
-                  _Bullet(
-                    'Duplicate accounts (matching issuer, account name, and secret) are automatically skipped.',
-                  ),
-                ],
+                title: l10n.helpWifi12,
+                children: [_Bullet(l10n.helpWifi13), _Bullet(l10n.helpWifi14)],
               ),
 
-              SizedBox(height: 8),
-              _Footer(
-                'Tip: Keep both devices awake and on the same Wi-Fi router until the transfer completes.',
-              ),
+              const SizedBox(height: 8),
+              _Footer(l10n.helpWifi15),
             ],
           ),
         );

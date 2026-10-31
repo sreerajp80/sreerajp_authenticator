@@ -2,10 +2,13 @@
 // Author: Sreeraj P
 // Description: Home screen with 2-tab navigation (Accounts and Tag Cloud) with search, filter, and sort functionalities.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:sreerajp_authenticator/config/app_config.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+
 import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
 import '../models/account.dart';
@@ -197,6 +200,13 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    // The app name in the active language; dev builds keep a " Dev" suffix.
+    final appName =
+        context.read<AppConfig>().appName.resolve(
+          Localizations.localeOf(context).languageCode,
+        ) +
+        (AppFlavorConfig.instance.isDev ? ' Dev' : '');
     final isDark = theme.brightness == Brightness.dark;
     final sortBy = context.watch<SettingsProvider>().sortBy;
 
@@ -209,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       child: GestureDetector(
+        // Only notes activity for auto-lock; not a control.
+        excludeFromSemantics: true,
         onTap: _onUserInteraction,
         behavior: HitTestBehavior.translucent,
         child: Scaffold(
@@ -249,14 +261,14 @@ class _HomeScreenState extends State<HomeScreen>
                 leading: _isSelectionMode
                     ? IconButton(
                         icon: const Icon(Icons.close, color: Colors.white),
-                        tooltip: 'Cancel selection',
+                        tooltip: l10n.tooltipCancelSelection,
                         onPressed: _exitSelectionMode,
                       )
                     : null,
                 title: Text(
                   _isSelectionMode
-                      ? '${_selectedAccountIds.length} Selected'
-                      : AppFlavorConfig.instance.appName,
+                      ? l10n.labelSelectedCount(_selectedAccountIds.length)
+                      : appName,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -287,14 +299,14 @@ class _HomeScreenState extends State<HomeScreen>
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
-                  tabs: const [
+                  tabs: [
                     Tab(
-                      icon: Icon(Icons.shield_outlined, size: 20),
-                      text: 'Accounts',
+                      icon: const Icon(Icons.shield_outlined, size: 20),
+                      text: l10n.tabAccounts,
                     ),
                     Tab(
-                      icon: Icon(Icons.style_outlined, size: 20),
-                      text: 'Tags',
+                      icon: const Icon(Icons.style_outlined, size: 20),
+                      text: l10n.tabTags,
                     ),
                   ],
                 ),
@@ -319,7 +331,9 @@ class _HomeScreenState extends State<HomeScreen>
                             allSelected ? Icons.deselect : Icons.select_all,
                             color: Colors.white,
                           ),
-                          tooltip: allSelected ? 'Deselect All' : 'Select All',
+                          tooltip: allSelected
+                              ? l10n.tooltipDeselectAll
+                              : l10n.tooltipSelectAll,
                           onPressed: () => _selectAllAccounts(visibleAccounts),
                         );
                       },
@@ -338,17 +352,15 @@ class _HomeScreenState extends State<HomeScreen>
                           color: Colors.white,
                         ),
                       ),
-                      tooltip: 'Sort',
+                      tooltip: l10n.tooltipSort,
                       onSelected: (value) {
                         _onUserInteraction();
                         context.read<SettingsProvider>().setSortBy(value);
                         if (value == 'manual') {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Long press and drag to reorder accounts',
-                              ),
-                              duration: Duration(seconds: 2),
+                            SnackBar(
+                              content: Text(l10n.descReorderHint),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         }
@@ -357,25 +369,25 @@ class _HomeScreenState extends State<HomeScreen>
                         _buildPopupMenuItem(
                           value: 'manual',
                           icon: Icons.drag_handle,
-                          label: 'Manual',
+                          label: l10n.labelSortManual,
                           isSelected: sortBy == 'manual',
                         ),
                         _buildPopupMenuItem(
                           value: 'issuer',
                           icon: Icons.business,
-                          label: 'By Issuer',
+                          label: l10n.labelSortIssuer,
                           isSelected: sortBy == 'issuer',
                         ),
                         _buildPopupMenuItem(
                           value: 'account',
                           icon: Icons.sort_by_alpha,
-                          label: 'By Account Name',
+                          label: l10n.labelSortAccount,
                           isSelected: sortBy == 'account',
                         ),
                         _buildPopupMenuItem(
                           value: 'date',
                           icon: Icons.calendar_today,
-                          label: 'By Date Added',
+                          label: l10n.labelSortDate,
                           isSelected: sortBy == 'date',
                         ),
                       ],
@@ -398,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         );
                       },
-                      tooltip: 'Settings',
+                      tooltip: l10n.tooltipSettings,
                     ),
                   ],
                   const SizedBox(width: 8),
@@ -467,9 +479,8 @@ class _HomeScreenState extends State<HomeScreen>
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(
-                                        0xFF64B5F6,
-                                      ).withValues(alpha: 0.4)
+                                    ? const Color(0xFF64B5F6)
+                                          .withValues(alpha: 0.4)
                                     : AppTheme.primaryBlue.withValues(
                                         alpha: 0.3,
                                       ),
@@ -487,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Filtered by: $tagsText',
+                                    l10n.descFilteredBy(tagsText),
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
@@ -514,18 +525,18 @@ class _HomeScreenState extends State<HomeScreen>
                                       color: Colors.red.withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.close,
                                           size: 14,
                                           color: Colors.redAccent,
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
-                                          'Clear Filter',
-                                          style: TextStyle(
+                                          l10n.actionClearFilter,
+                                          style: const TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.redAccent,
@@ -556,12 +567,10 @@ class _HomeScreenState extends State<HomeScreen>
                                   gradient: LinearGradient(
                                     colors: isDark
                                         ? [
-                                            const Color(
-                                              0xFF1E3A5F,
-                                            ).withValues(alpha: 0.3),
-                                            const Color(
-                                              0xFF2D4A3D,
-                                            ).withValues(alpha: 0.3),
+                                            const Color(0xFF1E3A5F)
+                                                .withValues(alpha: 0.3),
+                                            const Color(0xFF2D4A3D)
+                                                .withValues(alpha: 0.3),
                                           ]
                                         : [
                                             AppTheme.primaryBlue.withValues(
@@ -594,7 +603,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        'Long press to enter multi-select • Drag to reorder.',
+                                        l10n.descHomeHint,
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: isDark
@@ -621,6 +630,18 @@ class _HomeScreenState extends State<HomeScreen>
                               sortBy,
                               provider.selectedTags,
                             );
+
+                            if (provider.loadFailed) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Text(
+                                    l10n.errorAccountsLoadFailed,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              );
+                            }
 
                             if (accounts.isEmpty) {
                               return HomeEmptyState(searchQuery: _searchQuery);
@@ -715,21 +736,21 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         _buildBatchActionButton(
                           icon: Icons.style_outlined,
-                          label: 'Reassign Tags',
+                          label: l10n.actionReassignTags,
                           onPressed: _selectedAccountIds.isEmpty
                               ? null
                               : _showBatchTagDialog,
                         ),
                         _buildBatchActionButton(
                           icon: Icons.upload_file_outlined,
-                          label: 'Export Selected',
+                          label: l10n.actionExportSelected,
                           onPressed: _selectedAccountIds.isEmpty
                               ? null
                               : _showBatchExportDialog,
                         ),
                         _buildBatchActionButton(
                           icon: Icons.delete_outline,
-                          label: 'Delete Selected',
+                          label: l10n.actionDeleteSelected,
                           color: Colors.redAccent,
                           onPressed: _selectedAccountIds.isEmpty
                               ? null
@@ -781,6 +802,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildAccountItem(Account account, int index) {
+    final l10n = AppLocalizations.of(context);
     final isSelected =
         account.id != null && _selectedAccountIds.contains(account.id);
     final tile = AccountTile(
@@ -825,14 +847,14 @@ class _HomeScreenState extends State<HomeScreen>
                       topLeft: Radius.circular(12),
                       bottomLeft: Radius.circular(12),
                     ),
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.edit, size: 20),
-                        SizedBox(height: 4),
+                        const Icon(Icons.edit, size: 20),
+                        const SizedBox(height: 4),
                         Text(
-                          'Edit',
-                          style: TextStyle(
+                          l10n.actionEdit,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -851,14 +873,14 @@ class _HomeScreenState extends State<HomeScreen>
                       topRight: Radius.circular(12),
                       bottomRight: Radius.circular(12),
                     ),
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.delete, size: 20),
-                        SizedBox(height: 4),
+                        const Icon(Icons.delete, size: 20),
+                        const SizedBox(height: 4),
                         Text(
-                          'Delete',
-                          style: TextStyle(
+                          l10n.actionDelete,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -892,15 +914,16 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showDeleteDialog(Account account) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: Text('Are you sure you want to delete ${account.name}?'),
+        title: Text(l10n.titleDeleteAccount),
+        content: Text(l10n.descDeleteAccountConfirm(account.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(l10n.actionCancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -913,13 +936,13 @@ class _HomeScreenState extends State<HomeScreen>
                 context.read<AccountsProvider>().deleteAccount(account.id!);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${account.name} deleted'),
+                    content: Text(l10n.descAccountDeleted(account.name)),
                     duration: const Duration(seconds: 2),
                   ),
                 );
               }
             },
-            child: const Text('Delete'),
+            child: Text(l10n.actionDelete),
           ),
         ],
       ),
@@ -968,6 +991,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showBatchTagDialog() {
     if (_selectedAccountIds.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     final TextEditingController tagController = TextEditingController();
     bool isReplace = false;
 
@@ -975,53 +999,56 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (statefulContext, setDialogState) => AlertDialog(
-          title: Text('Reassign Tags (${_selectedAccountIds.length})'),
+          title: Text(l10n.titleReassignTagsCount(_selectedAccountIds.length)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Enter tags separated by commas (e.g. Work, VIP):',
-                style: TextStyle(fontSize: 13),
+              Text(
+                l10n.descReassignTagsHint,
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: tagController,
-                decoration: const InputDecoration(
-                  labelText: 'Tags',
-                  hintText: 'Work, Personal',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.labelTags,
+                  hintText: l10n.labelTagsExample,
+                  border: const OutlineInputBorder(),
                 ),
                 autofocus: true,
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Checkbox(
-                    value: isReplace,
-                    onChanged: (val) {
-                      setDialogState(() => isReplace = val ?? false);
-                    },
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setDialogState(() => isReplace = !isReplace);
+              MergeSemantics(
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: isReplace,
+                      onChanged: (val) {
+                        setDialogState(() => isReplace = val ?? false);
                       },
-                      child: const Text(
-                        'Replace existing tags (instead of appending)',
-                        style: TextStyle(fontSize: 12),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        excludeFromSemantics: true,
+                        onTap: () {
+                          setDialogState(() => isReplace = !isReplace);
+                        },
+                        child: Text(
+                          l10n.descReplaceTags,
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(l10n.actionCancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1045,14 +1072,14 @@ class _HomeScreenState extends State<HomeScreen>
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Updated tags for ${ids.length} accounts'),
+                      content: Text(l10n.descTagsUpdated(ids.length)),
                       duration: const Duration(seconds: 2),
                     ),
                   );
                   _exitSelectionMode();
                 }
               },
-              child: const Text('Apply Tags'),
+              child: Text(l10n.actionApplyTags),
             ),
           ],
         ),
@@ -1062,6 +1089,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showBatchExportDialog() {
     if (_selectedAccountIds.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     final TextEditingController passwordController = TextEditingController();
     final TextEditingController confirmPasswordController =
         TextEditingController();
@@ -1071,22 +1099,27 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (statefulContext, setDialogState) => AlertDialog(
-          title: Text('Export Selected (${_selectedAccountIds.length})'),
+          title: Text(
+            l10n.titleExportSelectedCount(_selectedAccountIds.length),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Set a password to encrypt this backup file.',
-                style: TextStyle(fontSize: 13),
+              Text(
+                l10n.descExportPasswordHint,
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: passwordController,
                 obscureText: !isPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: l10n.labelPassword,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
+                    tooltip: isPasswordVisible
+                        ? l10n.tooltipHidePassword
+                        : l10n.tooltipShowPassword,
                     icon: Icon(
                       isPasswordVisible
                           ? Icons.visibility
@@ -1102,9 +1135,9 @@ class _HomeScreenState extends State<HomeScreen>
               TextField(
                 controller: confirmPasswordController,
                 obscureText: !isPasswordVisible,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.labelConfirmPassword,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -1112,7 +1145,7 @@ class _HomeScreenState extends State<HomeScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(l10n.actionCancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1121,8 +1154,8 @@ class _HomeScreenState extends State<HomeScreen>
 
                 if (password.length < 6) {
                   ScaffoldMessenger.of(statefulContext).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password must be at least 6 characters'),
+                    SnackBar(
+                      content: Text(l10n.errorPasswordTooShort),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -1130,8 +1163,8 @@ class _HomeScreenState extends State<HomeScreen>
                 }
                 if (password != confirm) {
                   ScaffoldMessenger.of(statefulContext).showSnackBar(
-                    const SnackBar(
-                      content: Text('Passwords do not match'),
+                    SnackBar(
+                      content: Text(l10n.errorPasswordMismatch),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -1158,7 +1191,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Exported ${selectedAccounts.length} selected accounts',
+                          l10n.descExportedSelected(selectedAccounts.length),
                         ),
                         duration: const Duration(seconds: 2),
                       ),
@@ -1166,15 +1199,15 @@ class _HomeScreenState extends State<HomeScreen>
                     _exitSelectionMode();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Failed to export selected accounts'),
+                      SnackBar(
+                        content: Text(l10n.errorExportSelectedFailed),
                         backgroundColor: Colors.red,
                       ),
                     );
                   }
                 }
               },
-              child: const Text('Export'),
+              child: Text(l10n.actionExport),
             ),
           ],
         ),
@@ -1185,18 +1218,17 @@ class _HomeScreenState extends State<HomeScreen>
   void _showBatchDeleteDialog() {
     if (_selectedAccountIds.isEmpty) return;
     final count = _selectedAccountIds.length;
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Selected Accounts'),
-        content: Text(
-          'Are you sure you want to delete $count accounts? This action cannot be undone.',
-        ),
+        title: Text(l10n.titleDeleteAccounts),
+        content: Text(l10n.descDeleteSelectedConfirm(count)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(l10n.actionCancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1211,10 +1243,8 @@ class _HomeScreenState extends State<HomeScreen>
               if (!verified) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Authentication failed. Deletion canceled.',
-                      ),
+                    SnackBar(
+                      content: Text(l10n.errorAuthFailedDeleteCanceled),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -1229,14 +1259,14 @@ class _HomeScreenState extends State<HomeScreen>
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('$count accounts deleted'),
+                    content: Text(l10n.descAccountsDeleted(count)),
                     duration: const Duration(seconds: 2),
                   ),
                 );
                 _exitSelectionMode();
               }
             },
-            child: Text('Delete ($count)'),
+            child: Text(l10n.actionDeleteCount(count)),
           ),
         ],
       ),
@@ -1244,10 +1274,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<bool> _verifyBiometricOrPinForBulkDelete() async {
+    final l10n = AppLocalizations.of(context);
     final authService = AuthService();
     final isBioAvailable = await authService.isBiometricAvailable();
     if (isBioAvailable) {
-      final bioResult = await authService.authenticateWithBiometric();
+      final bioResult = await authService.authenticateWithBiometric(
+        reason: l10n.descAuthReasonBiometric,
+      );
       if (bioResult.isSuccess) return true;
       if (bioResult.outcome == LocalAuthOutcome.canceled) return false;
     }
@@ -1257,15 +1290,23 @@ class _HomeScreenState extends State<HomeScreen>
     if (settingsProvider.isAppLockEnabled) {
       return await showPinVerificationDialog(
         context: context,
-        purpose: 'delete selected accounts',
+        purpose: l10n.descPinPurposeDeleteSelected,
         settingsProvider: settingsProvider,
         authService: authService,
       );
     }
 
-    final phoneResult = await authService.authenticateWithPhoneLock();
-    if (phoneResult.isSuccess) return true;
-
-    return true;
+    final phoneResult = await authService.authenticateWithPhoneLock(
+      reason: l10n.descAuthReasonPhoneLock,
+    );
+    return bulkDeleteAllowedAfterPhoneLock(phoneResult);
   }
 }
+
+/// Whether a bulk delete may go ahead after the phone-lock prompt (used when
+/// biometrics did not decide and app lock is off). A failed, canceled or
+/// locked-out check stops the delete. With no screen lock on the phone there
+/// is nothing to check, and the user already confirmed in the delete dialog.
+@visibleForTesting
+bool bulkDeleteAllowedAfterPhoneLock(LocalAuthResult result) =>
+    result.isSuccess || result.outcome == LocalAuthOutcome.notAvailable;

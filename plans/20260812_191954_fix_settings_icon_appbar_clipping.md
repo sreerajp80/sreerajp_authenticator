@@ -1,6 +1,6 @@
 # Fix Settings Icon & AppBar Actions Clipping on Home Screen
 
-**Status:** Approved & Implemented
+**Status:** completed
 
 ## Issue
 On the Home screen header, the settings gear icon and sort icon pill containers are vertically clipped/truncated at the top edge.

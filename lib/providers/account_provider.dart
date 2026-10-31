@@ -5,10 +5,10 @@
 // Description: Provider for managing authenticator accounts
 
 import 'package:flutter/foundation.dart';
+
 import '../models/account.dart';
 import '../services/database_service.dart';
 import '../services/encryption_service.dart';
-import '../services/migration_service.dart';
 import '../services/otp_service.dart';
 import '../utils/app_logger.dart';
 
@@ -25,20 +25,19 @@ class AccountsProvider extends ChangeNotifier {
   List<Account> _accounts = [];
   final DatabaseService _db = DatabaseService.instance;
   final EncryptionService _encryption = EncryptionService();
-  final MigrationService _migration = MigrationService();
   bool _isLoading = false;
-  String _searchQuery = '';
   bool _isPreDecrypting = false;
-  bool _isMigrating = false;
+  bool _loadFailed = false;
 
   final Set<String> _selectedTags = {};
 
   // Getters
   List<Account> get accounts => _accounts;
   bool get isLoading => _isLoading;
-  String get searchQuery => _searchQuery;
   bool get isPreDecrypting => _isPreDecrypting;
-  bool get isMigrating => _isMigrating;
+
+  /// The last load failed, so an empty list does not mean an empty vault.
+  bool get loadFailed => _loadFailed;
   Set<String> get selectedTags => _selectedTags;
 
   List<String> get allAvailableTags {
@@ -51,60 +50,11 @@ class AccountsProvider extends ChangeNotifier {
     return list;
   }
 
-  /// Filtered accounts based on search query and active tags (AND logic).
-  List<Account> get filteredAccounts {
-    var result = _accounts;
-
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      result = result.where((account) {
-        final name = account.name.toLowerCase();
-        final issuer = (account.issuer ?? '').toLowerCase();
-        final tagMatch = account.tags.any(
-          (t) => t.toLowerCase().contains(query),
-        );
-        return name.contains(query) || issuer.contains(query) || tagMatch;
-      }).toList();
-    }
-
-    if (_selectedTags.isNotEmpty) {
-      result = result.where((account) {
-        return _selectedTags.every(
-          (selTag) => account.tags.any(
-            (accTag) => accTag.toLowerCase() == selTag.toLowerCase(),
-          ),
-        );
-      }).toList();
-    }
-
-    return result;
-  }
-
   AccountsProvider() {
-    _initialize();
+    loadAccounts();
   }
 
-  Future<void> _initialize() async {
-    await _migration.runPendingMigrations(
-      onStatusChanged: (migrating) {
-        _isMigrating = migrating;
-        notifyListeners();
-      },
-    );
-    await loadAccounts();
-  }
-
-  // ====================== SEARCH & TAG METHODS ======================
-
-  void setSearchQuery(String query) {
-    _searchQuery = query;
-    notifyListeners();
-  }
-
-  void clearSearch() {
-    _searchQuery = '';
-    notifyListeners();
-  }
+  // ====================== TAG METHODS ======================
 
   void toggleTag(String tag) {
     final existing = _selectedTags.firstWhere(
@@ -215,6 +165,12 @@ class AccountsProvider extends ChangeNotifier {
 
   // ====================== ACCOUNT METHODS ======================
 
+  /// Read everything again, after all app data was deleted.
+  Future<void> reloadAfterDataDelete() async {
+    _selectedTags.clear();
+    await loadAccounts();
+  }
+
   Future<void> loadAccounts() async {
     _isLoading = true;
     _isPreDecrypting = true;
@@ -231,8 +187,10 @@ class AccountsProvider extends ChangeNotifier {
       await OTPService.preDecryptAllSecrets(_accounts);
 
       _isPreDecrypting = false;
+      _loadFailed = false;
     } catch (e) {
       AppLogger.error('Failed to load accounts', e);
+      _loadFailed = true;
       _accounts = [];
       _isPreDecrypting = false;
     } finally {
@@ -274,6 +232,48 @@ class AccountsProvider extends ChangeNotifier {
       AppLogger.error('Failed to delete account', e);
       rethrow;
     }
+  }
+
+  /// Next HOTP code. The new counter is saved before the code is returned, so
+  /// a code is never shown twice. If the save fails, no code is returned.
+  Future<OTPGenerationResult> nextHotpCode(Account account) async {
+    final index = _accounts.indexWhere((a) => a.id == account.id);
+    if (index < 0) {
+      return const OTPGenerationResult.failure(
+        OTPUnexpectedException('Account is no longer in the list'),
+      );
+    }
+    final current = _accounts[index];
+    final result = await OTPService.generateHOTPAsync(current);
+    if (!result.isSuccess) return result;
+
+    final counter = current.counter ?? 0;
+    try {
+      final changed = await _db.setHotpCounter(
+        current.id!,
+        counter,
+        counter + 1,
+      );
+      if (changed != 1) {
+        return const OTPGenerationResult.failure(
+          OTPUnexpectedException('HOTP counter was not saved'),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Failed to save HOTP counter', e);
+      return OTPGenerationResult.failure(
+        OTPUnexpectedException('HOTP counter was not saved', e),
+      );
+    }
+
+    final updatedIndex = _accounts.indexWhere((a) => a.id == account.id);
+    if (updatedIndex >= 0) {
+      _accounts[updatedIndex] = _accounts[updatedIndex].copyWith(
+        counter: counter + 1,
+      );
+      notifyListeners();
+    }
+    return result;
   }
 
   Future<String> encryptSecret(String plainSecret) async {
@@ -360,30 +360,6 @@ class AccountsProvider extends ChangeNotifier {
   }
 
   // ====================== BACKUP & RESTORE ======================
-
-  Future<Map<String, dynamic>> exportData() async {
-    try {
-      final decryptedAccounts = <Map<String, dynamic>>[];
-
-      for (final account in _accounts) {
-        final decryptedSecret = await getDecryptedSecret(account.secret);
-        final accountMap = account.toMap();
-        accountMap['secret'] = decryptedSecret;
-        decryptedAccounts.add(accountMap);
-      }
-
-      return {
-        'version': 1,
-        'exportDate': DateTime.now().toIso8601String(),
-        'accounts': decryptedAccounts,
-        'groups':
-            <Map<String, dynamic>>[], // kept for backup format compatibility
-      };
-    } catch (e) {
-      AppLogger.error('Failed to export account data', e);
-      rethrow;
-    }
-  }
 
   Future<ImportResult> importData(Map<String, dynamic> data) async {
     try {

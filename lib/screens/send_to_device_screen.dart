@@ -6,15 +6,17 @@
 //   sync to a device that already has the app). The payload is pushed only after
 //   a device has connected and the sender chooses what to share.
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 import '../providers/account_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sync_provider.dart';
+import '../services/clipboard_service.dart';
 import '../services/p2p_sync_service.dart';
+import '../utils/constants.dart';
 
 /// Tabbed host view. Rendered by `SyncScreen` while the state is [SyncHosting].
 class SendToDeviceView extends StatefulWidget {
@@ -28,6 +30,8 @@ class SendToDeviceView extends StatefulWidget {
 
 class _SendToDeviceViewState extends State<SendToDeviceView>
     with SingleTickerProviderStateMixin {
+  /// Localized strings. Read only while the screen is mounted.
+  AppLocalizations get _l10n => AppLocalizations.of(context);
   late final TabController _tabController;
 
   // Selection for the incremental "Sync to a Phone" section.
@@ -63,14 +67,13 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
         .syncableSettingsSnapshot();
     await context.read<SyncProvider>().sendFullSync(
       accounts: accounts,
-      groups: const [],
       settingsSnapshot: settings,
     );
   }
 
   Future<void> _selectiveSync() async {
     if (!_syncAccounts && !_syncSettings) {
-      _showMessage('Select at least one item to sync', isError: true);
+      _showMessage(_l10n.errorSyncNothingSelected, isError: true);
       return;
     }
     final accounts = context.read<AccountsProvider>().accounts;
@@ -79,10 +82,8 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
         .syncableSettingsSnapshot();
     await context.read<SyncProvider>().sendSelectiveSync(
       accounts: accounts,
-      groups: const [],
       settingsSnapshot: settings,
       includeAccounts: _syncAccounts,
-      includeGroups: false,
       includeSettings: _syncSettings,
     );
   }
@@ -93,9 +94,9 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
       children: [
         TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Server Details'),
-            Tab(text: 'Sync'),
+          tabs: [
+            Tab(text: _l10n.tabServerDetails),
+            Tab(text: _l10n.tabSync),
           ],
         ),
         Expanded(
@@ -147,7 +148,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'On the other device, choose “Receive” → “Scan QR code”',
+                        _l10n.descReceiveHint,
                         style: theme.textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -156,17 +157,20 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                 ),
                 const Divider(height: 32),
                 Text(
-                  'Or enter these manually',
+                  _l10n.descEnterManuallyHint,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 12),
-                _infoRow(context, 'Host IP', state.ipAddress),
+                _infoRow(context, _l10n.labelHostIpShort, state.ipAddress),
                 const SizedBox(height: 12),
-                _infoRow(context, 'Port', state.port.toString()),
+                _infoRow(context, _l10n.labelPort, state.port.toString()),
                 const SizedBox(height: 16),
-                Text('Pairing code', style: theme.textTheme.labelMedium),
+                Text(
+                  _l10n.labelPairingCode,
+                  style: theme.textTheme.labelMedium,
+                ),
                 const SizedBox(height: 4),
                 SelectableText(
                   P2pSyncService.formatPairingCode(state.code),
@@ -180,10 +184,13 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Copy code'),
+                    label: Text(_l10n.actionCopyCode),
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: state.code));
-                      _showMessage('Pairing code copied');
+                      ClipboardService.copySecret(
+                        state.code,
+                        clearAfter: AppConstants.clipboardClearLong,
+                      );
+                      _showMessage(_l10n.descPairingCodeCopied);
                     },
                   ),
                 ),
@@ -194,7 +201,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
         const SizedBox(height: 24),
         OutlinedButton(
           onPressed: () => context.read<SyncProvider>().stopHosting(),
-          child: const Text('Stop hosting'),
+          child: Text(_l10n.actionStopHosting),
         ),
       ],
     );
@@ -226,9 +233,8 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
             Expanded(
               child: Text(
                 connected
-                    ? 'A device is connected. Open the Sync tab to choose what '
-                          'to share.'
-                    : 'Waiting for the other device to connect…',
+                    ? _l10n.descClientConnected
+                    : _l10n.descWaitingForClient,
                 style: TextStyle(color: fg),
               ),
             ),
@@ -266,8 +272,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'No device is connected yet. Open the Server Details tab '
-                      'and let the other device scan the QR or enter the code.',
+                      _l10n.descNoClientYet,
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
@@ -279,7 +284,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
         ],
 
         // Section A — New Client Phone (Full Sync).
-        _sectionHeader(context, 'New client phone'),
+        _sectionHeader(context, _l10n.titleNewClientPhone),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -287,19 +292,13 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Send everything — all accounts and app settings — to '
-                  'a phone that is setting up for the first time. Device-specific '
-                  'items (app lock, PIN, phone-lock unlock, recovery key) are not '
-                  'sent.',
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text(_l10n.descFullSync, style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     icon: const Icon(Icons.cloud_sync),
-                    label: const Text('Full Sync'),
+                    label: Text(_l10n.actionFullSync),
                     onPressed: connected ? _fullSync : null,
                   ),
                 ),
@@ -310,7 +309,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
         const SizedBox(height: 24),
 
         // Section B — Sync to a Phone (selective / incremental).
-        _sectionHeader(context, 'Sync to a phone'),
+        _sectionHeader(context, _l10n.titleSyncToPhone),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -319,8 +318,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'For a phone that already has the app with its own data. Choose '
-                  'what to add:',
+                  _l10n.descSelectiveSync,
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 4),
@@ -332,7 +330,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                   onChanged: connected
                       ? (v) => setState(() => _syncAccounts = v ?? false)
                       : null,
-                  title: const Text('Accounts'),
+                  title: Text(_l10n.labelSyncAccounts),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
@@ -342,8 +340,8 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                   onChanged: connected
                       ? (v) => setState(() => _syncSettings = v ?? false)
                       : null,
-                  title: const Text('Settings'),
-                  subtitle: const Text('Theme, auto-lock, and sync timeouts'),
+                  title: Text(_l10n.labelSyncSettings),
+                  subtitle: Text(_l10n.descSyncSettings),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -362,9 +360,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'This will not override anything already on the other '
-                          'device. If something matches, the other device keeps '
-                          'its own version — its data is retained.',
+                          _l10n.descNoOverride,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onTertiaryContainer,
                           ),
@@ -378,7 +374,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.sync),
-                    label: const Text('Sync'),
+                    label: Text(_l10n.actionSync),
                     onPressed: connected ? _selectiveSync : null,
                   ),
                 ),
@@ -403,7 +399,7 @@ class _SendToDeviceViewState extends State<SendToDeviceView>
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             const SizedBox(width: 16),
-            Text('Syncing…', style: theme.textTheme.titleMedium),
+            Text(_l10n.descSyncing, style: theme.textTheme.titleMedium),
           ],
         ),
         const SizedBox(height: 16),
