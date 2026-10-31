@@ -61,3 +61,6 @@ app.*.map.json
 *.ipa
 *.msix
 
+# Local-only Play Console notes (never commit)
+play_closed_testing/
+

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sreerajp_authenticator/config/locale_config.dart';
@@ -27,7 +29,12 @@ void main() {
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        // Reads pixels: on Linux, thin text can give a letter-edge shade as the
+        // text colour, which fails with good colours. theme_contrast_test.dart
+        // checks the colour pairs on every system.
+        if (!Platform.isLinux) {
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
+        }
 
         handle.dispose();
         await removeA11yScreen(tester);

@@ -21,6 +21,17 @@ class AppTheme {
   static const warningAmber = Color(0xFFFFA726);
   static const errorCoral = Color(0xFFEF5350);
 
+  // Status colors for small text and icons on a 10% tint of the same color.
+  // One color cannot reach 4.5 : 1 on both the light and the dark card.
+  static Color statusSuccess(Brightness brightness) =>
+      brightness == Brightness.dark ? successGreen : const Color(0xFF1B5E20);
+  static Color statusWarning(Brightness brightness) =>
+      brightness == Brightness.dark ? warningAmber : const Color(0xFF8A5200);
+  static Color statusError(Brightness brightness) =>
+      brightness == Brightness.dark
+      ? const Color(0xFFFF8A80)
+      : const Color(0xFFB71C1C);
+
   // About-screen signature badge heart (guideline.md §1.7)
   static const heartRed = Color(0xFFE53935);
 

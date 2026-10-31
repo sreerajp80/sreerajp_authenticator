@@ -280,14 +280,16 @@ class _PermissionsScreenState extends State<PermissionsScreen>
                                     Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.successGreen.withValues(
-                                          alpha: 0.1,
-                                        ),
+                                        color: AppTheme.statusSuccess(
+                                          theme.brightness,
+                                        ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.wifi_off_outlined,
-                                        color: AppTheme.successGreen,
+                                        color: AppTheme.statusSuccess(
+                                          theme.brightness,
+                                        ),
                                         size: 24,
                                       ),
                                     ),
@@ -385,15 +387,15 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     IconData statusIcon;
 
     if (isGranted) {
-      statusColor = AppTheme.successGreen;
+      statusColor = AppTheme.statusSuccess(theme.brightness);
       statusText = l10n.labelStatusGranted;
       statusIcon = Icons.check_circle;
     } else if (isPermanentlyDenied) {
-      statusColor = AppTheme.errorCoral;
+      statusColor = AppTheme.statusError(theme.brightness);
       statusText = l10n.labelStatusDenied;
       statusIcon = Icons.cancel;
     } else if (isDenied) {
-      statusColor = AppTheme.warningAmber;
+      statusColor = AppTheme.statusWarning(theme.brightness);
       statusText = l10n.labelStatusNotGranted;
       statusIcon = Icons.remove_circle_outline;
     } else {
