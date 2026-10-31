@@ -1,235 +1,227 @@
+<p align="center">
+  <img src="docs/images/feature_graphic.png" alt="Sreeraj P Authenticator: two-factor codes, encrypted on your phone" width="100%">
+</p>
+
 # Sreeraj P Authenticator
 
-Flutter authenticator app for generating TOTP and HOTP codes with encrypted local storage, app lock, QR onboarding, grouped account management, and encrypted backup/restore.
+A privacy-first, offline two-factor authentication (2FA) app for Android. It makes the one-time codes that protect your online accounts, and keeps your accounts encrypted on your phone.
 
-## Overview
+![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
+![Flutter 3.47](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-This project is an offline-first authenticator application built with Flutter and Provider. Secrets are stored locally in SQLite after device-side encryption, the encryption key is kept in `FlutterSecureStorage`, and the app can be protected with either an app PIN or the device's screen lock.
+## Why This App
 
-The app ships on Android only (Android 10+, see `docs/PROJECT_PROFILE.md`). iOS, macOS, Windows, Linux and web are not declared platforms; their folders were removed.
+- **Offline:** codes are made on your phone. There is no cloud service behind the app.
+- **No account:** there is nothing to sign up for.
+- **No tracking:** no analytics, ads or crash reporting.
+- **Encrypted:** account secrets are encrypted with AES-256-GCM before they are saved.
+- **Yours to move:** go to a new phone by Wi-Fi, by camera, or with an encrypted backup file.
+- **Open source:** MIT license, built only with open source packages.
 
-## Implemented Features
+## Screenshots
 
-### OTP
+<table>
+  <tr>
+    <td><img src="docs/images/screenshots/01_accounts.png" alt="Accounts list with live codes" width="200"></td>
+    <td><img src="docs/images/screenshots/02_tags.png" alt="Tag cloud" width="200"></td>
+    <td><img src="docs/images/screenshots/07_backup.png" alt="Encrypted backup and restore" width="200"></td>
+    <td><img src="docs/images/screenshots/08_languages.png" alt="Language choice: English, Malayalam, Sanskrit" width="200"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/screenshots/03_sync_start.png" alt="Sync options: Wi-Fi and optical" width="200"></td>
+    <td><img src="docs/images/screenshots/04_sync_code.png" alt="QR sync step 1: the new phone shows a transfer code" width="200"></td>
+    <td><img src="docs/images/screenshots/05_sync_enter.png" alt="QR sync step 2: type the code on the old phone" width="200"></td>
+    <td><img src="docs/images/screenshots/06_sync_stream.png" alt="QR sync step 3: scan the moving QR code" width="200"></td>
+  </tr>
+</table>
 
-- TOTP and HOTP support
-- SHA-1, SHA-256, and SHA-512 algorithms
-- Configurable digits and period
-- QR parsing from `otpauth://` URIs
-- Manual account entry
-- Countdown display for time-based codes
-- Clipboard copy from the account list
+The screenshots show demo data only.
 
-### Account Management
+## Features
 
-- Search by account name or issuer
-- Group-based filtering
-- Manual drag-and-drop ordering
-- Sort by manual order, issuer, account name, or date added
-- Swipe actions for edit and delete
-- Sensitive edits gated behind app-lock verification when enabled
+### Codes
 
-### Groups
+- TOTP (time-based) and HOTP (counter-based) codes
+- Steam Guard, Blizzard and YubiKey (HMAC-SHA1) accounts
+- SHA-1, SHA-256 and SHA-512
+- Base32 and hex secrets, detected automatically
+- Add an account by QR code, or type a TOTP key by hand
+- Live countdown ring for time-based codes
+- Tap to copy; the clipboard is cleared after 30 seconds if it has not changed
+- Hide or show each code
 
-- Create, edit, and delete custom groups
-- Choose group colors and icons
-- Reassign accounts when groups are removed
+### Organising Accounts
+
+- Free-form tags, with a tag cloud and a tag management screen
+- Search by name, issuer or tag
+- Sort by issuer, account name or date added, or drag into your own order
+- Optional notes on each account
+- Icons for common services, stored in the app, so no network is used
+- Swipe to edit or delete, and select several accounts to delete together
 
 ### Security
 
-- AES-256-GCM for stored secrets with a 12-byte nonce
-- Encryption key stored under `authenticator_key` in secure storage
-- Screenshot and screen-recording protection enabled at app startup
-- App lock with:
-  - App PIN
-  - Device screen lock
-  - Optional biometric unlock for PIN mode
-- PIN hashing with PBKDF2-HMAC-SHA256
-- Recovery key flow for PIN-based lock mode
-- Progressive lockout after failed PIN attempts
-- Auto-lock when backgrounded or after timeout
-- Decrypted OTP secrets cached briefly in memory and cleared on lock/background
+- AES-256-GCM encryption for stored secrets
+- Encryption key held in Android secure storage (Keystore-backed)
+- Optional app lock: an App PIN, your phone's screen lock (fingerprint, face, pattern or PIN), or both
+- PIN hashed with PBKDF2-HMAC-SHA256; longer lockouts after repeated wrong tries
+- Recovery key, if you forget your App PIN
+- Lockdown mode, which allows unlocking only with the App PIN
+- Auto-lock after the time you choose
+- Screenshots and screen recording blocked by default
+- Delete all data from the Security screen
 
-### Backup And Restore
+### Backup And Moving To A New Phone
 
-- Encrypted export and import through the in-app UI using password-protected `.aes` backups
-- Backup encryption uses PBKDF2-HMAC-SHA256 plus AES-256-GCM
-- Accounts and groups are restored without overwriting existing data
-- Duplicate groups and accounts are skipped during import
+All of these work without the internet:
 
-### Migration Support
+- **Encrypted backup:** a password-protected `.aes` file (PBKDF2 and AES-256-GCM). Accounts you already have are skipped on restore.
+- **Wi-Fi sync:** send accounts and settings directly to another phone on the same Wi-Fi or hotspot. A pairing code that is never sent over the network encrypts the session.
+- **Optical air-gap sync:** send accounts as an animated QR code, read by the other phone's camera. It uses no network at all, and a one-time transfer code encrypts the frames.
 
-- Legacy XOR-encrypted secrets can be migrated forward
-- Legacy AES-CBC account secrets are decrypt-only and migrated to GCM
-- Older PIN storage is migrated from `SharedPreferences` to secure storage
-- Older backup formats are still supported for decryption during import
+### Look And Language
+
+- English, Malayalam (മലയാളം) and Sanskrit (संस्कृतम्), changed in Settings without a restart
+- System, light and dark themes
+
+The full list is in [docs/features.md](docs/features.md).
+
+## Availability
+
+The app needs Android 10 or newer. A Google Play release is planned, starting with closed testing. Until then, you can build it from source using the steps below.
 
 ## Security Model
 
-- No network permission is declared in the Android manifest.
 - Secrets are encrypted before they are written to the database.
-- The encryption key is created on-device and persisted via `FlutterSecureStorage`.
-- Android system backup is disabled with `android:allowBackup="false"` and `android:fullBackupContent="false"`.
-- Camera permission is only needed for QR scanning.
-- Biometric and fingerprint capabilities are optional.
+- The encryption key is created on the device and is kept in `flutter_secure_storage`.
+- Nothing sensitive (secrets, keys, PINs, codes) is ever written to logs.
+- Android system backup is off (`android:allowBackup="false"`). The only backups are the app's own encrypted files.
 
-Out of scope: this app does not try to protect against a fully compromised or rooted device. It is designed for strong local protection on a normal consumer device, not for hostile-system guarantees.
+Permissions:
 
-## User Flow
+| Permission | Why it is needed |
+|------------|------------------|
+| Camera | Scanning QR codes (optional) |
+| Biometric | Unlocking with the phone's screen lock (optional) |
+| Vibrate | Short feedback on key actions |
+| Internet | Local sockets for Wi-Fi sync between your own devices only. The app has no other network use |
 
-### Add an Account
+Out of scope: the app does not try to protect against a fully compromised or rooted device. It is designed for strong local protection on a normal consumer device.
 
-1. Tap the floating action button on the home screen.
-2. Choose QR scan or manual entry.
-3. For manual entry, provide the account name and Base32 secret.
-4. Optionally set issuer, digits, period, algorithm, and group.
-5. Save the account. The secret is encrypted before persistence.
+More detail: [docs/security.md](docs/security.md) and [PRIVACY.md](PRIVACY.md).
 
-### Secure the App
+## How To Use It
+
+### Add An Account
+
+1. Tap the add button on the home screen to open the QR scanner. Long-press it to choose between the scanner and manual entry.
+2. Scan the QR code the website shows you, or type the account name and secret key.
+3. Optionally add an issuer, tags and a note, then save.
+
+### Lock The App
 
 1. Open `Settings` -> `Security`.
-2. Enable app lock.
-3. Choose either:
-   - `App PIN`
-   - `Phone Screen Lock`
-4. If you choose `App PIN`, save the recovery key shown by the app.
-5. Optionally enable biometric authentication for PIN mode.
-6. Set the auto-lock timeout.
+2. Turn on app lock and choose `App PIN`, `Phone screen lock`, or both.
+3. If you set an App PIN, save the recovery key. It is shown only once.
+4. Set the auto-lock time.
 
-### Backup And Restore
+### Back Up And Restore
 
-1. Open `Settings` -> `Backup & Restore`.
-2. Create an encrypted backup with a password.
-3. Store the generated `.aes` file somewhere safe.
-4. To restore, select the backup file and enter the same password.
+1. Open `Settings` -> `Backup & restore`.
+2. Create a backup with a strong password and keep the `.aes` file somewhere safe.
+3. To restore, pick the file and enter the same password.
 
 ## Tech Stack
 
 | Area | Implementation |
 |------|----------------|
-| UI | Flutter Material |
-| State management | Provider |
+| UI | Flutter, `material_ui` |
+| State management | `provider` |
 | Local database | `sqflite` |
 | Secure key storage | `flutter_secure_storage` |
-| Auth | `local_auth` |
+| App lock | `local_auth` |
 | QR scanning | `flutter_zxing`, `camera` |
-| Encryption | `encrypt` + `pointycastle` |
-| Sharing / file flows | `share_plus`, `file_picker`, `path_provider` |
+| Encryption | `encrypt`, `pointycastle` |
+| Sharing and files | `share_plus`, `file_picker` |
+
+## Building From Source
+
+You need the Flutter SDK (3.47 stable), the Android SDK, and an Android device or emulator.
+
+```bash
+flutter pub get
+flutter run --flavor dev
+```
+
+Flutter sets the app's flavor from `--flavor`, so no other setting is needed.
+
+| Flavor | Package ID | App name | Signing |
+|--------|------------|----------|---------|
+| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | Sreeraj P Authenticator Dev | Debug keystore (automatic) |
+| `prod` | `in.sreerajp.sreerajp_authenticator` | Sreeraj P Authenticator | Your release keystore (`android/key.properties`) |
+
+Checks to run before a commit:
+
+```bash
+dart format .
+flutter analyze
+flutter test
+```
+
+Release APKs, split by CPU type:
+
+```bash
+flutter build apk --flavor prod --release --obfuscate --split-debug-info=build/symbols/android-prod-<version>/ --split-per-abi
+```
+
+Play Store bundle:
+
+```bash
+flutter build appbundle --flavor prod --release --obfuscate --split-debug-info=build/symbols/android-prod-<version>/
+```
+
+The full release steps are in [docs/release_process.md](docs/release_process.md).
 
 ## Project Structure
 
 ```text
 lib/
-|-- config/      Flavor configuration
-|-- models/      Account and group models
+|-- config/      App, flavor and locale configuration
+|-- l10n/        Translations (ARB files)
+|-- models/      Immutable data classes
 |-- providers/   App state with Provider
 |-- screens/     Route-level UI
-|-- services/    OTP, auth, encryption, database, migration, import/export
-|-- utils/       Constants and theme helpers
-`-- widgets/     Reusable UI components
+|-- services/    OTP, auth, encryption, database, backup, sync
+|-- utils/       Constants and helpers
+|-- widgets/     Reusable UI components
+`-- main.dart
 
-test/
-|-- config/
-|-- models/
-|-- providers/
-|-- services/
-`-- widgets/
+test/            Tests, mirroring lib/
+docs/            Design documents and README images
 ```
 
-## Development Setup
+## Tests
 
-### Prerequisites
+The test suite includes RFC 4226 and RFC 6238 code vectors, AES-256-GCM encryption, database migrations, backup export and import, Wi-Fi and optical sync parsing, and translation checks.
 
-- Flutter SDK
-- Android SDK / Android Studio
-- A connected Android device or emulator
+## Known Limits
 
-### Install Dependencies
+- Correct device time is needed for time-based codes.
+- HOTP, Steam, Blizzard and YubiKey accounts can only be added by QR code or URI.
+- There is no import from other authenticator apps' export formats.
+- There is no plain-text export, by design.
 
-```bash
-flutter pub get
-```
+## Documentation
 
-### Run The App
-
-Development flavor:
-
-```bash
-flutter run --flavor dev --dart-define=FLUTTER_APP_FLAVOR=dev
-```
-
-Production flavor:
-
-```bash
-flutter run --flavor prod --dart-define=FLUTTER_APP_FLAVOR=prod
-```
-
-The `--dart-define` value matters because the in-app flavor config reads `FLUTTER_APP_FLAVOR` to control the app name, environment label, and the `DEV` banner.
-
-## Android Flavors
-
-| Flavor | Package ID | App Name | Purpose |
-|--------|------------|----------|---------|
-| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | `Sreeraj P Authenticator Dev` | Local development and internal testing |
-| `prod` | `in.sreerajp.sreerajp_authenticator` | `Sreeraj P Authenticator` | Release builds |
-
-## Common Commands
-
-Run tests:
-
-```bash
-flutter test
-```
-
-Run static analysis:
-
-```bash
-flutter analyze
-```
-
-Build a development APK:
-
-```bash
-flutter build apk --flavor dev --debug --dart-define=FLUTTER_APP_FLAVOR=dev
-```
-
-Build production split APKs:
-
-```bash
-flutter build apk --flavor prod --release --split-per-abi --dart-define=FLUTTER_APP_FLAVOR=prod
-```
-
-Build a Play Store bundle:
-
-```bash
-flutter build appbundle --flavor prod --release --dart-define=FLUTTER_APP_FLAVOR=prod
-```
-
-## Testing Scope
-
-The current test suite covers:
-
-- OTP generation and RFC 4226 HOTP vectors
-- OTP URI parsing and generation
-- Encryption round-trips and legacy decryption paths
-- Authentication and recovery-key logic
-- Database, migration, export/import, providers, and home widgets
-- Flavor configuration
-
-## Notes And Limitations
-
-- The app is designed to work fully offline.
-- QR scanning requires camera permission.
-- Correct device time is critical for TOTP accuracy.
-- The current in-app backup UI is focused on encrypted `.aes` backups.
-- JSON and CSV export helpers still exist in the service layer for compatibility, but they are not the primary user-facing backup flow in the current screens.
-
-## Related Docs
-
-- `docs/project_structure.md`
-- `docs/guidelines/flutter_build_flavors_guide.md`
-- `docs/release_process.md`
+- [Features](docs/features.md)
+- [Architecture](docs/architecture.md)
+- [Security](docs/security.md)
+- [Dependencies](docs/dependencies.md)
+- [Project structure](docs/project_structure.md)
+- [Release process](docs/release_process.md)
+- [Privacy policy](PRIVACY.md)
 
 ## License
 
-This project is developed by Sreeraj P. See `LICENSE`.
+Developed by Sreeraj P. Released under the [MIT License](LICENSE).

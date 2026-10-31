@@ -35,6 +35,7 @@ sreerajp_authenticator/
 ```text
 docs/
 |-- guidelines/                     Git submodule (https://github.com/sreerajp80/Flutter_Guidelines)
+|-- images/                         README feature graphic and screenshots (not shipped in the app)
 |-- GUIDELINES_MANIFEST.md          Portable pointer file linking shared guidelines (copied unchanged)
 |-- PROJECT_PROFILE.md              [Living] Product brief, platforms, stores, languages, identity, About options, tools
 |-- architecture.md                 [Living] Architecture, layers, lifecycle, state, and persistence

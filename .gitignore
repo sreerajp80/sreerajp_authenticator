@@ -63,4 +63,8 @@ app.*.map.json
 
 # Local-only Play Console notes (never commit)
 play_closed_testing/
+/plans/20261031_191611_play-closed-testing-docs.md
+/plans/20261031_200426_play-docs-real-console-answers.md
+/change_log/20261031_194900_play-closed-testing-docs.md
+/change_log/20261031_200545_play-docs-real-console-answers.md
 
