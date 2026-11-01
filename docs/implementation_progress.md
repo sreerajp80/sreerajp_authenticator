@@ -2,7 +2,7 @@
 
 This document tracks live implementation status and completed tasks for Sreeraj P Authenticator.
 
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-31
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [implementation_plan.md](implementation_plan.md)
 
@@ -25,7 +25,7 @@ This document tracks live implementation status and completed tasks for Sreeraj 
 - [x] **Build Flavors**: `dev` and `prod` flavor setup with Android Gradle configuration.
 - [x] **Guidelines Submodule Integration**: Added `docs/guidelines` submodule pointing to `https://github.com/sreerajp80/Flutter_Guidelines`.
 - [x] **Baseline Documentation Set**: All 9 mandatory baseline documents under `docs/`, including `PROJECT_PROFILE.md`.
-- [x] **Multi-Algorithm Support**: Steam Guard (5-char alphanumeric), Blizzard (8-digit) and YubiKey (hex seed). mOTP was removed before the first release (`plans/20261031_085346_first-release-cleanup.md`).
+- [x] **Multi-Algorithm Support**: Steam Guard (5-char alphanumeric), Blizzard (8-digit) and YubiKey (hex seed). mOTP was removed before the first release (`plans/20261031_185346_first-release-cleanup.md`).
 - [x] **Tag-Based Organization & Brand Icons**: Free-form multi-tagging, autocomplete filtering, and bundled brand SVG icons.
 - [x] **Dual Offline Device Sync**: Wi-Fi LAN P2P transfer and camera-only Optical Air-Gap animated QR stream.
 - [x] **Database Schema v4**: Migrated legacy group structures to flexible account tags and streamlined persistence.
@@ -40,7 +40,7 @@ This document tracks live implementation status and completed tasks for Sreeraj 
 - [x] **Phase 2 — Agent and docs files**: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, baseline docs reshaped.
 - [x] **Phase 3 — Toolchain**: AGP 9.4.1, Kotlin 2.4.10, Gradle 9.8.0, Java 17, `minSdk 29`.
 - [x] **Phase 3b — `material_ui` migration**: `material_ui ^1.8.0`, imports migrated, compatibility bridge.
-- [x] **Phase 4 — Platforms**: `ios/`, `macos/`, `web/` removed. `windows/` and `linux/` removed later (`plans/20261031_074327_remove-windows-linux.md`): the app is Android only.
+- [x] **Phase 4 — Platforms**: `ios/`, `macos/`, `web/` removed. `windows/` and `linux/` removed later (`plans/20261031_174327_remove-windows-linux.md`): the app is Android only.
 - [x] **Phase 5a — Localization foundation**: `l10n.yaml`, ARB `en`/`ml`/`sa`, Sanskrit fallback, language picker, fonts, About config and badge, `test/l10n/` checks.
 - [x] **Phase 5b — Core flows**: lock, home, add account, QR scanner, account and tag widgets, PIN dialog, permissions.
 - [x] **Phase 5c — Security, backup and sync**: screens migrated; sync and backup errors are codes.
@@ -48,7 +48,7 @@ This document tracks live implementation status and completed tasks for Sreeraj 
 - [x] **Phase 6 — Tooltips and accessibility**: tooltips, add button keyboard access, 48 dp eye button, contrast and text scaling fixed; `test/accessibility/` guards them. Screen reader runs are on the release checklist.
 - [x] **Phase 7 — Security Baseline check**: `docs/security.md` §1.1, §3.1, §12 filled. §12 is not signed off.
 - [x] **Phase 8 — CI**: checks-only GitHub workflow (`.github/workflows/ci.yml`).
-- [x] **Release blockers**: "Delete all data" and `PRIVACY.md` added (`plans/20261031_081352_android-release-blockers.md`). Still open: push `PRIVACY.md`, and the owner's phone test and §12 sign-off.
+- [x] **Release blockers**: "Delete all data" and `PRIVACY.md` added (`plans/20261031_181352_android-release-blockers.md`). Still open: the owner's phone test and §12 sign-off.
 
 ### Features
 

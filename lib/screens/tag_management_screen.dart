@@ -9,7 +9,6 @@ import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 import '../providers/account_provider.dart';
 import '../utils/app_logger.dart';
-import '../utils/theme.dart';
 
 class TagManagementScreen extends StatefulWidget {
   const TagManagementScreen({super.key});
@@ -222,12 +221,12 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
                   decoration: BoxDecoration(
                     color: isDark
                         ? const Color(0xFF1E293B)
-                        : AppTheme.primaryBlue.withValues(alpha: 0.08),
+                        : theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark
                           ? const Color(0xFF334155)
-                          : AppTheme.primaryBlue.withValues(alpha: 0.2),
+                          : theme.colorScheme.primary.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(

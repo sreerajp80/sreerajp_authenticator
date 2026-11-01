@@ -125,8 +125,8 @@ class MyApp extends StatelessWidget {
             },
 
             // Theme configuration
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
+            theme: AppTheme.light(themeProvider.accent),
+            darkTheme: AppTheme.dark(themeProvider.accent),
             themeMode: themeProvider.themeMode,
 
             // Determine initial screen based on lock status

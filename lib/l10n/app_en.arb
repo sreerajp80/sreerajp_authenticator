@@ -128,6 +128,38 @@
   "@titleThemeMode": {
     "description": "Theme mode row and screen title. Keep short."
   },
+  "titleAccentColor": "Accent colour",
+  "@titleAccentColor": {
+    "description": "Accent colour row and screen title. Keep short."
+  },
+  "titleSelectAccentColor": "Select accent colour",
+  "@titleSelectAccentColor": {
+    "description": "Section label above the accent colour list. Keep short."
+  },
+  "labelAccentBlue": "Blue",
+  "@labelAccentBlue": {
+    "description": "Accent colour name: blue. Keep short."
+  },
+  "labelAccentTeal": "Teal",
+  "@labelAccentTeal": {
+    "description": "Accent colour name: teal. Keep short."
+  },
+  "labelAccentIndigo": "Indigo",
+  "@labelAccentIndigo": {
+    "description": "Accent colour name: indigo. Keep short."
+  },
+  "labelAccentGreen": "Green",
+  "@labelAccentGreen": {
+    "description": "Accent colour name: green. Keep short."
+  },
+  "labelAccentCopper": "Copper",
+  "@labelAccentCopper": {
+    "description": "Accent colour name: copper. Keep short."
+  },
+  "labelAccentGraphite": "Graphite",
+  "@labelAccentGraphite": {
+    "description": "Accent colour name: graphite. Keep short."
+  },
   "titleThemeInformation": "Theme information",
   "@titleThemeInformation": {
     "description": "Section header on the Appearance screen. Keep short."
@@ -136,7 +168,7 @@
   "@titleVisualDesign": {
     "description": "Card title on the Appearance screen. Keep short."
   },
-  "descVisualDesign": "{appName} uses an offline-first 3D neumorphic theme with vibrant token countdown rings and high-contrast accessibility.",
+  "descVisualDesign": "{appName} uses a clean offline design with raised cards, clear countdown rings and high-contrast text.",
   "@descVisualDesign": {
     "description": "Card body on the Appearance screen. {appName} is the app name in the active language.",
     "placeholders": {
@@ -2020,7 +2052,7 @@
   "@labelOpticalSend": {
     "description": "Row title. Keep short."
   },
-  "descOpticalSend": "Transmit your accounts as an animated QR stream (12–15 FPS)",
+  "descOpticalSend": "Transmit your accounts as an animated QR stream (10–15 FPS)",
   "@descOpticalSend": {
     "description": "Row subtitle."
   },
@@ -2433,7 +2465,7 @@
   "@descFeatures14": {
     "description": "Features screen: heading."
   },
-  "descFeatures15": "Add accounts by pointing your camera at standard 2FA QR codes (otpauth://). Includes a flashlight toggle and instant validation.",
+  "descFeatures15": "Add accounts by pointing your camera at standard 2FA QR codes (otpauth://), or bring many at once from a Google Authenticator export QR code. Includes a flashlight toggle and instant validation.",
   "@descFeatures15": {
     "description": "Features screen: feature description."
   },
@@ -3754,5 +3786,98 @@
   "errorDeleteAllDataFailed": "Some data could not be deleted. Please try again.",
   "@errorDeleteAllDataFailed": {
     "description": "Message shown when part of the delete failed."
+  },
+  "titleImportAccounts": "Import accounts",
+  "@titleImportAccounts": {
+    "description": "Title of the screen that reviews accounts found in another app's export. Keep short."
+  },
+  "titleQrCodesMissing": "QR codes missing",
+  "@titleQrCodesMissing": {
+    "description": "Dialog title when only part of an export was scanned. Keep short."
+  },
+  "actionImportCount": "Import ({count})",
+  "@actionImportCount": {
+    "description": "Button that imports the chosen accounts. {count} is how many. Keep short.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "labelAlreadyInApp": "Already in app",
+  "@labelAlreadyInApp": {
+    "description": "Shown on an account that will not be imported because it is already in the app. Keep short."
+  },
+  "labelUnnamedAccount": "Unnamed account",
+  "@labelUnnamedAccount": {
+    "description": "Shown when a damaged account in an export has no readable name. Keep short."
+  },
+  "descMigrationProgress": "Scanned {scanned} of {total} QR codes",
+  "@descMigrationProgress": {
+    "description": "Progress in the scanner while reading an export split across several QR codes.",
+    "placeholders": {
+      "scanned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "descMigrationPartial": "Only {scanned} of {total} QR codes were scanned. Accounts in the other QR codes will not be imported.",
+  "@descMigrationPartial": {
+    "description": "Warning before continuing with part of an export.",
+    "placeholders": {
+      "scanned": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "descImportReviewHint": "Choose the Google Authenticator accounts to import.",
+  "@descImportReviewHint": {
+    "description": "Hint at the top of the import review screen."
+  },
+  "descImportHotpReminder": "Stop using the old app for counter-based accounts, or the counters will no longer match.",
+  "@descImportHotpReminder": {
+    "description": "Shown after importing HOTP accounts."
+  },
+  "errorMigrationInvalid": "This Google Authenticator QR code could not be read.",
+  "@errorMigrationInvalid": {
+    "description": "Snackbar when an export QR code is damaged."
+  },
+  "errorMigrationOtherExport": "This QR code is from a different export. Go back and start again to use it.",
+  "@errorMigrationOtherExport": {
+    "description": "Snackbar when a scanned QR code belongs to another export."
+  },
+  "errorImportFailed": "Could not import the accounts. Nothing was saved.",
+  "@errorImportFailed": {
+    "description": "Snackbar when saving imported accounts fails."
+  },
+  "errorEntryDamaged": "This account's data is damaged.",
+  "@errorEntryDamaged": {
+    "description": "Reason an account in an export cannot be imported."
+  },
+  "errorEntryNoSecret": "This account has no secret key.",
+  "@errorEntryNoSecret": {
+    "description": "Reason an account in an export cannot be imported."
+  },
+  "errorEntryShortSecret": "This account's secret key is too short.",
+  "@errorEntryShortSecret": {
+    "description": "Reason an account in an export cannot be imported."
+  },
+  "errorEntryAlgorithm": "This account uses an algorithm the app does not support.",
+  "@errorEntryAlgorithm": {
+    "description": "Reason an account in an export cannot be imported."
+  },
+  "errorEntryDigits": "This account uses a code length the app does not support.",
+  "@errorEntryDigits": {
+    "description": "Reason an account in an export cannot be imported."
+  },
+  "errorEntryType": "This account is of a type the app does not support.",
+  "@errorEntryType": {
+    "description": "Reason an account in an export cannot be imported."
   }
 }

@@ -23,9 +23,8 @@ The `Production App Extension` applies, so this file is filled in **in full**.
 - Version source of truth: [`pubspec.yaml`](../pubspec.yaml) (read the current version there; it is
   not copied into this file).
 
-> **Open blockers.** Before the first Google Play release: `PRIVACY.md` must be pushed to `main`, so
-> its URL is live (profile §1). Before any release: the release owner tests "Delete all data" on a
-> real phone and signs off [`security.md`](security.md) §12.
+> **Open blockers.** Before any release: the release owner tests "Delete all data" on a real phone
+> and signs off [`security.md`](security.md) §12.
 
 ---
 

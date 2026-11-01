@@ -1,7 +1,7 @@
 // File Path: sreerajp_authenticator/lib/providers/account_provider.dart
 // Author: Sreeraj P
 // Created: 2025 September 25
-// Last Modified: 2026 August 01
+// Last Modified: 2026 October 31
 // Description: Provider for managing authenticator accounts
 
 import 'package:flutter/foundation.dart';
@@ -361,27 +361,31 @@ class AccountsProvider extends ChangeNotifier {
 
   // ====================== BACKUP & RESTORE ======================
 
+  /// Import treats two accounts with the same key as duplicates.
+  static String duplicateKey(Account account) =>
+      '${account.name.toLowerCase()}|${(account.issuer ?? '').toLowerCase()}|${account.type.toLowerCase()}';
+
+  /// The keys of the accounts already in the app.
+  Set<String> get existingDuplicateKeys => _accounts.map(duplicateKey).toSet();
+
+  /// Add the accounts in [data]. All new accounts are saved together: if this
+  /// throws, none of them were saved.
   Future<ImportResult> importData(Map<String, dynamic> data) async {
     try {
-      var accountsAdded = 0;
+      final newAccounts = <Account>[];
       var accountsSkipped = 0;
 
       // Import accounts, skipping duplicates matched on name + issuer + type.
       if (data['accounts'] != null) {
-        final existingKeys = _accounts
-            .map(
-              (a) =>
-                  '${a.name.toLowerCase()}|${(a.issuer ?? '').toLowerCase()}|${a.type.toLowerCase()}',
-            )
-            .toSet();
+        final existingKeys = existingDuplicateKeys;
         final accounts = data['accounts'] as List;
         for (final item in accounts) {
           final account = item is Account
               ? item
               : Account.fromMap(item as Map<String, dynamic>);
-          final key =
-              '${account.name.toLowerCase()}|${(account.issuer ?? '').toLowerCase()}|${account.type.toLowerCase()}';
+          final key = duplicateKey(account);
           if (!existingKeys.contains(key)) {
+            // Encrypt first, outside the transaction, so it stays short.
             final encryptedAccount = Account(
               name: account.name,
               secret: await _encryption.encrypt(account.secret),
@@ -396,9 +400,8 @@ class AccountsProvider extends ChangeNotifier {
               createdAt: account.createdAt,
               sortOrder: account.sortOrder,
             );
-            await _db.createAccount(encryptedAccount);
+            newAccounts.add(encryptedAccount);
             existingKeys.add(key);
-            accountsAdded++;
           } else {
             accountsSkipped++;
             AppLogger.verbose('Skipped a duplicate account during import');
@@ -406,10 +409,11 @@ class AccountsProvider extends ChangeNotifier {
         }
       }
 
+      await _db.createAccounts(newAccounts);
       await loadAccounts();
 
       return ImportResult(
-        accountsAdded: accountsAdded,
+        accountsAdded: newAccounts.length,
         accountsSkipped: accountsSkipped,
       );
     } catch (e) {

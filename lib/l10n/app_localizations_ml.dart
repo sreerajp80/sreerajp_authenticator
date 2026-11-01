@@ -104,6 +104,30 @@ class AppLocalizationsMl extends AppLocalizations {
   String get titleThemeMode => 'തീം രീതി';
 
   @override
+  String get titleAccentColor => 'പ്രധാന നിറം';
+
+  @override
+  String get titleSelectAccentColor => 'നിറം തിരഞ്ഞെടുക്കുക';
+
+  @override
+  String get labelAccentBlue => 'നീല';
+
+  @override
+  String get labelAccentTeal => 'നീലപ്പച്ച';
+
+  @override
+  String get labelAccentIndigo => 'കരിനീല';
+
+  @override
+  String get labelAccentGreen => 'പച്ച';
+
+  @override
+  String get labelAccentCopper => 'ചെമ്പ്';
+
+  @override
+  String get labelAccentGraphite => 'ഗ്രാഫൈറ്റ്';
+
+  @override
   String get titleThemeInformation => 'തീം വിവരങ്ങൾ';
 
   @override
@@ -111,7 +135,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String descVisualDesign(String appName) {
-    return '$appName ഓഫ്‌ലൈനായി പ്രവർത്തിക്കുന്ന 3D ന്യൂമോർഫിക് തീം ഉപയോഗിക്കുന്നു; തിളക്കമുള്ള കൗണ്ട്ഡൗൺ വലയങ്ങളും ഉയർന്ന വർണ്ണവ്യത്യാസമുള്ള എളുപ്പത്തിലുള്ള ഉപയോഗവും ഇതിലുണ്ട്.';
+    return '$appName ഉയർന്നുനിൽക്കുന്ന കാർഡുകളും വ്യക്തമായ കൗണ്ട്ഡൗൺ വലയങ്ങളും ഉയർന്ന വർണ്ണവ്യത്യാസമുള്ള എഴുത്തുമുള്ള വൃത്തിയുള്ള ഓഫ്‌ലൈൻ രൂപകൽപ്പന ഉപയോഗിക്കുന്നു.';
   }
 
   @override
@@ -1571,7 +1595,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get descOpticalSend =>
-      'അക്കൗണ്ടുകൾ ചലിക്കുന്ന QR സ്ട്രീമായി അയയ്ക്കുക (12–15 FPS)';
+      'അക്കൗണ്ടുകൾ ചലിക്കുന്ന QR സ്ട്രീമായി അയയ്ക്കുക (10–15 FPS)';
 
   @override
   String get labelOpticalReceive => 'ഒപ്റ്റിക്കൽ സ്ട്രീം സ്കാൻ';
@@ -1863,7 +1887,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get descFeatures15 =>
-      'സാധാരണ 2FA QR കോഡുകളിലേക്ക് (otpauth://) ക്യാമറ തിരിച്ച് അക്കൗണ്ടുകൾ ചേർക്കുക. ഫ്ലാഷ്‌ലൈറ്റും ഉടനടി പരിശോധനയും ഉണ്ട്.';
+      'സാധാരണ 2FA QR കോഡുകളിലേക്ക് (otpauth://) ക്യാമറ തിരിച്ച് അക്കൗണ്ടുകൾ ചേർക്കുക, അല്ലെങ്കിൽ Google Authenticator എക്സ്പോർട്ട് QR കോഡിൽ നിന്ന് പലതും ഒരുമിച്ച് ഇറക്കുമതി ചെയ്യുക. ഫ്ലാഷ്‌ലൈറ്റും ഉടനടി പരിശോധനയും ഉണ്ട്.';
 
   @override
   String get descFeatures16 => 'വേഗത്തിലുള്ള കണ്ടെത്തൽ';
@@ -2905,4 +2929,72 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get errorDeleteAllDataFailed =>
       'ചില വിവരങ്ങൾ ഇല്ലാതാക്കാനായില്ല. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get titleImportAccounts => 'അക്കൗണ്ട് ഇറക്കുമതി';
+
+  @override
+  String get titleQrCodesMissing => 'QR കോഡുകൾ കുറവാണ്';
+
+  @override
+  String actionImportCount(int count) {
+    return 'ഇറക്കുമതി ($count)';
+  }
+
+  @override
+  String get labelAlreadyInApp => 'ആപ്പിൽ നിലവിലുണ്ട്';
+
+  @override
+  String get labelUnnamedAccount => 'പേരില്ലാത്ത അക്കൗണ്ട്';
+
+  @override
+  String descMigrationProgress(int scanned, int total) {
+    return '$total QR കോഡുകളിൽ $scanned എണ്ണം സ്കാൻ ചെയ്തു';
+  }
+
+  @override
+  String descMigrationPartial(int scanned, int total) {
+    return '$total QR കോഡുകളിൽ $scanned എണ്ണം മാത്രമേ സ്കാൻ ചെയ്തിട്ടുള്ളൂ. മറ്റ് QR കോഡുകളിലെ അക്കൗണ്ടുകൾ ഇറക്കുമതി ചെയ്യില്ല.';
+  }
+
+  @override
+  String get descImportReviewHint =>
+      'ഇറക്കുമതി ചെയ്യേണ്ട Google Authenticator അക്കൗണ്ടുകൾ തിരഞ്ഞെടുക്കുക.';
+
+  @override
+  String get descImportHotpReminder =>
+      'കൗണ്ടർ അടിസ്ഥാനമാക്കിയ അക്കൗണ്ടുകൾക്ക് പഴയ ആപ്പ് ഇനി ഉപയോഗിക്കരുത്; അല്ലെങ്കിൽ കൗണ്ടറുകൾ പൊരുത്തപ്പെടില്ല.';
+
+  @override
+  String get errorMigrationInvalid =>
+      'ഈ Google Authenticator QR കോഡ് വായിക്കാൻ കഴിഞ്ഞില്ല.';
+
+  @override
+  String get errorMigrationOtherExport =>
+      'ഈ QR കോഡ് മറ്റൊരു എക്സ്പോർട്ടിൽ നിന്നുള്ളതാണ്. ഇത് ഉപയോഗിക്കാൻ തിരികെ പോയി വീണ്ടും തുടങ്ങുക.';
+
+  @override
+  String get errorImportFailed =>
+      'അക്കൗണ്ടുകൾ ഇറക്കുമതി ചെയ്യാൻ കഴിഞ്ഞില്ല. ഒന്നും സംരക്ഷിച്ചിട്ടില്ല.';
+
+  @override
+  String get errorEntryDamaged => 'ഈ അക്കൗണ്ടിന്റെ വിവരങ്ങൾ കേടായിരിക്കുന്നു.';
+
+  @override
+  String get errorEntryNoSecret => 'ഈ അക്കൗണ്ടിന് രഹസ്യ കീ ഇല്ല.';
+
+  @override
+  String get errorEntryShortSecret => 'ഈ അക്കൗണ്ടിന്റെ രഹസ്യ കീ വളരെ ചെറുതാണ്.';
+
+  @override
+  String get errorEntryAlgorithm =>
+      'ഈ അക്കൗണ്ട് ഉപയോഗിക്കുന്ന അൽഗോരിതം ആപ്പ് പിന്തുണയ്ക്കുന്നില്ല.';
+
+  @override
+  String get errorEntryDigits =>
+      'ഈ അക്കൗണ്ടിന്റെ കോഡ് നീളം ആപ്പ് പിന്തുണയ്ക്കുന്നില്ല.';
+
+  @override
+  String get errorEntryType =>
+      'ഈ അക്കൗണ്ടിന്റെ തരം ആപ്പ് പിന്തുണയ്ക്കുന്നില്ല.';
 }

@@ -18,7 +18,7 @@ import '../services/clipboard_service.dart';
 import '../services/otp_service.dart';
 import '../utils/constants.dart';
 import '../utils/app_logger.dart';
-import 'account_tile/pattern_painter.dart';
+import '../utils/theme.dart';
 import 'account_tile/account_avatar.dart';
 import 'account_tile/otp_code_display.dart';
 import 'account_tile/timer_indicator.dart';
@@ -333,359 +333,214 @@ class _AccountTileState extends State<AccountTile>
     return otp;
   }
 
+  /// The first tag, then "+N" for the rest. A screen reader hears every tag.
+  Widget _buildTags(ThemeData theme) {
+    final tags = widget.account.tags
+        .map((tag) => tag.startsWith('#') ? tag : '#$tag')
+        .toList();
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Semantics(
+      label: tags.join(', '),
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                tags.first,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11, color: muted),
+              ),
+            ),
+          ),
+          if (tags.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                '+${tags.length - 1}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: muted,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final hasIssuer = widget.account.issuer?.isNotEmpty == true;
+    const radius = BorderRadius.all(Radius.circular(14));
 
-    return Container(
+    return AnimatedContainer(
       key: widget.dismissibleKey,
-      margin: const EdgeInsets.only(bottom: 8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        transform: Matrix4.diagonal3Values(
-          _isPressed ? 0.98 : 1.0,
-          _isPressed ? 0.98 : 1.0,
-          1.0,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: _isPressed
-                ? [
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withValues(alpha: 0.6)
-                          : Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withValues(alpha: 0.8)
-                          : Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                      spreadRadius: -5,
-                    ),
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withValues(alpha: 0.6)
-                          : Colors.grey.shade400.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                    if (!isDark)
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        blurRadius: 10,
-                        offset: const Offset(0, -3),
-                        spreadRadius: -5,
-                      ),
-                  ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Stack(
-              children: [
-                // Layer 1: Base gradient background
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [
-                                const Color.fromARGB(255, 48, 44, 42),
-                                const Color.fromARGB(255, 71, 35, 39),
-                              ]
-                            : [
-                                const Color.fromARGB(0, 109, 108, 109),
-                                const Color.fromARGB(255, 248, 248, 248),
-                              ],
-                      ),
-                    ),
+      duration: const Duration(milliseconds: 100),
+      transform: Matrix4.diagonal3Values(
+        _isPressed ? 0.98 : 1.0,
+        _isPressed ? 0.98 : 1.0,
+        1.0,
+      ),
+      transformAlignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: AppTheme.cardShadows(isDark: isDark, isPressed: _isPressed),
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Stack(
+          children: [
+            Material(
+              color: theme.colorScheme.surface,
+              child: Semantics(
+                onTapHint: widget.isSelectionMode
+                    ? null
+                    : AppLocalizations.of(context).actionCopyCode,
+                child: InkWell(
+                  onTapDown: (_) => setState(() => _isPressed = true),
+                  onTapUp: (_) => setState(() => _isPressed = false),
+                  onTapCancel: () => setState(() => _isPressed = false),
+                  onTap: () {
+                    widget.onTap?.call();
+                    if (!widget.isSelectionMode) _copyToClipboard();
+                  },
+                  onLongPress: widget.onLongPress,
+                  highlightColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.06,
                   ),
-                ),
-                // Layer 2: Pattern overlay
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: EnhancedPatternPainter(isDark: isDark),
-                  ),
-                ),
-
-                // Layer 3: Subtle noise texture
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0.7, -0.6),
-                        radius: 2.0,
-                        colors: isDark
-                            ? [
-                                const Color.fromARGB(
-                                  255,
-                                  129,
-                                  133,
-                                  136,
-                                ).withValues(alpha: 0.68),
-                                Colors.transparent,
-                              ]
-                            : [
-                                theme.colorScheme.primary.withValues(
-                                  alpha: 0.34,
+                  splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            if (widget.isSelectionMode)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Icon(
+                                  widget.isSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  color: widget.isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurfaceVariant,
+                                  size: 24,
                                 ),
-                                Colors.transparent,
-                              ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Layer 4: Border overlay
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color.fromARGB(
-                              255,
-                              155,
-                              153,
-                              153,
-                            ).withValues(alpha: 0.15)
-                          : const Color.fromARGB(
-                              255,
-                              163,
-                              161,
-                              161,
-                            ).withValues(alpha: 0.5),
-                      width: 1.2,
-                    ),
-                  ),
-                ),
-
-                // Layer 5: Main content with DYNAMIC HEIGHT
-                Material(
-                  color: Colors.transparent,
-                  child: Semantics(
-                    onTapHint: widget.isSelectionMode
-                        ? null
-                        : AppLocalizations.of(context).actionCopyCode,
-                    child: InkWell(
-                      onTapDown: (_) => setState(() => _isPressed = true),
-                      onTapUp: (_) => setState(() => _isPressed = false),
-                      onTapCancel: () => setState(() => _isPressed = false),
-                      onTap: () {
-                        widget.onTap?.call();
-                        if (!widget.isSelectionMode) _copyToClipboard();
-                      },
-                      onLongPress: widget.onLongPress,
-                      borderRadius: BorderRadius.circular(16),
-                      highlightColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.85,
-                      ),
-                      splashColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.25,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                        child: IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (widget.isSelectionMode)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: Icon(
-                                    widget.isSelected
-                                        ? Icons.check_circle
-                                        : Icons.radio_button_unchecked,
-                                    color: widget.isSelected
-                                        ? theme.colorScheme.primary
-                                        : (isDark
-                                              ? Colors.grey.shade500
-                                              : Colors.grey.shade400),
-                                    size: 24,
+                              ),
+                            AccountAvatar(
+                              displayLetter:
+                                  (hasIssuer
+                                          ? widget.account.issuer![0]
+                                          : widget.account.name[0])
+                                      .toUpperCase(),
+                              issuer: widget.account.issuer,
+                              accountName: widget.account.name,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    hasIssuer
+                                        ? widget.account.issuer!
+                                        : widget.account.name,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              AccountAvatar(
-                                displayLetter:
-                                    (widget.account.issuer?.isNotEmpty == true
-                                            ? widget.account.issuer![0]
-                                            : widget.account.name[0])
-                                        .toUpperCase(),
-                                issuer: widget.account.issuer,
-                                accountName: widget.account.name,
-                              ),
-                              const SizedBox(width: 12),
-
-                              // Account Details
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              if (widget
-                                                      .account
-                                                      .issuer
-                                                      ?.isNotEmpty ==
-                                                  true)
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 2,
-                                                      ),
-                                                  child: Text(
-                                                    widget.account.issuer!,
-                                                    style: theme
-                                                        .textTheme
-                                                        .bodySmall
-                                                        ?.copyWith(
-                                                          color: isDark
-                                                              ? Colors
-                                                                    .grey
-                                                                    .shade400
-                                                              : theme
-                                                                    .colorScheme
-                                                                    .onSurfaceVariant,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          fontSize: 11,
-                                                        ),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              Text(
-                                                widget.account.name,
-                                                style: theme
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      fontSize: 13,
-                                                      color: isDark
-                                                          ? Colors.white
-                                                          : null,
-                                                    ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (widget.account.tags.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 6),
-                                        child: Wrap(
-                                          spacing: 6,
-                                          runSpacing: 4,
-                                          children: widget.account.tags.map((
-                                            tag,
-                                          ) {
-                                            final label = tag.startsWith('#')
-                                                ? tag
-                                                : '#$tag';
-                                            return Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: isDark
-                                                    ? theme.colorScheme.primary
-                                                          .withValues(
-                                                            alpha: 0.25,
-                                                          )
-                                                    : theme.colorScheme.primary
-                                                          .withValues(
-                                                            alpha: 0.12,
-                                                          ),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                border: Border.all(
-                                                  color: theme
-                                                      .colorScheme
-                                                      .primary
-                                                      .withValues(alpha: 0.4),
-                                                  width: 1.0,
-                                                ),
-                                              ),
-                                              child: Text(
-                                                label,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isDark
-                                                      ? const Color(0xFF90CAF9)
-                                                      : theme
-                                                            .colorScheme
-                                                            .primary,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
+                                  if (hasIssuer)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: Text(
+                                        widget.account.name,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              fontSize: 12,
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    const SizedBox(height: 8),
-                                    OtpCodeDisplay(
-                                      fadeAnimation: _fadeAnimation,
-                                      formattedCode: _formatOTP(
-                                        _getDisplayCode(),
-                                      ),
-                                      isCodeVisible: _isCodeVisible,
-                                      onToggleVisibility: _toggleCodeVisibility,
                                     ),
-                                  ],
-                                ),
+                                ],
                               ),
-
-                              if (!_isHotp)
-                                TimerIndicator(
-                                  remainingTime: _remainingTime,
-                                  period: widget.account.period,
-                                )
-                              else if (!widget.isSelectionMode)
-                                IconButton(
-                                  icon: const Icon(Icons.refresh_rounded),
-                                  tooltip: AppLocalizations.of(context)
-                                      .tooltipNextCode,
-                                  onPressed: _isFetchingHotp
-                                      ? null
-                                      : _nextHotpCode,
-                                ),
-                              const SizedBox(width: 8),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (!_isHotp)
+                              TimerIndicator(
+                                remainingTime: _remainingTime,
+                                period: widget.account.period,
+                              )
+                            else if (!widget.isSelectionMode)
+                              IconButton(
+                                icon: const Icon(Icons.refresh_rounded),
+                                tooltip: AppLocalizations.of(context)
+                                    .tooltipNextCode,
+                                onPressed: _isFetchingHotp
+                                    ? null
+                                    : _nextHotpCode,
+                              ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Divider(height: 1, color: theme.dividerColor),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              flex: 3,
+                              child: OtpCodeDisplay(
+                                fadeAnimation: _fadeAnimation,
+                                formattedCode: _formatOTP(_getDisplayCode()),
+                                isCodeVisible: _isCodeVisible,
+                                onToggleVisibility: _toggleCodeVisibility,
+                              ),
+                            ),
+                            if (widget.account.tags.isNotEmpty)
+                              Flexible(flex: 2, child: _buildTags(theme)),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+            // Thin light top edge, like light catching a raised surface.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 1,
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.9),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

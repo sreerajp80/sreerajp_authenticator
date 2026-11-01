@@ -10,9 +10,11 @@ import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 import '../models/account.dart';
 import '../providers/account_provider.dart';
+import '../services/google_migration_service.dart';
 import '../services/otp_service.dart';
 import '../utils/app_logger.dart';
 import '../widgets/qr_camera_view.dart';
+import 'google_import_review_screen.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -26,8 +28,90 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   bool isProcessing = false;
 
+  /// The QR codes scanned so far from a Google Authenticator export.
+  final GoogleMigrationCollector _migration = GoogleMigrationCollector();
+
+  @override
+  void dispose() {
+    _migration.clear();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  void _processMigrationCode(String code) {
+    final l10n = AppLocalizations.of(context);
+
+    final GoogleMigrationBatch batch;
+    try {
+      batch = GoogleMigrationService.parse(code);
+    } on GoogleMigrationException catch (e) {
+      // The exception holds only a code, so this logs no scanned data.
+      AppLogger.error('Failed to read a migration QR code', e);
+      _showError(l10n.errorMigrationInvalid);
+      return;
+    }
+
+    switch (_migration.add(batch)) {
+      case GoogleMigrationAddResult.repeated:
+        return;
+      case GoogleMigrationAddResult.otherExport:
+        _showError(l10n.errorMigrationOtherExport);
+        return;
+      case GoogleMigrationAddResult.added:
+        if (_migration.isComplete) {
+          _openMigrationReview();
+        } else {
+          setState(() {});
+        }
+    }
+  }
+
+  void _openMigrationReview() {
+    Navigator.of(context).pushReplacement<bool, bool>(
+      MaterialPageRoute(
+        builder: (_) => GoogleImportReviewScreen(entries: _migration.entries),
+      ),
+    );
+  }
+
+  Future<void> _continueWithScanned() async {
+    final l10n = AppLocalizations.of(context);
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.titleQrCodesMissing),
+        content: Text(
+          l10n.descMigrationPartial(_migration.scanned, _migration.total),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.actionCancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.actionContinue),
+          ),
+        ],
+      ),
+    );
+    if (proceed == true && mounted) _openMigrationReview();
+  }
+
   void _processQRCode(String? code) async {
     if (code == null || isProcessing) return;
+    if (GoogleMigrationService.isMigrationLink(code)) {
+      _processMigrationCode(code);
+      return;
+    }
     final l10n = AppLocalizations.of(context);
 
     setState(() {
@@ -303,6 +387,22 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
+                      if (!_migration.isEmpty) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.descMigrationProgress(
+                            _migration.scanned,
+                            _migration.total,
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _continueWithScanned,
+                          child: Text(l10n.actionContinue),
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),

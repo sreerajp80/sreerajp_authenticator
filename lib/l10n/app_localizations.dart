@@ -262,6 +262,54 @@ abstract class AppLocalizations {
   /// **'Theme mode'**
   String get titleThemeMode;
 
+  /// Accent colour row and screen title. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent colour'**
+  String get titleAccentColor;
+
+  /// Section label above the accent colour list. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Select accent colour'**
+  String get titleSelectAccentColor;
+
+  /// Accent colour name: blue. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get labelAccentBlue;
+
+  /// Accent colour name: teal. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get labelAccentTeal;
+
+  /// Accent colour name: indigo. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Indigo'**
+  String get labelAccentIndigo;
+
+  /// Accent colour name: green. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get labelAccentGreen;
+
+  /// Accent colour name: copper. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Copper'**
+  String get labelAccentCopper;
+
+  /// Accent colour name: graphite. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphite'**
+  String get labelAccentGraphite;
+
   /// Section header on the Appearance screen. Keep short.
   ///
   /// In en, this message translates to:
@@ -277,7 +325,7 @@ abstract class AppLocalizations {
   /// Card body on the Appearance screen. {appName} is the app name in the active language.
   ///
   /// In en, this message translates to:
-  /// **'{appName} uses an offline-first 3D neumorphic theme with vibrant token countdown rings and high-contrast accessibility.'**
+  /// **'{appName} uses a clean offline design with raised cards, clear countdown rings and high-contrast text.'**
   String descVisualDesign(String appName);
 
   /// Theme mode row subtitle when the theme follows the system.
@@ -2827,7 +2875,7 @@ abstract class AppLocalizations {
   /// Row subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Transmit your accounts as an animated QR stream (12–15 FPS)'**
+  /// **'Transmit your accounts as an animated QR stream (10–15 FPS)'**
   String get descOpticalSend;
 
   /// Row title. Keep short.
@@ -3319,7 +3367,7 @@ abstract class AppLocalizations {
   /// Features screen: feature description.
   ///
   /// In en, this message translates to:
-  /// **'Add accounts by pointing your camera at standard 2FA QR codes (otpauth://). Includes a flashlight toggle and instant validation.'**
+  /// **'Add accounts by pointing your camera at standard 2FA QR codes (otpauth://), or bring many at once from a Google Authenticator export QR code. Includes a flashlight toggle and instant validation.'**
   String get descFeatures15;
 
   /// Features screen: feature highlight chip.
@@ -5057,6 +5105,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Some data could not be deleted. Please try again.'**
   String get errorDeleteAllDataFailed;
+
+  /// Title of the screen that reviews accounts found in another app's export. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Import accounts'**
+  String get titleImportAccounts;
+
+  /// Dialog title when only part of an export was scanned. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'QR codes missing'**
+  String get titleQrCodesMissing;
+
+  /// Button that imports the chosen accounts. {count} is how many. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Import ({count})'**
+  String actionImportCount(int count);
+
+  /// Shown on an account that will not be imported because it is already in the app. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in app'**
+  String get labelAlreadyInApp;
+
+  /// Shown when a damaged account in an export has no readable name. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed account'**
+  String get labelUnnamedAccount;
+
+  /// Progress in the scanner while reading an export split across several QR codes.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned {scanned} of {total} QR codes'**
+  String descMigrationProgress(int scanned, int total);
+
+  /// Warning before continuing with part of an export.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {scanned} of {total} QR codes were scanned. Accounts in the other QR codes will not be imported.'**
+  String descMigrationPartial(int scanned, int total);
+
+  /// Hint at the top of the import review screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the Google Authenticator accounts to import.'**
+  String get descImportReviewHint;
+
+  /// Shown after importing HOTP accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop using the old app for counter-based accounts, or the counters will no longer match.'**
+  String get descImportHotpReminder;
+
+  /// Snackbar when an export QR code is damaged.
+  ///
+  /// In en, this message translates to:
+  /// **'This Google Authenticator QR code could not be read.'**
+  String get errorMigrationInvalid;
+
+  /// Snackbar when a scanned QR code belongs to another export.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code is from a different export. Go back and start again to use it.'**
+  String get errorMigrationOtherExport;
+
+  /// Snackbar when saving imported accounts fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not import the accounts. Nothing was saved.'**
+  String get errorImportFailed;
+
+  /// Reason an account in an export cannot be imported.
+  ///
+  /// In en, this message translates to:
+  /// **'This account\'s data is damaged.'**
+  String get errorEntryDamaged;
+
+  /// Reason an account in an export cannot be imported.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no secret key.'**
+  String get errorEntryNoSecret;
+
+  /// Reason an account in an export cannot be imported.
+  ///
+  /// In en, this message translates to:
+  /// **'This account\'s secret key is too short.'**
+  String get errorEntryShortSecret;
+
+  /// Reason an account in an export cannot be imported.
+  ///
+  /// In en, this message translates to:
+  /// **'This account uses an algorithm the app does not support.'**
+  String get errorEntryAlgorithm;
+
+  /// Reason an account in an export cannot be imported.
+  ///
+  /// In en, this message translates to:
+  /// **'This account uses a code length the app does not support.'**
+  String get errorEntryDigits;
+
+  /// Reason an account in an export cannot be imported.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is of a type the app does not support.'**
+  String get errorEntryType;
 }
 
 class _AppLocalizationsDelegate

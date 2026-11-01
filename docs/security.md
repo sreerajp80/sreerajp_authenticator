@@ -24,7 +24,7 @@ The `Sensitive Data Extension` applies, so this file is filled in **in full**.
 Each line is `verified`, `n/a` (with a short reason), `failed` (a known gap, see §17), or
 `to verify` until it has been checked. The rules are in engineering standard §15.1. Re-check this
 list before every production release. Last checked for the "Delete all data" change
-([`../plans/20261031_081352_android-release-blockers.md`](../plans/20261031_081352_android-release-blockers.md)),
+([`../plans/20261031_181352_android-release-blockers.md`](../plans/20261031_181352_android-release-blockers.md)),
 which added no new entry point, permission or dependency.
 
 | Area | Rule | Status |
@@ -36,7 +36,7 @@ which added no new entry point, permission or dependency.
 | Outside input | Intents, imports, payloads, clipboard, QR codes validated (§3.1); parameterized SQL; no path traversal | `verified` — §3.1; backup files have a size limit and the sync limits; every SQL statement uses bound values or fixed text; no file path is built from input |
 | Deep links | No sensitive action without user confirmation; verified links for callbacks | `n/a` — no deep links registered (launcher intent only) |
 | WebView | Not used, or allowlisted HTTPS origins, JavaScript only if needed, no bridge to untrusted content | `n/a` — the app opens no WebView. `url_launcher` declares an unexported `WebViewActivity`, which the app does not ask for |
-| Platform hardening | Android components not exported unless needed; `PendingIntent` immutable; narrow `FileProvider`; private app folders | `verified` — exported: launcher activity and AndroidX `ProfileInstallReceiver` (needs the `DUMP` permission); `share_plus` provider limited to `cache/share_plus/`; no `PendingIntent` in app code |
+| Platform hardening | Android components not exported unless needed; `PendingIntent` immutable; narrow `FileProvider`; private app folders | `verified` — exported: launcher activity and AndroidX `ProfileInstallReceiver` (needs the `DUMP` permission); no `FileProvider` from backup export (it uses the system save screen); no `PendingIntent` in app code |
 | Randomness / crypto | `Random.secure()` for security values; standard, maintained crypto libraries only | `verified` — only `Random.secure()` and secure IVs in `lib/`; libraries are `pointycastle` / `encrypt` / `crypto` |
 | Release build | No debug menus, test accounts or backdoors; `debuggable=false`; `--obfuscate` | `verified` on the prod release APK — not debuggable, built with `--obfuscate`, symbols written; dev tools are behind `AppFlavorConfig` |
 | Third-party SDKs | Each SDK listed in §4 with what it collects; no secrets or PII in crash reports or analytics | `verified` — none in `pubspec.yaml` or the release APK (§4) |
@@ -84,6 +84,7 @@ Every way data reaches the app from outside, and how each is checked (engineerin
 |-------------|---------|------------|----------------------------|
 | Android intent | Launcher `MAIN` intent only; no share target, no deep link | No data read from the intent | No |
 | QR code (camera) | `otpauth://totp/...` | Parsed by `OTPService.parseOtpAuthUri`; null or empty secret rejected with a message | No — user reviews before the account is saved |
+| Google Authenticator export QR (camera) | `otpauth-migration://offline?data=…` | `GoogleMigrationService.parse`: input size limit, every Protobuf length checked against the bytes left, varints limited to 10 bytes, field size limits. A broken QR code is rejected as a whole; a bad account becomes a problem entry. Errors hold codes only, never scanned data | No — user chooses on a review screen, then the import funnel (`AccountsProvider.importData`) |
 | Sync QR (camera) | `spauth://sync?v=1&ip=…&port=…&code=…` | `P2pSyncService.parseSyncQrPayload` rejects foreign scheme/host/version, bad port, empty code | No — only starts the normal join flow |
 | Optical sync frames (camera) | Chunked QR frames (version 2) | Version 1 (plaintext) frames refused; CRC32 per chunk, parity chunks, AES-256-GCM tag check with the one-time transfer code (§5.2), then the import funnel | No — goes through `AccountsProvider.importData` |
 | File import | Encrypted `.aes` backup via the system file picker | 16 MB size check before reading; password-based decryption; the Wi-Fi sync limits on account count and field length; malformed data rejected (§14) | No — add-only import |

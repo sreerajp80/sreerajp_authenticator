@@ -159,11 +159,12 @@ Screens: Security, Lock, Permissions. Services: `auth_service.dart`,
   inside). There is no plain-text export option in the UI.
 - **Export**: all accounts are decrypted, put into JSON, then re-encrypted
   with a password the user types in (PBKDF2, 300,000 iterations, then
-  AES-256-GCM). The file is shared via the normal Android share sheet (`share_plus`).
+  AES-256-GCM). The file is saved through the system save screen (`file_picker`), and success is shown only after it is written.
 - **Import**: user picks the backup file via the system file picker (`file_picker`), types the password, and the app decrypts and
   adds the accounts. Accounts that already exist (same name + issuer + type)
   are skipped automatically, and the user is provided an `ImportResult` dialog telling how many were added vs
-  skipped.
+  skipped. The new accounts are saved in one database transaction, so if the
+  import fails, none of them are added.
 - Only the current backup format (`v3`) can be read. Older formats are refused
   with a message (`docs/security.md` §6); the app has had no public release, so
   no old backups need them.
@@ -223,7 +224,11 @@ server or internet involved in any of them.
 
 - **Theme**: System / Light / Dark, kept in sync across devices as part of
   "Settings" sync.
-- Custom look and feel (3D/neumorphic-style cards), custom Inter app font, swipe
+- **Accent colour**: Blue (default), Teal, Indigo, Green, Copper or Graphite, in
+  Settings → Appearance. Applied at once and kept on this device only (not synced).
+  There is no red choice, because the timer turns red for a code's last 5 seconds.
+- Account cards show the first tag and then `+N`; a screen reader hears every tag.
+- Custom look and feel (raised 3D-style cards), custom Inter app font, swipe
   actions, animated FAB, gradient app bar.
 - **Home screen**: two tabs — Accounts (search, tag filter, sortable list)
   and Tags (tag cloud view).
@@ -271,7 +276,10 @@ server or internet involved in any of them.
 - No plain-text export option (encrypted `.aes` export only).
 - Manual account entry only supports TOTP with SHA1/256/512; other
   types (HOTP, Steam, Blizzard, YubiKey) require a QR/URI import.
-- No import from other authenticator apps' own export/migration formats
-  (e.g. Google Authenticator's export QR, Aegis, 2FAS). Only this app's own
-  `.aes` backup file and single-account `otpauth://`/vendor URIs (via QR
-  scan) can be imported.
+- Import from other authenticator apps covers Google Authenticator's export
+  QR codes only. Other formats (e.g. Aegis, 2FAS) are not supported. Besides
+  that, only this app's own `.aes` backup file and single-account
+  `otpauth://`/vendor URIs (via QR scan) can be imported.
+- Google Authenticator import skips an account with the same name, issuer and
+  type as one already in the app, even if its secret differs. That account
+  must be added by hand.

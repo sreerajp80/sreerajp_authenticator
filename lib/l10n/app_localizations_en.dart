@@ -100,6 +100,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleThemeMode => 'Theme mode';
 
   @override
+  String get titleAccentColor => 'Accent colour';
+
+  @override
+  String get titleSelectAccentColor => 'Select accent colour';
+
+  @override
+  String get labelAccentBlue => 'Blue';
+
+  @override
+  String get labelAccentTeal => 'Teal';
+
+  @override
+  String get labelAccentIndigo => 'Indigo';
+
+  @override
+  String get labelAccentGreen => 'Green';
+
+  @override
+  String get labelAccentCopper => 'Copper';
+
+  @override
+  String get labelAccentGraphite => 'Graphite';
+
+  @override
   String get titleThemeInformation => 'Theme information';
 
   @override
@@ -107,7 +131,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String descVisualDesign(String appName) {
-    return '$appName uses an offline-first 3D neumorphic theme with vibrant token countdown rings and high-contrast accessibility.';
+    return '$appName uses a clean offline design with raised cards, clear countdown rings and high-contrast text.';
   }
 
   @override
@@ -1545,7 +1569,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get descOpticalSend =>
-      'Transmit your accounts as an animated QR stream (12–15 FPS)';
+      'Transmit your accounts as an animated QR stream (10–15 FPS)';
 
   @override
   String get labelOpticalReceive => 'Scan optical stream';
@@ -1834,7 +1858,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get descFeatures15 =>
-      'Add accounts by pointing your camera at standard 2FA QR codes (otpauth://). Includes a flashlight toggle and instant validation.';
+      'Add accounts by pointing your camera at standard 2FA QR codes (otpauth://), or bring many at once from a Google Authenticator export QR code. Includes a flashlight toggle and instant validation.';
 
   @override
   String get descFeatures16 => 'Fast detection';
@@ -2872,4 +2896,73 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorDeleteAllDataFailed =>
       'Some data could not be deleted. Please try again.';
+
+  @override
+  String get titleImportAccounts => 'Import accounts';
+
+  @override
+  String get titleQrCodesMissing => 'QR codes missing';
+
+  @override
+  String actionImportCount(int count) {
+    return 'Import ($count)';
+  }
+
+  @override
+  String get labelAlreadyInApp => 'Already in app';
+
+  @override
+  String get labelUnnamedAccount => 'Unnamed account';
+
+  @override
+  String descMigrationProgress(int scanned, int total) {
+    return 'Scanned $scanned of $total QR codes';
+  }
+
+  @override
+  String descMigrationPartial(int scanned, int total) {
+    return 'Only $scanned of $total QR codes were scanned. Accounts in the other QR codes will not be imported.';
+  }
+
+  @override
+  String get descImportReviewHint =>
+      'Choose the Google Authenticator accounts to import.';
+
+  @override
+  String get descImportHotpReminder =>
+      'Stop using the old app for counter-based accounts, or the counters will no longer match.';
+
+  @override
+  String get errorMigrationInvalid =>
+      'This Google Authenticator QR code could not be read.';
+
+  @override
+  String get errorMigrationOtherExport =>
+      'This QR code is from a different export. Go back and start again to use it.';
+
+  @override
+  String get errorImportFailed =>
+      'Could not import the accounts. Nothing was saved.';
+
+  @override
+  String get errorEntryDamaged => 'This account\'s data is damaged.';
+
+  @override
+  String get errorEntryNoSecret => 'This account has no secret key.';
+
+  @override
+  String get errorEntryShortSecret =>
+      'This account\'s secret key is too short.';
+
+  @override
+  String get errorEntryAlgorithm =>
+      'This account uses an algorithm the app does not support.';
+
+  @override
+  String get errorEntryDigits =>
+      'This account uses a code length the app does not support.';
+
+  @override
+  String get errorEntryType =>
+      'This account is of a type the app does not support.';
 }

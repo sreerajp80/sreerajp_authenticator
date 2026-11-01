@@ -313,6 +313,7 @@ class _OpticalSyncScreenState extends State<OpticalSyncScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: SegmentedButton<int>(
+                        showSelectedIcon: false,
                         segments: [
                           for (final fps in const [10, 12, 15])
                             ButtonSegment(

@@ -12,8 +12,10 @@ double _ratio(Color a, Color b) {
 /// colour pairs, in both themes.
 void main() {
   for (final entry in {
-    'light': AppTheme.lightTheme,
-    'dark': AppTheme.darkTheme,
+    for (final accent in AppAccent.values) ...{
+      'light ${accent.name}': AppTheme.light(accent),
+      'dark ${accent.name}': AppTheme.dark(accent),
+    },
   }.entries) {
     final scheme = entry.value.colorScheme;
     final page = entry.value.scaffoldBackgroundColor;

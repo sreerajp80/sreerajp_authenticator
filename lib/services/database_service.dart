@@ -1,7 +1,7 @@
 // File Path: sreerajp_authenticator/lib/services/database_service.dart
 // Author: Sreeraj P
 // Created: 2025 September 25
-// Last Modified: 2026 August 01
+// Last Modified: 2026 October 31
 // Description: Database service.
 
 import 'package:flutter/foundation.dart';
@@ -80,6 +80,18 @@ class DatabaseService {
   Future<int> createAccount(Account account) async {
     final db = await database;
     return await db.insert('accounts', account.toMap());
+  }
+
+  /// Insert all [accounts] in one transaction: either every row is saved, or
+  /// none is.
+  Future<void> createAccounts(List<Account> accounts) async {
+    if (accounts.isEmpty) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      for (final account in accounts) {
+        await txn.insert('accounts', account.toMap());
+      }
+    });
   }
 
   Future<List<Account>> getAllAccounts() async {

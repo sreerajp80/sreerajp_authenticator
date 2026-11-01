@@ -104,6 +104,30 @@ class AppLocalizationsSa extends AppLocalizations {
   String get titleThemeMode => 'रूपविन्यासप्रकारः';
 
   @override
+  String get titleAccentColor => 'प्रधानवर्णः';
+
+  @override
+  String get titleSelectAccentColor => 'वर्णचयनम्';
+
+  @override
+  String get labelAccentBlue => 'नीलः';
+
+  @override
+  String get labelAccentTeal => 'हरितनीलः';
+
+  @override
+  String get labelAccentIndigo => 'श्यामनीलः';
+
+  @override
+  String get labelAccentGreen => 'हरितः';
+
+  @override
+  String get labelAccentCopper => 'ताम्रः';
+
+  @override
+  String get labelAccentGraphite => 'धूसरः';
+
+  @override
   String get titleThemeInformation => 'रूपविन्याससूचना';
 
   @override
@@ -111,7 +135,7 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String descVisualDesign(String appName) {
-    return '$appName अन्तर्जालं विना कार्यक्षमं त्रिविमीयं मृदुरूपविन्यासं प्रयुङ्क्ते, यस्मिन् दीप्तानि गणनावलयानि उच्चवर्णभेदयुक्ता सुगमता च सन्ति।';
+    return '$appName अन्तर्जालं विना कार्यक्षमां स्वच्छां रचनां प्रयुङ्क्ते, यस्यां उन्नतपत्राणि स्पष्टानि गणनावलयानि उच्चवर्णभेदयुक्तः पाठः च सन्ति।';
   }
 
   @override
@@ -1559,7 +1583,7 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get descOpticalSend =>
-      'विवरणानि चलत्-QR-प्रवाहरूपेण प्रेष्यन्ताम् (12–15 FPS)';
+      'विवरणानि चलत्-QR-प्रवाहरूपेण प्रेष्यन्ताम् (10–15 FPS)';
 
   @override
   String get labelOpticalReceive => 'प्रकाशीयप्रवाहावलोकनम्';
@@ -1846,7 +1870,7 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get descFeatures15 =>
-      'मानक-2FA-QR-सङ्केतेषु (otpauth://) छायाग्राहकं स्थापयित्वा विवरणानि योज्यन्ताम्। दीपः तत्क्षणपरीक्षणं च अन्तर्भवतः।';
+      'मानक-2FA-QR-सङ्केतेषु (otpauth://) छायाग्राहकं स्थापयित्वा विवरणानि योज्यन्ताम्, अथवा Google Authenticator-निर्यात-QR-सङ्केतात् बहूनि युगपत् आनीयन्ताम्। दीपः तत्क्षणपरीक्षणं च अन्तर्भवतः।';
 
   @override
   String get descFeatures16 => 'शीघ्रं ज्ञानम्';
@@ -2884,4 +2908,71 @@ class AppLocalizationsSa extends AppLocalizations {
   @override
   String get errorDeleteAllDataFailed =>
       'कश्चित् दत्तांशः लोप्तुं न शक्तः। पुनः प्रयत्यताम्।';
+
+  @override
+  String get titleImportAccounts => 'विवरणानयनम्';
+
+  @override
+  String get titleQrCodesMissing => 'QR-सङ्केताः न्यूनाः';
+
+  @override
+  String actionImportCount(int count) {
+    return 'आनीयताम् ($count)';
+  }
+
+  @override
+  String get labelAlreadyInApp => 'पूर्वमेव विद्यते';
+
+  @override
+  String get labelUnnamedAccount => 'अनामकं विवरणम्';
+
+  @override
+  String descMigrationProgress(int scanned, int total) {
+    return '$total QR-सङ्केतेषु $scanned अवलोकिताः';
+  }
+
+  @override
+  String descMigrationPartial(int scanned, int total) {
+    return '$total QR-सङ्केतेषु $scanned एव अवलोकिताः। अन्येषु सङ्केतेषु स्थितानि विवरणानि न आनेष्यन्ते।';
+  }
+
+  @override
+  String get descImportReviewHint =>
+      'आनेतव्यानि Google Authenticator-विवरणानि चीयन्ताम्।';
+
+  @override
+  String get descImportHotpReminder =>
+      'गणकाधारितविवरणेभ्यः पुरातनः अनुप्रयोगः मा प्रयुज्यताम्, अन्यथा गणकाः विसंवदिष्यन्ति।';
+
+  @override
+  String get errorMigrationInvalid =>
+      'अयं Google Authenticator QR-सङ्केतः पठितुं न शक्तः।';
+
+  @override
+  String get errorMigrationOtherExport =>
+      'अयं QR-सङ्केतः अन्यस्मात् निर्यातात् आगतः। एतस्य उपयोगाय प्रतिनिवृत्य पुनः आरभ्यताम्।';
+
+  @override
+  String get errorImportFailed =>
+      'विवरणानि आनेतुं न शक्तानि। किमपि न रक्षितम्।';
+
+  @override
+  String get errorEntryDamaged => 'अस्य विवरणस्य दत्तांशः दूषितः।';
+
+  @override
+  String get errorEntryNoSecret => 'अस्य विवरणस्य गुप्तकुञ्चिका नास्ति।';
+
+  @override
+  String get errorEntryShortSecret => 'अस्य विवरणस्य गुप्तकुञ्चिका अतिह्रस्वा।';
+
+  @override
+  String get errorEntryAlgorithm =>
+      'अस्य विवरणस्य गणनविधिः अनुप्रयोगेन न समर्थ्यते।';
+
+  @override
+  String get errorEntryDigits =>
+      'अस्य विवरणस्य सङ्केतदैर्घ्यम् अनुप्रयोगेन न समर्थ्यते।';
+
+  @override
+  String get errorEntryType => 'अस्य विवरणस्य प्रकारः अनुप्रयोगेन न समर्थ्यते।';
 }

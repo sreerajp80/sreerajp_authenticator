@@ -2,6 +2,7 @@
 // Author: Sreeraj P
 // Description: Home screen with 2-tab navigation (Accounts and Tag Cloud) with search, filter, and sort functionalities.
 
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:sreerajp_authenticator/config/app_config.dart';
@@ -21,7 +22,6 @@ import 'qr_scanner_screen.dart';
 import 'settings_screen.dart';
 
 import '../config/app_flavor_config.dart';
-import '../utils/theme.dart';
 import '../widgets/home/home_empty_state.dart';
 import '../widgets/home/home_fab_button.dart';
 import '../widgets/home/home_search_bar.dart';
@@ -207,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen>
           Localizations.localeOf(context).languageCode,
         ) +
         (AppFlavorConfig.instance.isDev ? ' Dev' : '');
+    final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final sortBy = context.watch<SettingsProvider>().sortBy;
 
@@ -232,35 +233,25 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: _isSelectionMode
-                      ? (isDark
-                            ? [const Color(0xFF1F2937), const Color(0xFF111827)]
-                            : [AppTheme.deepBlue, const Color(0xFF0D47A1)])
-                      : (isDark
-                            ? [const Color(0xFF1565C0), const Color(0xFF0D47A1)]
-                            : [AppTheme.primaryBlue, AppTheme.deepBlue]),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.3)
-                        : AppTheme.deepBlue.withValues(alpha: 0.2),
-                    offset: const Offset(0, 3),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                  ),
-                ],
+                color: _isSelectionMode
+                    ? Color.alphaBlend(
+                        scheme.primary.withValues(alpha: 0.1),
+                        scheme.surface,
+                      )
+                    : scheme.surface,
+                border: Border(bottom: BorderSide(color: theme.dividerColor)),
               ),
               child: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                centerTitle: true,
+                centerTitle: false,
+                // The header is light in the light theme, so status icons flip.
+                systemOverlayStyle: isDark
+                    ? SystemUiOverlayStyle.light
+                    : SystemUiOverlayStyle.dark,
                 leading: _isSelectionMode
                     ? IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: Icon(Icons.close, color: scheme.onSurface),
                         tooltip: l10n.tooltipCancelSelection,
                         onPressed: _exitSelectionMode,
                       )
@@ -270,33 +261,24 @@ class _HomeScreenState extends State<HomeScreen>
                       ? l10n.labelSelectedCount(_selectedAccountIds.length)
                       : appName,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.4,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
-                      ),
-                      Shadow(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        offset: const Offset(0, -1),
-                        blurRadius: 2,
-                      ),
-                    ],
+                    color: scheme.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                iconTheme: const IconThemeData(color: Colors.white, size: 24),
+                iconTheme: IconThemeData(
+                  color: scheme.onSurfaceVariant,
+                  size: 24,
+                ),
                 bottom: TabBar(
                   controller: _tabController,
-                  indicatorColor: Colors.white,
-                  indicatorWeight: 3,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
+                  indicatorColor: scheme.primary,
+                  indicatorWeight: 2,
+                  dividerColor: Colors.transparent,
+                  labelColor: scheme.primary,
+                  unselectedLabelColor: scheme.onSurfaceVariant,
                   labelStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
                   tabs: [
@@ -329,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen>
                         return IconButton(
                           icon: Icon(
                             allSelected ? Icons.deselect : Icons.select_all,
-                            color: Colors.white,
+                            color: scheme.onSurface,
                           ),
                           tooltip: allSelected
                               ? l10n.tooltipDeselectAll
@@ -340,17 +322,10 @@ class _HomeScreenState extends State<HomeScreen>
                     )
                   else ...[
                     PopupMenuButton<String>(
-                      icon: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.sort,
-                          size: 20,
-                          color: Colors.white,
-                        ),
+                      icon: Icon(
+                        Icons.sort,
+                        size: 22,
+                        color: scheme.onSurfaceVariant,
                       ),
                       tooltip: l10n.tooltipSort,
                       onSelected: (value) {
@@ -393,14 +368,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ],
                     ),
                     IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.settings_outlined, size: 20),
-                      ),
+                      icon: const Icon(Icons.settings_outlined, size: 22),
                       onPressed: () {
                         _onUserInteraction();
                         Navigator.push(
@@ -419,18 +387,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [const Color(0xFF0D1117), const Color(0xFF161B22)]
-                    : [
-                        const Color.fromARGB(255, 255, 255, 255),
-                        const Color.fromARGB(255, 106, 128, 161),
-                      ],
-              ),
-            ),
+            color: theme.scaffoldBackgroundColor,
             child: SafeArea(
               top: true,
               child: TabBarView(
@@ -471,19 +428,10 @@ class _HomeScreenState extends State<HomeScreen>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF1E3A5F)
-                                  : AppTheme.primaryBlue.withValues(
-                                      alpha: 0.12,
-                                    ),
+                              color: scheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isDark
-                                    ? const Color(0xFF64B5F6)
-                                          .withValues(alpha: 0.4)
-                                    : AppTheme.primaryBlue.withValues(
-                                        alpha: 0.3,
-                                      ),
+                                color: scheme.primary.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Row(
@@ -491,9 +439,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 Icon(
                                   Icons.filter_alt,
                                   size: 18,
-                                  color: isDark
-                                      ? const Color(0xFF64B5F6)
-                                      : AppTheme.primaryBlue,
+                                  color: scheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -502,9 +448,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark
-                                          ? Colors.white
-                                          : AppTheme.deepBlue,
+                                      color: scheme.onSurface,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -564,30 +508,12 @@ class _HomeScreenState extends State<HomeScreen>
                                 ),
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: isDark
-                                        ? [
-                                            const Color(0xFF1E3A5F)
-                                                .withValues(alpha: 0.3),
-                                            const Color(0xFF2D4A3D)
-                                                .withValues(alpha: 0.3),
-                                          ]
-                                        : [
-                                            AppTheme.primaryBlue.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                            AppTheme.mintGreen.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                          ],
-                                  ),
+                                  color: scheme.primary.withValues(alpha: 0.07),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark
-                                        ? const Color(0xFF30363D)
-                                        : AppTheme.primaryBlue.withValues(
-                                            alpha: 0.2,
-                                          ),
+                                    color: scheme.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
                                     width: 1,
                                   ),
                                 ),
@@ -596,9 +522,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     Icon(
                                       Icons.info_outline,
                                       size: 18,
-                                      color: isDark
-                                          ? const Color(0xFF64B5F6)
-                                          : AppTheme.primaryBlue,
+                                      color: scheme.primary,
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
@@ -606,9 +530,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         l10n.descHomeHint,
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: isDark
-                                              ? const Color(0xFFB1BAC4)
-                                              : AppTheme.deepBlue,
+                                          color: scheme.onSurfaceVariant,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -670,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           (1 - animValue) * 6;
                                       return Material(
                                         elevation: elevation,
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(14),
                                         child: child,
                                       );
                                     },
@@ -717,7 +639,7 @@ class _HomeScreenState extends State<HomeScreen>
           bottomNavigationBar: _isSelectionMode
               ? Container(
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF161B22) : Colors.white,
+                    color: scheme.surface,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.2),
@@ -779,21 +701,18 @@ class _HomeScreenState extends State<HomeScreen>
     required String label,
     required bool isSelected,
   }) {
+    final accent = Theme.of(context).colorScheme.primary;
     return PopupMenuItem<String>(
       value: value,
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: isSelected ? AppTheme.primaryBlue : Colors.grey,
-          ),
+          Icon(icon, size: 20, color: isSelected ? accent : Colors.grey),
           const SizedBox(width: 12),
           Text(
             label,
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? AppTheme.primaryBlue : null,
+              color: isSelected ? accent : null,
             ),
           ),
         ],
@@ -841,11 +760,11 @@ class _HomeScreenState extends State<HomeScreen>
                       _onUserInteraction();
                       _navigateToAddAccount(accountToEdit: account);
                     },
-                    backgroundColor: AppTheme.mintGreen,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
+                      topLeft: Radius.circular(14),
+                      bottomLeft: Radius.circular(14),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -870,8 +789,8 @@ class _HomeScreenState extends State<HomeScreen>
                     backgroundColor: Colors.red.shade600,
                     foregroundColor: Colors.white,
                     borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
+                      topRight: Radius.circular(14),
+                      bottomRight: Radius.circular(14),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -957,8 +876,7 @@ class _HomeScreenState extends State<HomeScreen>
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final activeColor =
-        color ?? (isDark ? const Color(0xFF64B5F6) : AppTheme.primaryBlue);
+    final activeColor = color ?? theme.colorScheme.primary;
     final disabledColor = isDark ? Colors.grey.shade700 : Colors.grey.shade400;
 
     return InkWell(
@@ -1180,11 +1098,14 @@ class _HomeScreenState extends State<HomeScreen>
                     )
                     .toList();
 
+                final settingsProvider = context.read<SettingsProvider>();
+                settingsProvider.setBackupInProgress(true);
                 final service = ExportImportService();
                 final success = await service.exportAccountsEncrypted(
                   selectedAccounts,
                   password,
                 );
+                settingsProvider.setBackupInProgress(false);
 
                 if (mounted) {
                   if (success) {

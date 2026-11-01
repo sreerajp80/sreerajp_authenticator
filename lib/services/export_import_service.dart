@@ -10,8 +10,6 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:pointycastle/export.dart';
 
@@ -46,15 +44,30 @@ class BackupContentException implements Exception {
   String toString() => 'Backup content is not valid';
 }
 
-class ExportImportService {
-  final _encryptionService = EncryptionService();
+/// Saves [bytes] somewhere the user chooses. Returns the saved location, or null
+/// if the user cancelled.
+typedef BackupFileSaver = Future<Uri?> Function(
+  String fileName,
+  Uint8List bytes,
+);
 
-  // Export accounts as encrypted JSON (RECOMMENDED)
+class ExportImportService {
+  ExportImportService({@visibleForTesting BackupFileSaver? fileSaver})
+    : _fileSaver = fileSaver ?? _saveWithSystemDialog;
+
+  final _encryptionService = EncryptionService();
+  final BackupFileSaver _fileSaver;
+
+  static Future<Uri?> _saveWithSystemDialog(String fileName, Uint8List bytes) =>
+      FilePicker.saveFile(fileName: fileName, bytes: bytes);
+
+  // Export accounts as encrypted JSON (RECOMMENDED).
+  // Returns true only when the file was really saved. Returns false if the user
+  // cancelled the save screen or saving failed.
   Future<bool> exportAccountsEncrypted(
     List<Account> accounts,
     String password,
   ) async {
-    File? file;
     try {
       // Step 1: Decrypt all secrets with device key
       final decryptedAccounts = await Future.wait(
@@ -75,22 +88,15 @@ class ExportImportService {
       final fileName =
           'authenticator_backup_encrypted_${DateTime.now().millisecondsSinceEpoch}.aes';
 
-      final directory = await getTemporaryDirectory();
-      file = File('${directory.path}/$fileName');
-      await file.writeAsString(encryptedData);
+      final saved = await _fileSaver(
+        fileName,
+        Uint8List.fromList(utf8.encode(encryptedData)),
+      );
 
-      final xFile = XFile(file.path);
-      final params = ShareParams(files: [xFile]);
-      final result = await SharePlus.instance.share(params);
-
-      return result.status == ShareResultStatus.success;
+      return saved != null;
     } catch (e) {
       AppLogger.error('Failed to export encrypted backup', e);
       return false;
-    } finally {
-      try {
-        await file?.delete();
-      } catch (_) {}
     }
   }
 

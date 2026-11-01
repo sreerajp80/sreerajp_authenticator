@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
-import '../../utils/theme.dart';
-
 /// Keyboard route to the same options a long press opens.
 class _OpenAddOptionsIntent extends Intent {
   const _OpenAddOptionsIntent();
@@ -155,7 +153,6 @@ class _HomeFabButtonState extends State<HomeFabButton> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
     return ScaleTransition(
@@ -223,19 +220,9 @@ class _HomeFabButtonState extends State<HomeFabButton> {
                                 : null,
                             boxShadow: [
                               BoxShadow(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.5)
-                                    : AppTheme.mintGreen.withValues(alpha: 0.4),
+                                color: Colors.black.withValues(alpha: 0.3),
                                 offset: Offset(0, _isButtonPressed ? 2 : 5),
                                 blurRadius: _isButtonPressed ? 3 : 10,
-                                spreadRadius: _isButtonPressed ? 0 : 1,
-                              ),
-                              BoxShadow(
-                                color: AppTheme.mintGreen.withValues(
-                                  alpha: 0.3,
-                                ),
-                                offset: Offset(0, _isButtonPressed ? 1 : 2),
-                                blurRadius: _isButtonPressed ? 2 : 4,
                               ),
                             ],
                           ),
@@ -244,36 +231,9 @@ class _HomeFabButtonState extends State<HomeFabButton> {
                             child: Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: _isButtonPressed
-                                      ? [
-                                          Color.fromARGB(
-                                            (AppTheme.mintGreen.a * 255.0)
-                                                    .round() &
-                                                0xff,
-                                            (AppTheme.mintGreen.r * 255.0 * 0.9)
-                                                    .round() &
-                                                0xff,
-                                            (AppTheme.mintGreen.g * 255.0 * 0.9)
-                                                    .round() &
-                                                0xff,
-                                            (AppTheme.mintGreen.b * 255.0 * 0.9)
-                                                    .round() &
-                                                0xff,
-                                          ),
-                                          AppTheme.sageGreen,
-                                        ]
-                                      : [
-                                          AppTheme.mintGreen,
-                                          AppTheme.sageGreen,
-                                        ],
-                                ),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  width: 1.5,
-                                ),
+                                color: _isButtonPressed
+                                    ? theme.colorScheme.secondary
+                                    : theme.colorScheme.primary,
                               ),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 100),
@@ -286,17 +246,8 @@ class _HomeFabButtonState extends State<HomeFabButton> {
                                 child: Center(
                                   child: Icon(
                                     Icons.add,
-                                    color: Colors.white,
+                                    color: theme.colorScheme.onPrimary,
                                     size: 28,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        offset: const Offset(0, 1),
-                                        blurRadius: 2,
-                                      ),
-                                    ],
                                   ),
                                 ),
                               ),

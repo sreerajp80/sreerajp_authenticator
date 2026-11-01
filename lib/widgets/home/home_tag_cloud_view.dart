@@ -10,8 +10,6 @@ import '../../screens/tag_management_screen.dart';
 
 import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
-import '../../utils/theme.dart';
-
 class HomeTagCloudView extends StatefulWidget {
   final VoidCallback onTagSelected;
 
@@ -64,7 +62,9 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                           l10n.titleTagCloud,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : AppTheme.deepBlue,
+                            color: isDark
+                                ? Colors.white
+                                : theme.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -276,7 +276,7 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                                   ? theme.colorScheme.primary
                                   : (isDark
                                         ? const Color(0xFF334155)
-                                        : AppTheme.primaryBlue.withValues(
+                                        : theme.colorScheme.primary.withValues(
                                             alpha: 0.25,
                                           )),
                               width: isSelected ? 1.5 : 1.0,
@@ -302,10 +302,10 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                   color: isSelected
-                                      ? Colors.white
+                                      ? theme.colorScheme.onPrimary
                                       : (isDark
                                             ? const Color(0xFFE2E8F0)
-                                            : AppTheme.deepBlue),
+                                            : theme.colorScheme.onSurface),
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -316,14 +316,15 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? Colors.white.withValues(alpha: 0.25)
+                                      ? theme.colorScheme.onPrimary.withValues(
+                                          alpha: 0.25,
+                                        )
                                       : (isDark
                                             ? Colors.white.withValues(
                                                 alpha: 0.1,
                                               )
-                                            : AppTheme.primaryBlue.withValues(
-                                                alpha: 0.1,
-                                              )),
+                                            : theme.colorScheme.primary
+                                                  .withValues(alpha: 0.1)),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -332,7 +333,7 @@ class _HomeTagCloudViewState extends State<HomeTagCloudView> {
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: isSelected
-                                        ? Colors.white
+                                        ? theme.colorScheme.onPrimary
                                         : theme.colorScheme.primary,
                                   ),
                                 ),

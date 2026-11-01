@@ -243,7 +243,7 @@ no public release):
 
 - DI approach: provider tree plus manual service construction inside providers and services
 - App-root dependencies:
-  - `ThemeProvider`
+  - `ThemeProvider` (theme mode and accent colour; `AppTheme.light/dark(accent)` builds the themes)
   - `SettingsProvider`
   - `AccountProvider`
 - Test replacement strategy:
@@ -311,7 +311,11 @@ no public release):
 
 - `screen_protector`: screenshot and screen-recording protection
 - `local_auth`: device lock and biometric authentication
-- `flutter_zxing` and `camera`: QR scanning (`lib/widgets/qr_camera_view.dart`)
+- `flutter_zxing` and `camera`: QR scanning (`lib/widgets/qr_camera_view.dart`).
+  Google Authenticator export QR codes go from `lib/screens/qr_scanner_screen.dart`
+  through `lib/services/google_migration_service.dart` to
+  `lib/screens/google_import_review_screen.dart`, then the normal import funnel
+  (`AccountsProvider.importData`)
 - `flutter_secure_storage`: key and secret-material storage
 - `device_state_service` method channel: boot-count checks for adaptive unlock policy
 

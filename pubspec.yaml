@@ -1,7 +1,7 @@
 name: sreerajp_authenticator
 description: "A modern TOTP/HOTP authenticator app"
 publish_to: 'none'
-version: 2.10.2+30
+version: 2.10.3+31
 
 environment:
   sdk: ^3.13.5
@@ -33,8 +33,7 @@ dependencies:
 
   # Utilities
   flutter_secure_storage: ^11.2.0  # Secure storage for sensitive data
-  share_plus: ^13.3.1  # For export functionality
-  file_picker: ^13.3.0  # For import functionality
+  file_picker: ^13.3.0  # For backup export and import
   permission_handler: ^13.0.2  # Handle permissions
   url_launcher: ^6.3.1  # For opening links
   qr_flutter: ^4.1.0  # For QR code generation

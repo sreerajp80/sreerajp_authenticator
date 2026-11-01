@@ -2,8 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
-import '../../utils/theme.dart';
-
 class HomeEmptyState extends StatelessWidget {
   final String searchQuery;
 
@@ -13,7 +11,7 @@ class HomeEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final scheme = theme.colorScheme;
 
     return Center(
       child: Column(
@@ -23,25 +21,9 @@ class HomeEmptyState extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        const Color(0xFF1E3A5F).withValues(alpha: 0.2),
-                        const Color(0xFF2D4A3D).withValues(alpha: 0.2),
-                      ]
-                    : [
-                        AppTheme.primaryBlue.withValues(alpha: 0.1),
-                        AppTheme.mintGreen.withValues(alpha: 0.1),
-                      ],
-              ),
+              color: scheme.primary.withValues(alpha: 0.1),
             ),
-            child: Icon(
-              Icons.security,
-              size: 80,
-              color: isDark ? const Color(0xFF64B5F6) : AppTheme.primaryBlue,
-            ),
+            child: Icon(Icons.security, size: 80, color: scheme.primary),
           ),
           const SizedBox(height: 24),
           Text(
@@ -50,7 +32,7 @@ class HomeEmptyState extends StatelessWidget {
                 : l10n.emptyNoAccountsYet,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: isDark ? const Color(0xFFE1E4E8) : const Color(0xFF1A1A2E),
+              color: scheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -59,7 +41,7 @@ class HomeEmptyState extends StatelessWidget {
                 ? l10n.emptyTryDifferentSearch
                 : l10n.emptyAddFirstAccount,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? const Color(0xFF8B949E) : const Color(0xFF6B7280),
+              color: scheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
@@ -67,39 +49,23 @@ class HomeEmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [
-                        const Color(0xFF1565C0).withValues(alpha: 0.15),
-                        const Color(0xFF0D47A1).withValues(alpha: 0.15),
-                      ]
-                    : [
-                        AppTheme.primaryBlue.withValues(alpha: 0.08),
-                        AppTheme.deepBlue.withValues(alpha: 0.08),
-                      ],
-              ),
+              color: scheme.primary.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF30363D)
-                    : AppTheme.primaryBlue.withValues(alpha: 0.2),
+                color: scheme.primary.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.lightbulb_outline,
-                  size: 16,
-                  color: isDark ? const Color(0xFFFFD700) : AppTheme.goldAccent,
-                ),
+                Icon(Icons.lightbulb_outline, size: 16, color: scheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   l10n.emptyLongPressTip,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? const Color(0xFFB1BAC4) : AppTheme.deepBlue,
+                    color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

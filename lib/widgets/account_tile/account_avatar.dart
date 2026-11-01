@@ -23,95 +23,34 @@ class AccountAvatar extends StatelessWidget {
       accountName ?? '',
     );
 
+    final accent = theme.colorScheme.primary;
+
+    // Brand icons keep a white tile, because some are dark and would be lost
+    // on the dark card.
     return Container(
-      width: 48,
-      height: 48,
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: iconPath != null
-              ? [
-                  theme.colorScheme.surfaceContainerHighest,
-                  theme.colorScheme.surface,
-                ]
-              : [theme.colorScheme.primary, theme.colorScheme.secondary],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: iconPath != null
-              ? theme.colorScheme.primary.withValues(alpha: 0.3)
-              : Colors.transparent,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(2, 4),
-            spreadRadius: -2,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: iconPath != null ? Colors.white : accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+        border: iconPath != null ? Border.all(color: theme.dividerColor) : null,
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 24,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.85),
-                    Colors.white.withValues(alpha: 0.25),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Center(
-            child: iconPath != null
-                ? SvgPicture.asset(
-                    iconPath,
-                    width: 26,
-                    height: 26,
-                    placeholderBuilder: (_) => _buildLetterAvatar(),
-                  )
-                : _buildLetterAvatar(),
-          ),
-        ],
-      ),
+      child: iconPath != null
+          ? SvgPicture.asset(
+              iconPath,
+              width: 24,
+              height: 24,
+              placeholderBuilder: (_) => _buildLetterAvatar(accent),
+            )
+          : _buildLetterAvatar(accent),
     );
   }
 
-  Widget _buildLetterAvatar() {
+  Widget _buildLetterAvatar(Color color) {
     return Text(
       displayLetter,
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-        shadows: [
-          Shadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            offset: const Offset(0, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
+      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: color),
     );
   }
 }

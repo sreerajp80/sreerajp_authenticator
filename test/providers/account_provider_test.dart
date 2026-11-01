@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sreerajp_authenticator/providers/account_provider.dart';
 import 'package:sreerajp_authenticator/services/database_service.dart';
+import 'package:sreerajp_authenticator/services/google_migration_service.dart';
 
+import '../services/google_migration_test_data.dart';
 import 'provider_test_helpers.dart';
 
 void main() {
@@ -56,6 +58,67 @@ void main() {
       expect(result.isSuccess, isFalse);
       expect(result.code, isNull);
       expect((await db.getAllAccounts()).single.counter, 9);
+    });
+  });
+
+  group('Google Authenticator import', () {
+    test('an imported HOTP account continues from its counter', () async {
+      final provider = AccountsProvider();
+      await settleAsyncWork();
+      final account = GoogleMigrationService.parse(
+        migrationLink(
+          migrationPayload([migrationAccount(type: 1, counter: 1)]),
+        ),
+      ).entries.single.account!;
+
+      final result = await provider.importData({
+        'accounts': [account],
+      });
+      expect(result.accountsAdded, 1);
+
+      // RFC 4226 test value for counter 1.
+      final code = await provider.nextHotpCode(provider.accounts.single);
+      expect(code.code, '287082');
+      expect((await db.getAllAccounts()).single.counter, 2);
+    });
+
+    test('the duplicate check matches what import skips', () async {
+      final provider = AccountsProvider();
+      await settleAsyncWork();
+      final account = makeAccount(name: 'Me', issuer: 'Site');
+      await provider.importData({
+        'accounts': [account],
+      });
+
+      final same = makeAccount(name: 'ME', issuer: 'SITE');
+      expect(
+        provider.existingDuplicateKeys,
+        contains(AccountsProvider.duplicateKey(same)),
+      );
+      final result = await provider.importData({
+        'accounts': [same],
+      });
+      expect(result.accountsAdded, 0);
+      expect(result.accountsSkipped, 1);
+    });
+
+    test('a failed save leaves no accounts', () async {
+      final provider = AccountsProvider();
+      await settleAsyncWork();
+      // The second account breaks a NOT NULL column inside the transaction.
+      final database = await db.database;
+      await database.execute(
+        "CREATE TRIGGER fail_second BEFORE INSERT ON accounts "
+        "WHEN NEW.name = 'bad' BEGIN SELECT RAISE(ABORT, 'test'); END",
+      );
+
+      await expectLater(
+        provider.importData({
+          'accounts': [makeAccount(name: 'good'), makeAccount(name: 'bad')],
+        }),
+        throwsA(anything),
+      );
+      expect(await db.getAllAccounts(), isEmpty);
     });
   });
 
@@ -176,6 +239,74 @@ void main() {
         expect(provider.accounts.length, 2);
       },
     );
+
+    test('importData saves all new accounts with encrypted secrets', () async {
+      final provider = AccountsProvider();
+      await waitForCondition(() => !provider.isLoading);
+
+      const plainSecret = 'JBSWY3DPEHPK3PXP';
+      final result = await provider.importData({
+        'accounts': [
+          makeAccount(name: 'One', secret: plainSecret),
+          makeAccount(name: 'Two', secret: plainSecret),
+        ],
+      });
+
+      expect(result.accountsAdded, 2);
+      final stored = await db.getAllAccounts();
+      expect(stored.length, 2);
+      for (final account in stored) {
+        expect(account.secret, isNot(plainSecret));
+      }
+    });
+
+    test('importData saves nothing if a write fails midway', () async {
+      await db.createAccount(makeAccount(name: 'Existing'));
+      final provider = AccountsProvider();
+      await waitForCondition(
+        () => provider.accounts.length == 1 && !provider.isLoading,
+      );
+
+      // Make the insert of the second new account fail.
+      final database = await db.database;
+      await database.execute('''
+        CREATE TRIGGER fail_insert BEFORE INSERT ON accounts
+        WHEN NEW.name = 'Bad'
+        BEGIN SELECT RAISE(ABORT, 'test failure'); END
+      ''');
+
+      final data = <String, dynamic>{
+        'accounts': [
+          makeAccount(name: 'Good'),
+          makeAccount(name: 'Bad'),
+          makeAccount(name: 'Late'),
+        ],
+      };
+
+      await expectLater(provider.importData(data), throwsA(anything));
+      expect((await db.getAllAccounts()).map((a) => a.name).toList(), [
+        'Existing',
+      ]);
+
+      // Running it again after the cause is gone adds every account.
+      await database.execute('DROP TRIGGER fail_insert');
+      final result = await provider.importData(data);
+      expect(result.accountsAdded, 3);
+      expect((await db.getAllAccounts()).length, 4);
+    });
+
+    test('importData saves nothing if an item is malformed', () async {
+      final provider = AccountsProvider();
+      await waitForCondition(() => !provider.isLoading);
+
+      await expectLater(
+        provider.importData({
+          'accounts': [makeAccount(name: 'Good'), 'not an account'],
+        }),
+        throwsA(anything),
+      );
+      expect(await db.getAllAccounts(), isEmpty);
+    });
 
     test('renameTag renames tag across all member accounts', () async {
       await db.createAccount(

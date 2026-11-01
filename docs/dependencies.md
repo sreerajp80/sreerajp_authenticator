@@ -25,7 +25,7 @@ All external packages must fit the offline-first security posture of the app. Th
 | `provider` | Application state management |
 | `encrypt` & `pointycastle` | AES-256-GCM encryption and cryptographic operations |
 | `crypto` | HMAC hashing for RFC 4226/6238 TOTP/HOTP generation |
-| `file_picker` & `share_plus` | Encrypted backup import and export file handling |
+| `file_picker` | Encrypted backup import and export file handling |
 | `permission_handler` | Camera and storage permission management |
 | `url_launcher` | Opening external license or documentation links |
 | `flutter_slidable`, `flutter_animate`, `flutter_svg` | UI enhancements and animations |

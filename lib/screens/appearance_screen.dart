@@ -9,6 +9,7 @@ import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
 import '../providers/settings_provider.dart';
 import '../providers/theme_provider.dart';
+import 'accent_color_settings_screen.dart';
 import 'theme_mode_settings_screen.dart';
 
 /// Appearance preferences hub reached from Settings -> Appearance.
@@ -45,6 +46,14 @@ class AppearanceScreen extends StatelessWidget {
                 title: l10n.titleThemeMode,
                 subtitle: _getThemeModeSubtitle(l10n, themeProvider.themeMode),
                 onTap: () => _push(context, const ThemeModeSettingsScreen()),
+              ),
+              const SizedBox(height: 12),
+              _buildAppearanceCard(
+                context: context,
+                icon: Icons.palette_outlined,
+                title: l10n.titleAccentColor,
+                subtitle: accentColorName(l10n, themeProvider.accent),
+                onTap: () => _push(context, const AccentColorSettingsScreen()),
               ),
               const SizedBox(height: 24),
               _buildSectionLabel(

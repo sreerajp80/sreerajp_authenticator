@@ -54,14 +54,14 @@ The following features represent **groundbreaking innovations** that no current 
 ### Feature 1: Optical Air-Gap Sync (High-Density Animated QR Stream) `[COMPLETED]` ✅
 
 - **Status:** **Completed** ✅
-- **Implementation:** Implemented [`OpticalSyncService`](../lib/services/optical_sync_service.dart) with Fountain Code (LT Matrix) chunking, IEEE 802.3 CRC32 checksum verification, and dynamic out-of-order reconstruction. Built [`OpticalSyncScreen`](../lib/screens/optical_sync_screen.dart) for high-speed animated QR stream transmission (12–15 FPS) and live camera preview decoding. Integrated state handling into [`SyncProvider`](../lib/providers/sync_provider.dart) and added optical sync entry cards to [`SyncScreen`](../lib/screens/sync_screen.dart).
+- **Implementation:** Implemented [`OpticalSyncService`](../lib/services/optical_sync_service.dart) with Fountain Code (LT Matrix) chunking, IEEE 802.3 CRC32 checksum verification, and dynamic out-of-order reconstruction. Built [`OpticalSyncScreen`](../lib/screens/optical_sync_screen.dart) for high-speed animated QR stream transmission (10–15 FPS) and live camera preview decoding. Integrated state handling into [`SyncProvider`](../lib/providers/sync_provider.dart) and added optical sync entry cards to [`SyncScreen`](../lib/screens/sync_screen.dart).
 
 #### Problem in Current Apps
 Traditional 2FA migration between two offline devices requires either a single static QR code (which fails or gets truncated when vault has >15 accounts due to QR code density limits) or an active WiFi/LAN connection (which fails in high-security air-gapped facilities, public Wi-Fi with AP isolation enabled, or cellular-only environments).
 
 #### The Innovation
 **Optical Air-Gap Sync** transfers an unlimited number of 2FA accounts between two mobile phones using a **high-speed animated QR code stream (RaptorQ / Fountain Code matrix)**.
-- **Transmitter Device:** Packs the encrypted vault into binary chunks, appends CRC32 checksums, and renders an animated QR video stream on screen at 12–15 FPS.
+- **Transmitter Device:** Packs the encrypted vault into binary chunks, appends CRC32 checksums, and renders an animated QR video stream on screen at 10–15 FPS.
 - **Receiver Device:** Uses camera live preview to continuously capture frames, reconstructs missing fragments out-of-order, and decodes the full vault completely offline without Bluetooth, local Wi-Fi, socket binding, or cables.
 
 #### Technical Architecture & Implementation
@@ -284,7 +284,7 @@ The table below prioritizes all proposed features based on **Technical Feasibili
 
 | Phase | Feature Name | Type | Complexity | Security / UX Impact | Target File Locations | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | Universal Cross-App Migration Engine | Improvement | Medium | High (Seamless Onboarding) | [`lib/services/export_import_service.dart`](../lib/services/export_import_service.dart) | Planned |
+| **Phase 1** | Universal Cross-App Migration Engine | Improvement | Medium | High (Seamless Onboarding) | [`lib/services/google_migration_service.dart`](../lib/services/google_migration_service.dart) | Partial: Google Authenticator done; others planned |
 | **Phase 1** | Steam Guard & Non-Standard OTP | Improvement | Low | High (Broader Compatibility) | [`lib/services/otp_service.dart`](../lib/services/otp_service.dart) | **Completed** ✅ |
 | **Phase 1** | Offline Bundled Vector Brand Icons | Improvement | Medium | High (Premium Aesthetics) | `assets/icons/brands/`, [`lib/widgets/`](../lib/widgets) | **Completed** ✅ |
 | **Phase 1** | Next-Code Preview & Clipboard Sanitizer | Improvement | Low | Medium (User Convenience) | [`lib/services/otp_service.dart`](../lib/services/otp_service.dart) | Planned |

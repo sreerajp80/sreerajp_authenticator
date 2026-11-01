@@ -132,6 +132,69 @@ void main() {
     await removeTile(tester);
   });
 
+  testWidgets('the eye sits right next to the code', (tester) async {
+    await pumpTile(tester);
+
+    final codeRight = tester.getTopRight(find.text('*** ***')).dx;
+    final eyeLeft = tester.getTopLeft(find.byIcon(Icons.visibility_rounded)).dx;
+
+    expect(eyeLeft - codeRight, lessThan(24));
+    await removeTile(tester);
+  });
+
+  testWidgets('extra tags show as +N, and a screen reader hears them all', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: LocaleConfig.localizationsDelegates,
+        supportedLocales: LocaleConfig.supportedLocales,
+        home: Scaffold(
+          body: AccountTile(
+            account: makeAccount(
+              name: 'Acme',
+              tags: const ['Work', 'Bank', 'Home'],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('#Work'), findsOneWidget);
+    expect(find.text('+2'), findsOneWidget);
+    expect(find.text('#Bank'), findsNothing);
+    expect(find.bySemanticsLabel(RegExp('#Home')), findsOneWidget);
+    handle.dispose();
+    await removeTile(tester);
+  });
+
+  testWidgets('a long press still reaches the home screen', (tester) async {
+    var longPresses = 0;
+    final secret = await tester.runAsync(
+      () => EncryptionService().encrypt('JBSWY3DPEHPK3PXP'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: LocaleConfig.localizationsDelegates,
+        supportedLocales: LocaleConfig.supportedLocales,
+        home: Scaffold(
+          body: AccountTile(
+            account: makeAccount(name: 'Acme', secret: secret!),
+            onLongPress: () => longPresses++,
+          ),
+        ),
+      ),
+    );
+
+    await tester.longPress(find.text('Acme'));
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(longPresses, 1);
+    expect(clipboard, isNull);
+    await removeTile(tester);
+  });
+
   testWidgets('the clipboard clears after 30 seconds', (tester) async {
     await pumpTile(tester);
     await tester.tap(find.text('Acme'));

@@ -7,11 +7,16 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/theme.dart';
+
 class ThemeProvider extends ChangeNotifier {
   static const String _themeKey = 'theme_mode';
+  static const String _accentKey = 'accent_color';
   ThemeMode _themeMode = ThemeMode.system;
+  AppAccent _accent = AppAccent.blue;
 
   ThemeMode get themeMode => _themeMode;
+  AppAccent get accent => _accent;
 
   ThemeProvider() {
     _loadTheme();
@@ -21,6 +26,7 @@ class ThemeProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final themeIndex = prefs.getInt(_themeKey) ?? 0;
     _themeMode = ThemeMode.values[themeIndex];
+    _accent = AppAccent.fromName(prefs.getString(_accentKey));
     notifyListeners();
   }
 
@@ -31,6 +37,13 @@ class ThemeProvider extends ChangeNotifier {
     _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_themeKey, mode.index);
+    notifyListeners();
+  }
+
+  Future<void> setAccent(AppAccent accent) async {
+    _accent = accent;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accentKey, accent.name);
     notifyListeners();
   }
 

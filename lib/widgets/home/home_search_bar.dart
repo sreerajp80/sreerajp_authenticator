@@ -2,8 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
-import '../../utils/theme.dart';
-
 class HomeSearchBar extends StatelessWidget {
   final String searchQuery;
   final ValueChanged<String> onChanged;
@@ -19,45 +17,14 @@ class HomeSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  const Color(0xFF1565C0).withValues(alpha: 0.15),
-                  Colors.transparent,
-                ]
-              : [
-                  AppTheme.primaryBlue.withValues(alpha: 0.08),
-                  Colors.transparent,
-                ],
-        ),
-      ),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [const Color(0xFF1C2333), const Color(0xFF252D3D)]
-                : [Colors.white, const Color(0xFFFAFCFF)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.2)
-                  : AppTheme.primaryBlue.withValues(alpha: 0.1),
-              offset: const Offset(0, 2),
-              blurRadius: 8,
-              spreadRadius: 0,
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          color: theme.colorScheme.surface,
+          border: Border.all(color: theme.dividerColor),
         ),
         child: TextField(
           onChanged: onChanged,
@@ -67,7 +34,7 @@ class HomeSearchBar extends StatelessWidget {
             hintStyle: TextStyle(color: theme.hintColor.withValues(alpha: 0.7)),
             prefixIcon: Icon(
               Icons.search,
-              color: isDark ? const Color(0xFF64B5F6) : AppTheme.primaryBlue,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             suffixIcon: searchQuery.isNotEmpty
                 ? IconButton(

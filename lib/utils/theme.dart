@@ -2,20 +2,33 @@
 // Author: Sreeraj P
 // Created: 2025 September 25
 // Last Modified: 2025 October 12
-// Description: Enhanced theme with vibrant colors and professional 3D neumorphic design
+// Description: App theme built from the chosen accent colour, with raised card shadows
 
 import 'package:material_ui/material_ui.dart';
 
-class AppTheme {
-  // MODERN VIBRANT COLOR PALETTE
-  // Dark enough for small text and white-on-blue to pass 4.5 : 1 (§7.2).
-  static const primaryBlue = Color(0xFF2B6CB8);
-  static const deepBlue = Color(0xFF2E5C8A);
-  static const mintGreen = Color(0xFF6BCF9F);
-  static const sageGreen = Color(0xFF5FA575);
-  static const lavender = Color(0xFF9C88FF);
-  static const goldAccent = Color(0xFFFFD700);
+/// The accent colours a user can choose in Settings. A fixed list, so every
+/// choice is tested for contrast. No red: red means "code about to expire".
+/// The saved value is the name, so the order here can change safely.
+enum AppAccent {
+  blue(Color(0xFF2456C9), Color(0xFF7AA2FF)),
+  teal(Color(0xFF0F766E), Color(0xFF4FD1C0)),
+  indigo(Color(0xFF5B45C4), Color(0xFFA99BFF)),
+  green(Color(0xFF2E7D4F), Color(0xFF6FCF97)),
+  copper(Color(0xFFA8521E), Color(0xFFE9A26E)),
+  graphite(Color(0xFF3D4656), Color(0xFFAEB8C8));
 
+  const AppAccent(this.light, this.dark);
+
+  final Color light;
+  final Color dark;
+
+  static AppAccent fromName(String? name) => AppAccent.values.firstWhere(
+    (accent) => accent.name == name,
+    orElse: () => AppAccent.blue,
+  );
+}
+
+class AppTheme {
   // Status colors
   static const successGreen = Color(0xFF4CAF50);
   static const warningAmber = Color(0xFFFFA726);
@@ -47,35 +60,43 @@ class AppTheme {
   static const backgroundWhite = Color(0xFFFDFEFF);
   static const surfaceCard = Color(0xFFFFFFFF);
 
+  // Built once per accent, so a rebuild of the app keeps the same theme object.
+  static final _lightThemes = <AppAccent, ThemeData>{};
+  static final _darkThemes = <AppAccent, ThemeData>{};
+
+  static ThemeData light(AppAccent accent) =>
+      _lightThemes.putIfAbsent(accent, () => _buildLight(accent.light));
+  static ThemeData dark(AppAccent accent) =>
+      _darkThemes.putIfAbsent(accent, () => _buildDark(accent.dark));
+
+  static final lightTheme = light(AppAccent.blue);
+  static final darkTheme = dark(AppAccent.blue);
+
   // LIGHT THEME
-  static final lightTheme = ThemeData(
+  static ThemeData _buildLight(Color accent) => ThemeData(
     useMaterial3: true,
     fontFamilyFallback: fontFamilyFallback,
     brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: accent,
       brightness: Brightness.light,
-      primary: primaryBlue,
+      primary: accent,
       onPrimary: Colors.white,
-      secondary: mintGreen,
+      secondary: Color.lerp(accent, Colors.black, 0.18),
       onSecondary: Colors.white,
-      tertiary: lavender,
       surface: surfaceCard,
       onSurface: const Color(0xFF1A1A2E),
       surfaceContainerHighest: backgroundWhite,
       error: errorCoral,
-      primaryContainer: const Color(0xFFD4E4F7),
-      secondaryContainer: const Color(0xFFD4F5E3),
     ),
     scaffoldBackgroundColor: backgroundLight,
 
-    // Enhanced AppBar with gradient
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: true,
       backgroundColor: backgroundLight,
       surfaceTintColor: Colors.transparent,
-      iconTheme: const IconThemeData(color: deepBlue, size: 24),
+      iconTheme: IconThemeData(color: accent, size: 24),
       titleTextStyle: const TextStyle(
         color: Color(0xFF1A1A2E),
         fontSize: 20,
@@ -104,23 +125,21 @@ class AppTheme {
               borderRadius: BorderRadius.circular(14),
             ),
             foregroundColor: Colors.white,
-            backgroundColor: primaryBlue,
+            backgroundColor: accent,
             textStyle: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
           ).copyWith(
-            shadowColor: WidgetStateProperty.all(
-              primaryBlue.withValues(alpha: 0.4),
-            ),
+            shadowColor: WidgetStateProperty.all(accent.withValues(alpha: 0.4)),
           ),
     ),
 
     // 3D Floating Action Button
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       elevation: 0,
-      backgroundColor: mintGreen,
+      backgroundColor: accent,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
@@ -138,7 +157,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: primaryBlue, width: 2),
+        borderSide: BorderSide(color: accent, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       hintStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 15),
@@ -180,32 +199,30 @@ class AppTheme {
   );
 
   // DARK THEME
-  static final darkTheme = ThemeData(
+  static ThemeData _buildDark(Color accent) => ThemeData(
     useMaterial3: true,
     fontFamilyFallback: fontFamilyFallback,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: accent,
       brightness: Brightness.dark,
-      primary: const Color(0xFF64B5F6),
+      primary: accent,
       onPrimary: const Color(0xFF0D1117),
-      secondary: const Color(0xFF81C784),
+      secondary: Color.lerp(accent, Colors.black, 0.18),
       surface: const Color(0xFF1C2333),
       onSurface: const Color(0xFFE1E4E8),
       surfaceContainerHighest: const Color(0xFF252D3D),
       error: const Color(0xFFFF6B6B),
-      primaryContainer: const Color(0xFF1E3A5F),
-      secondaryContainer: const Color(0xFF2D4A3D),
     ),
     scaffoldBackgroundColor: const Color(0xFF0D1117),
 
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: true,
-      backgroundColor: Color(0xFF0D1117),
+      backgroundColor: const Color(0xFF0D1117),
       surfaceTintColor: Colors.transparent,
-      iconTheme: IconThemeData(color: Color(0xFF64B5F6), size: 24),
-      titleTextStyle: TextStyle(
+      iconTheme: IconThemeData(color: accent, size: 24),
+      titleTextStyle: const TextStyle(
         color: Color(0xFFE1E4E8),
         fontSize: 20,
         fontWeight: FontWeight.w700,
@@ -228,7 +245,7 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         foregroundColor: const Color(0xFF0D1117),
-        backgroundColor: const Color(0xFF64B5F6),
+        backgroundColor: accent,
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -239,7 +256,7 @@ class AppTheme {
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       elevation: 0,
-      backgroundColor: const Color(0xFF81C784),
+      backgroundColor: accent,
       foregroundColor: const Color(0xFF0D1117),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
@@ -260,6 +277,41 @@ class AppTheme {
       bodySmall: TextStyle(color: Color(0xFF6E7681), fontSize: 12),
     ),
   );
+
+  // Layered soft shadows that lift the account card off the page.
+  static List<BoxShadow> cardShadows({
+    required bool isDark,
+    bool isPressed = false,
+  }) {
+    final color = isDark ? Colors.black : const Color(0xFF141E32);
+    if (isPressed) {
+      return [
+        BoxShadow(
+          color: color.withValues(alpha: isDark ? 0.5 : 0.1),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ];
+    }
+    return [
+      BoxShadow(
+        color: color.withValues(alpha: isDark ? 0.5 : 0.06),
+        blurRadius: 2,
+        offset: const Offset(0, 1),
+      ),
+      BoxShadow(
+        color: color.withValues(alpha: isDark ? 0.35 : 0.07),
+        blurRadius: 8,
+        offset: const Offset(0, 4),
+      ),
+      BoxShadow(
+        color: color.withValues(alpha: isDark ? 0.6 : 0.14),
+        blurRadius: 20,
+        offset: const Offset(0, 12),
+        spreadRadius: -6,
+      ),
+    ];
+  }
 
   // PROFESSIONAL 3D NEUMORPHIC DECORATION
   static BoxDecoration get3DDecoration({
