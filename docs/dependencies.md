@@ -1,6 +1,6 @@
-# Dependencies — Sreeraj P Authenticator
+# Dependencies — Authenticator SP
 
-This document lists the approved baseline dependencies, package responsibilities, and explicit prohibited dependencies for Sreeraj P Authenticator.
+This document lists the approved baseline dependencies, package responsibilities, and explicit prohibited dependencies for Authenticator SP.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md)
 

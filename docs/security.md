@@ -1,6 +1,6 @@
-# Security — Sreeraj P Authenticator
+# Security — Authenticator SP
 
-This document governs the security architecture, threat model, sensitive data inventory, encryption design, session policy, and security testing checklist for Sreeraj P Authenticator. Read this before touching permissions, crypto, secure storage, authentication, or logging.
+This document governs the security architecture, threat model, sensitive data inventory, encryption design, session policy, and security testing checklist for Authenticator SP. Read this before touching permissions, crypto, secure storage, authentication, or logging.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [PROJECT_PROFILE.md](PROJECT_PROFILE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md) | [guidelines/security.md](guidelines/security.md)
 
@@ -10,7 +10,7 @@ The `Sensitive Data Extension` applies, so this file is filled in **in full**.
 
 ## 1. Security Scope
 
-- App: `Sreeraj P Authenticator`
+- App: `Authenticator SP`
 - Data sensitivity level: `high`
 - Engineering standard profiles in force:
   - `Core Baseline`

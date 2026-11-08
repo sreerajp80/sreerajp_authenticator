@@ -1,8 +1,8 @@
-# Privacy Policy — Sreeraj P Authenticator
+# Privacy Policy — Authenticator SP
 
 **Last updated:** 31 October 2026
 
-Sreeraj P Authenticator is a two-factor authentication app for Android, made by Sreeraj P. It works
+Authenticator SP is a two-factor authentication app for Android, made by Sreeraj P. It works
 offline. This policy explains what happens to your data when you use it.
 
 ## The short version

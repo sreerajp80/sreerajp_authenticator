@@ -79,9 +79,9 @@ void main() {
 
     test('fallback app name exists in every declared language', () {
       final name = AppConfig.fallback.appName;
-      expect(name.resolve('en'), 'Sreeraj P Authenticator');
-      expect(name.resolve('ml'), 'ശ്രീരാജ് പി പ്രമാണീകാരി');
-      expect(name.resolve('sa'), 'श्रीराज पी प्रमाणीकारकः');
+      expect(name.resolve('en'), 'Authenticator SP');
+      expect(name.resolve('ml'), 'മുദ്രിക');
+      expect(name.resolve('sa'), 'मुद्रिका');
     });
   });
 

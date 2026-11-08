@@ -159,8 +159,8 @@ class AppConstants {
 
   // ─── App / Branding (flavor-dependent) ─────────────────────────────────────
 
-  static const String appNameProd = 'Sreeraj P Authenticator';
-  static const String appNameDev = 'Sreeraj P Authenticator Dev';
+  static const String appNameProd = 'Authenticator SP';
+  static const String appNameDev = 'Authenticator SP Dev';
   static const String environmentNameProd = 'Production';
   static const String environmentNameDev = 'Development';
   static const String bannerLabelProd = 'PROD';

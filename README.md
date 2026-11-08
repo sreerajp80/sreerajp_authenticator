@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/feature_graphic.png" alt="Sreeraj P Authenticator: two-factor codes, encrypted on your phone" width="100%">
+  <img src="docs/images/feature_graphic.png" alt="Authenticator SP: two-factor codes, encrypted on your phone" width="100%">
 </p>
 
-# Sreeraj P Authenticator
+# Authenticator SP
 
 A privacy-first, offline two-factor authentication (2FA) app for Android. It makes the one-time codes that protect your online accounts, and keeps your accounts encrypted on your phone.
 
@@ -158,8 +158,8 @@ Flutter sets the app's flavor from `--flavor`, so no other setting is needed.
 
 | Flavor | Package ID | App name | Signing |
 |--------|------------|----------|---------|
-| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | Sreeraj P Authenticator Dev | Debug keystore (automatic) |
-| `prod` | `in.sreerajp.sreerajp_authenticator` | Sreeraj P Authenticator | Your release keystore (`android/key.properties`) |
+| `dev` | `in.sreerajp.sreerajp_authenticator.dev` | Authenticator SP Dev | Debug keystore (automatic) |
+| `prod` | `in.sreerajp.sreerajp_authenticator` | Authenticator SP | Your release keystore (`android/key.properties`) |
 
 Checks to run before a commit:
 

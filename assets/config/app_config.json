@@ -1,16 +1,16 @@
 {
   "appName": {
-    "en": "Sreeraj P Authenticator",
-    "ml": "ശ്രീരാജ് പി പ്രമാണീകാരി",
-    "sa": "श्रीराज पी प्रमाणीकारकः"
+    "en": "Authenticator SP",
+    "ml": "മുദ്രിക",
+    "sa": "मुद्रिका"
   },
   "description": {
     "en": "Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption.",
     "ml": "സ്വകാര്യതയ്ക്ക് മുൻഗണന നൽകി ഓഫ്‌ലൈനായി പ്രവർത്തിക്കുന്ന TOTP/HOTP പ്രാമാണീകരണ ആപ്പ്; AES-256-GCM എൻക്രിപ്ഷനോടെ സുരക്ഷിതമായ നിലവറ.",
     "sa": "गोपनीयताप्रधानम् अन्तर्जालं विना कार्यक्षमं TOTP/HOTP प्रमाणीकरणसाधनम्, AES-256-GCM गूढलेखनेन सुरक्षितकोशयुक्तम्।"
   },
-  "version": "2.10.3",
-  "build": "31",
+  "version": "2.10.4",
+  "build": "32",
   "details": {
     "author": {
       "en": "Sreeraj P",

@@ -1,6 +1,6 @@
-# Implementation Progress — Sreeraj P Authenticator
+# Implementation Progress — Authenticator SP
 
-This document tracks live implementation status and completed tasks for Sreeraj P Authenticator.
+This document tracks live implementation status and completed tasks for Authenticator SP.
 
 **Last updated:** 2026-10-31
 

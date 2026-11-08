@@ -1,4 +1,4 @@
-# Project Profile — Sreeraj P Authenticator
+# Project Profile — Authenticator SP
 
 **Last updated:** 2026-10-29
 
@@ -41,7 +41,8 @@
 
 | Item | Value |
 |---|---|
-| App display name | `en` Sreeraj P Authenticator · `ml` ശ്രീരാജ് പി പ്രമാണീകാരി · `sa` श्रीराज पी प्रमाणीकारकः (confirmed by user) |
+| App display name | `en` Authenticator SP · `ml` മുദ്രിക · `sa` मुद्रिका (confirmed by user) |
+| Play Store title | `en` Authenticator SP – Offline 2FA · `ml-IN` മുദ്രിക – ഓഫ്‌ലൈൻ 2FA (no Sanskrit listing on Play) |
 | Short description (one line) | Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption. |
 | Organization / publisher | Sreeraj P |
 | Reverse-DNS app id | `in.sreerajp.sreerajp_authenticator` (prod), `in.sreerajp.sreerajp_authenticator.dev` (dev) |

@@ -1,6 +1,6 @@
-# Architecture — Sreeraj P Authenticator
+# Architecture — Authenticator SP
 
-This document describes the technical architecture, layer boundaries, app lifecycle, state management, and persistence design of Sreeraj P Authenticator. Read this before changing screens, services, providers, models, or state logic.
+This document describes the technical architecture, layer boundaries, app lifecycle, state management, and persistence design of Authenticator SP. Read this before changing screens, services, providers, models, or state logic.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md) | [guidelines/architecture.md](guidelines/architecture.md)
 
@@ -8,7 +8,7 @@ This document describes the technical architecture, layer boundaries, app lifecy
 
 ## 1. Scope
 
-- Product: `Sreeraj P Authenticator`
+- Product: `Authenticator SP`
 - Repository type: `application`
 - Engineering standard profiles in force:
   - `Core Baseline`

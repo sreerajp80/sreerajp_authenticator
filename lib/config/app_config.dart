@@ -58,9 +58,9 @@ class AppConfig {
   /// so the app never crashes on a bad config.
   static const AppConfig fallback = AppConfig(
     appName: LocalizedText.byLocale({
-      'en': 'Sreeraj P Authenticator',
-      'ml': 'ശ്രീരാജ് പി പ്രമാണീകാരി',
-      'sa': 'श्रीराज पी प्रमाणीकारकः',
+      'en': 'Authenticator SP',
+      'ml': 'മുദ്രിക',
+      'sa': 'मुद्रिका',
     }),
     description: LocalizedText.plain(''),
     version: '0.0.0',

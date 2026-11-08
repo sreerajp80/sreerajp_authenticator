@@ -2,5 +2,5 @@
 <!-- Launcher name; must match appName in assets/config/app_config.json
      (docs/guidelines/guideline.md §1.8). -->
 <resources>
-    <string name="app_name">ശ്രീരാജ് പി പ്രമാണീകാരി Dev</string>
+    <string name="app_name">മുദ്രിക Dev</string>
 </resources>

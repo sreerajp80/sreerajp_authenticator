@@ -1,6 +1,6 @@
 // File Path: sreerajp_authenticator/lib/screens/features_screen.dart
 // Author: Sreeraj P
-// Description: Showcase screen listing all features and capabilities of Sreeraj P Authenticator with auto-lock monitoring
+// Description: Showcase screen listing all features and capabilities of Authenticator SP with auto-lock monitoring
 
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
@@ -37,7 +37,7 @@ class _FeatureCategory {
   });
 }
 
-/// Comprehensive features catalog for Sreeraj P Authenticator.
+/// Comprehensive features catalog for Authenticator SP.
 class FeaturesScreen extends StatelessWidget {
   const FeaturesScreen({super.key});
 

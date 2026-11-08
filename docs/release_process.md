@@ -1,6 +1,6 @@
-# Release Process — Sreeraj P Authenticator
+# Release Process — Authenticator SP
 
-This document describes the step-by-step build, versioning, signing, hardening, and release runbook for Sreeraj P Authenticator. Read this before preparing or tag-releasing a build.
+This document describes the step-by-step build, versioning, signing, hardening, and release runbook for Authenticator SP. Read this before preparing or tag-releasing a build.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [PROJECT_PROFILE.md](PROJECT_PROFILE.md) | [security.md](security.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/release_process.md](guidelines/release_process.md) | [guidelines/platform_store_readiness.md](guidelines/platform_store_readiness.md) | [guidelines/flutter_build_flavors_guide.md](guidelines/flutter_build_flavors_guide.md)
 
@@ -10,7 +10,7 @@ The `Production App Extension` applies, so this file is filled in **in full**.
 
 ## 1. Release Scope
 
-- App: `Sreeraj P Authenticator`
+- App: `Authenticator SP`
 - Release profile: `internal` (direct APK); first public Google Play release not yet done
 - Supported release platforms (from [`PROJECT_PROFILE.md`](PROJECT_PROFILE.md) §3):
   - `Android` — channels: Google Play, direct APK

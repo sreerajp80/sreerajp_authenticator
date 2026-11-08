@@ -1,6 +1,6 @@
-# Workflow Rules — Sreeraj P Authenticator
+# Workflow Rules — Authenticator SP
 
-This document describes the mandatory plan-before-changing, explicit user approval gate, and log-after-changing workflow rules for Sreeraj P Authenticator.
+This document describes the mandatory plan-before-changing, explicit user approval gate, and log-after-changing workflow rules for Authenticator SP.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/flutter_project_engineering_standard.md](guidelines/flutter_project_engineering_standard.md)
 

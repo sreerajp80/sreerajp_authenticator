@@ -1,4 +1,4 @@
-# Feature Reference — Sreeraj P Authenticator
+# Feature Reference — Authenticator SP
 
 This file is a full list of what this app is and what it can do today. It is
 meant to be given to an LLM (or a person) as ground truth, so they can check
@@ -10,10 +10,10 @@ meant to be given to an LLM (or a person) as ground truth, so they can check
 
 ## 1. What this app is
 
-**Sreeraj P Authenticator** is a privacy-first, offline-first two-factor authentication (2FA) app built with Flutter.
+**Authenticator SP** is a privacy-first, offline-first two-factor authentication (2FA) app built with Flutter.
 
 - **Canonical short description** (from `assets/config/app_config.json`): *"Privacy-first, offline-first TOTP/HOTP authenticator app with AES-256-GCM vault encryption."*
-- **Inclusive extended description**: *"Sreeraj P Authenticator is a privacy-first, offline-first 2FA authentication app featuring AES-256-GCM vault encryption, multi-algorithm support (TOTP, HOTP, Steam Guard, Blizzard, YubiKey), tag-based account organization with offline brand vector icons, biometric & recovery key security, lockdown mode, screen data leakage protection (FLAG_SECURE), password-encrypted backups, dual offline device-to-device sync (Wi-Fi LAN & Optical Air-Gap QR), 3D/neumorphic UI design, and zero telemetry."*
+- **Inclusive extended description**: *"Authenticator SP is a privacy-first, offline-first 2FA authentication app featuring AES-256-GCM vault encryption, multi-algorithm support (TOTP, HOTP, Steam Guard, Blizzard, YubiKey), tag-based account organization with offline brand vector icons, biometric & recovery key security, lockdown mode, screen data leakage protection (FLAG_SECURE), password-encrypted backups, dual offline device-to-device sync (Wi-Fi LAN & Optical Air-Gap QR), 3D/neumorphic UI design, and zero telemetry."*
 
 It generates one-time passcodes (OTPs) the same way apps like Google Authenticator or Authy do, but with no cloud account, no internet backend, and no telemetry — everything runs and stays on the device.
 

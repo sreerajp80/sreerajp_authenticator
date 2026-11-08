@@ -1,6 +1,6 @@
-# Project Structure — Sreeraj P Authenticator
+# Project Structure — Authenticator SP
 
-This document describes the tracked repository file tree and directory responsibility layout for Sreeraj P Authenticator. Read this to understand where files live and maintain project layout conventions.
+This document describes the tracked repository file tree and directory responsibility layout for Authenticator SP. Read this to understand where files live and maintain project layout conventions.
 
 [Read first: AGENTS.md](../AGENTS.md) | [CLAUDE.md](../CLAUDE.md) | [GUIDELINES_MANIFEST.md](GUIDELINES_MANIFEST.md) | [guidelines/guideline.md](guidelines/guideline.md)
 

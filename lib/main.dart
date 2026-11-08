@@ -2,7 +2,7 @@
 // Author: Sreeraj P
 // Created: 2025 September 25
 // Last Modified: 2025 October 14
-// Description: Main entry point for the Sreeraj P Authenticator app with lock screen check using routing wrapper pattern
+// Description: Main entry point for the Authenticator SP app with lock screen check using routing wrapper pattern
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';

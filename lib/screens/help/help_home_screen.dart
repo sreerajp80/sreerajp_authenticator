@@ -1,6 +1,6 @@
 // File Path: sreerajp_authenticator/lib/screens/help/help_home_screen.dart
 // Author: Sreeraj P
-// Description: Help Center and knowledge base hub for Sreeraj P Authenticator with auto-lock monitoring
+// Description: Help Center and knowledge base hub for Authenticator SP with auto-lock monitoring
 
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';

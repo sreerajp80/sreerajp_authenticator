@@ -97,7 +97,7 @@ Future<void> setUpA11yEnvironment() async {
       );
   rootBundle.clear();
   PackageInfo.setMockInitialValues(
-    appName: 'Sreeraj P Authenticator',
+    appName: 'Authenticator SP',
     packageName: 'in.sreerajp.sreerajp_authenticator',
     version: '1.0.0',
     buildNumber: '1',

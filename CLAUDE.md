@@ -1,4 +1,4 @@
-# CLAUDE.md — Sreeraj P Authenticator
+# CLAUDE.md — Authenticator SP
 
 This file is read by Claude Code at the start of every session in this repository.
 Read it before making any change. See the docs table below for full detail.
@@ -12,7 +12,7 @@ Follow the guidelines listed in `docs/GUIDELINES_MANIFEST.md`, starting with
 
 | Field | Value |
 |-------|-------|
-| App name | Sreeraj P Authenticator |
+| App name | Authenticator SP |
 | Type | Offline-first TOTP/HOTP two-factor authenticator app with AES-256-GCM vault, biometrics, and QR onboarding |
 | Platforms | Android (minSdk 29, targetSdk = Flutter default) — declared in `docs/PROJECT_PROFILE.md` |
 | Stores / channels | Android: Google Play, direct APK |
@@ -104,8 +104,8 @@ flutter build appbundle --flavor prod --release \
 
 | Flavor | App ID | Display name | Signing |
 |--------|--------|--------------|---------|
-| dev | `in.sreerajp.sreerajp_authenticator.dev` | Sreeraj P Authenticator Dev | Debug keystore (automatic) |
-| prod | `in.sreerajp.sreerajp_authenticator` | Sreeraj P Authenticator | Release keystore (`android/key.properties`) |
+| dev | `in.sreerajp.sreerajp_authenticator.dev` | Authenticator SP Dev | Debug keystore (automatic) |
+| prod | `in.sreerajp.sreerajp_authenticator` | Authenticator SP | Release keystore (`android/key.properties`) |
 
 ---
 
@@ -165,8 +165,8 @@ flutter build appbundle --flavor prod --release \
 - `MaterialApp` uses `LocaleConfig.localizationsDelegates` (`lib/config/locale_config.dart`), never
   the generated `AppLocalizations.localizationsDelegates` (it names the old SDK delegates).
 - The app name is never an ARB key: it comes from `appName` in `assets/config/app_config.json`
-  (English `Sreeraj P Authenticator`, Malayalam `ശ്രീരാജ് പി പ്രമാണീകാരി`, Sanskrit
-  `श्रीराज पी प्रमाणीकारकः`) and matches the Android `strings.xml` files in
+  (English `Authenticator SP`, Malayalam `മുദ്രിക`, Sanskrit
+  `मुद्रिका`) and matches the Android `strings.xml` files in
   `android/app/src/{dev,prod}/res/values*/`.
 - Tests that guard these rules live in `test/l10n/` (parity, label length, Hindi markers,
   Sanskrit fallback).

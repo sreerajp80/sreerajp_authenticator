@@ -21,7 +21,7 @@ void main() {
     // first loaded it; a later test would wait on that old zone forever.
     rootBundle.clear();
     PackageInfo.setMockInitialValues(
-      appName: 'Sreeraj P Authenticator',
+      appName: 'Authenticator SP',
       packageName: 'in.sreerajp.sreerajp_authenticator',
       version: '2.9.3',
       buildNumber: '27',
