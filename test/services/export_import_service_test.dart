@@ -40,76 +40,85 @@ void main() {
   // ─── v3 encrypt / decrypt round-trip ──────────────────────────────────────
 
   group('v3 encrypt / decrypt round-trip', () {
-    test('encrypts and decrypts with correct password', () {
+    test('encrypts and decrypts with correct password', () async {
       const password = 'StrongPassword123!';
       const plainText = '{"accounts":[]}';
 
-      final encrypted = service.encryptDataForTest(plainText, password);
+      final encrypted = await service.encryptDataForTest(plainText, password);
       expect(encrypted, startsWith('v3:'));
 
-      final decrypted = service.decryptDataForTest(encrypted, password);
+      final decrypted = await service.decryptDataForTest(encrypted, password);
       expect(decrypted, plainText);
     });
 
-    test('v3 format has four colon-separated parts', () {
-      final encrypted = service.encryptDataForTest('test', 'password');
+    test('v3 format has four colon-separated parts', () async {
+      final encrypted = await service.encryptDataForTest('test', 'password');
       final parts = encrypted.split(':');
       expect(parts.length, 4);
       expect(parts[0], 'v3');
     });
 
-    test('decrypt fails with wrong password', () {
-      final encrypted = service.encryptDataForTest('secret data', 'correct');
-      final decrypted = service.decryptDataForTest(encrypted, 'wrong');
+    test('decrypt fails with wrong password', () async {
+      final encrypted = await service.encryptDataForTest(
+        'secret data',
+        'correct',
+      );
+      final decrypted = await service.decryptDataForTest(encrypted, 'wrong');
       expect(decrypted, isNull);
     });
 
     test(
       'same plaintext produces different ciphertexts (random salt+nonce)',
-      () {
+      () async {
         const password = 'pass';
         const text = 'same content';
-        final enc1 = service.encryptDataForTest(text, password);
-        final enc2 = service.encryptDataForTest(text, password);
+        final enc1 = await service.encryptDataForTest(text, password);
+        final enc2 = await service.encryptDataForTest(text, password);
         expect(enc1, isNot(equals(enc2)));
 
         // Both decrypt to the same value
-        expect(service.decryptDataForTest(enc1, password), text);
-        expect(service.decryptDataForTest(enc2, password), text);
+        expect(await service.decryptDataForTest(enc1, password), text);
+        expect(await service.decryptDataForTest(enc2, password), text);
       },
     );
 
-    test('handles unicode content', () {
+    test('handles unicode content', () async {
       const password = 'pass';
       const text = 'Hello 🔐 Wörld こんにちは';
-      final encrypted = service.encryptDataForTest(text, password);
-      expect(service.decryptDataForTest(encrypted, password), text);
+      final encrypted = await service.encryptDataForTest(text, password);
+      expect(await service.decryptDataForTest(encrypted, password), text);
     });
 
-    test('handles large payloads', () {
+    test('handles large payloads', () async {
       const password = 'pass';
       final text = 'A' * 50000;
-      final encrypted = service.encryptDataForTest(text, password);
-      expect(service.decryptDataForTest(encrypted, password), text);
+      final encrypted = await service.encryptDataForTest(text, password);
+      expect(await service.decryptDataForTest(encrypted, password), text);
     });
   });
 
   // ─── Malformed input handling ─────────────────────────────────────────────
 
   group('decrypt error handling', () {
-    test('returns null for v3 with wrong number of parts', () {
-      expect(service.decryptDataForTest('v3:a:b', 'pass'), isNull);
-      expect(service.decryptDataForTest('v3:a:b:c:d', 'pass'), isNull);
+    test('returns null for v3 with wrong number of parts', () async {
+      expect(await service.decryptDataForTest('v3:a:b', 'pass'), isNull);
+      expect(await service.decryptDataForTest('v3:a:b:c:d', 'pass'), isNull);
     });
 
-    test('returns null for old backup formats', () {
-      expect(service.decryptDataForTest('v2:AAAA:AAAA', 'pass'), isNull);
-      expect(service.decryptDataForTest('AAAA:AAAA', 'pass'), isNull);
-      expect(service.decryptDataForTest('no_colon_at_all', 'pass'), isNull);
+    test('returns null for old backup formats', () async {
+      expect(await service.decryptDataForTest('v2:AAAA:AAAA', 'pass'), isNull);
+      expect(await service.decryptDataForTest('AAAA:AAAA', 'pass'), isNull);
+      expect(
+        await service.decryptDataForTest('no_colon_at_all', 'pass'),
+        isNull,
+      );
     });
 
-    test('returns null for corrupted base64', () {
-      expect(service.decryptDataForTest('v3:!!!:!!!:!!!', 'pass'), isNull);
+    test('returns null for corrupted base64', () async {
+      expect(
+        await service.decryptDataForTest('v3:!!!:!!!:!!!', 'pass'),
+        isNull,
+      );
     });
   });
 
@@ -235,30 +244,33 @@ void main() {
   // ─── End-to-end: encrypt JSON backup then decrypt and parse ───────────────
 
   group('end-to-end backup integrity', () {
-    test('encrypt then decrypt and parse produces original account data', () {
-      const password = 'BackupPassword!';
-      final accounts = [
-        makeAccount(name: 'GitHub', issuer: 'GitHub', secret: 'ABCDEF'),
-        makeAccount(
-          name: 'Google',
-          issuer: 'Google',
-          secret: 'GHIJKL',
-          digits: 8,
-        ),
-      ];
+    test(
+      'encrypt then decrypt and parse produces original account data',
+      () async {
+        const password = 'BackupPassword!';
+        final accounts = [
+          makeAccount(name: 'GitHub', issuer: 'GitHub', secret: 'ABCDEF'),
+          makeAccount(
+            name: 'Google',
+            issuer: 'Google',
+            secret: 'GHIJKL',
+            digits: 8,
+          ),
+        ];
 
-      final json = service.dataToJsonForTest(accounts);
-      final encrypted = service.encryptDataForTest(json, password);
-      final decrypted = service.decryptDataForTest(encrypted, password);
-      expect(decrypted, isNotNull);
+        final json = service.dataToJsonForTest(accounts);
+        final encrypted = await service.encryptDataForTest(json, password);
+        final decrypted = await service.decryptDataForTest(encrypted, password);
+        expect(decrypted, isNotNull);
 
-      final parsed = service.parseBackupJsonForTest(decrypted!)!;
-      final restoredAccounts = parsed['accounts'] as List<Account>;
+        final parsed = service.parseBackupJsonForTest(decrypted!)!;
+        final restoredAccounts = parsed['accounts'] as List<Account>;
 
-      expect(restoredAccounts.length, 2);
-      expect(restoredAccounts[0].name, 'GitHub');
-      expect(restoredAccounts[0].secret, 'ABCDEF');
-      expect(restoredAccounts[1].digits, 8);
-    });
+        expect(restoredAccounts.length, 2);
+        expect(restoredAccounts[0].name, 'GitHub');
+        expect(restoredAccounts[0].secret, 'ABCDEF');
+        expect(restoredAccounts[1].digits, 8);
+      },
+    );
   });
 }

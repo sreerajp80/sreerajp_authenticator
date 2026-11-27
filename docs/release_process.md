@@ -23,8 +23,9 @@ The `Production App Extension` applies, so this file is filled in **in full**.
 - Version source of truth: [`pubspec.yaml`](../pubspec.yaml) (read the current version there; it is
   not copied into this file).
 
-> **Open blockers.** Before any release: the release owner tests "Delete all data" on a real phone
-> and signs off [`security.md`](security.md) §12.
+> **Security sign-off.** [`security.md`](security.md) §12 was signed off for 2.10.4 (32) on
+> 15 November 2026, after the "Delete all data" phone test. Every later release needs its own
+> sign-off (§8).
 
 ---
 
@@ -97,11 +98,18 @@ All production builds are security-sensitive artifacts.
 `<platform>` is `android`; `<version>` is the full `pubspec.yaml` version,
 for example `2.9.3+27`. See [`security.md`](security.md) §8.1 for why.
 
+The APK and the App Bundle are separate compiles, so each has its own symbols. The release script
+(§9) keeps them apart:
+
+- App Bundle: `build/symbols/android-prod-<version>/`
+- APKs: `build/symbols/android-prod-<version>-apk/`
+
 Symbol archive policy:
 
-- Archive the symbols folder securely after every production build, **outside the repository**,
-  next to the release artifact (for example `<archive>/v2.9.3/symbols/`), and record the location
-  in §14.
+- Archive **both** symbols folders securely after every production build, **outside the
+  repository**, next to the release artifacts (for example `<archive>/v2.9.3/symbols-aab/` and
+  `<archive>/v2.9.3/symbols-apk/`), and record the locations in §14. A crash from a Play install
+  needs the AAB symbols; a crash from a direct APK install needs the APK symbols.
 - Keep symbols for the lifetime of the released version. Never commit them (`build/` is in
   `.gitignore`).
 - Decode a stack trace with
@@ -151,13 +159,13 @@ a documented reason is a review item.
 ```bash
 # bash / zsh
 aapt2 dump xmltree --file AndroidManifest.xml \
-  build/app/outputs/flutter-apk/app-arm64-v8a-prod-release.apk | grep -iE "debuggable|allowBackup|dataExtractionRules|fullBackupContent"
+  build/app/outputs/flutter-apk/SreerajP_Authenticator-arm64-v<x.y.z>_<n>-prod-release.apk | grep -iE "debuggable|allowBackup|dataExtractionRules|fullBackupContent"
 ```
 
 ```powershell
 # PowerShell (Windows)
 aapt2 dump xmltree --file AndroidManifest.xml `
-  build\app\outputs\flutter-apk\app-arm64-v8a-prod-release.apk | Select-String -Pattern "debuggable|allowBackup|dataExtractionRules|fullBackupContent"
+  build\app\outputs\flutter-apk\SreerajP_Authenticator-arm64-v<x.y.z>_<n>-prod-release.apk | Select-String -Pattern "debuggable|allowBackup|dataExtractionRules|fullBackupContent"
 ```
 
 ### 6.5 Network Security Configuration And Cleartext Traffic
@@ -175,12 +183,12 @@ Files in the APK's `assets/` and `res/` are not encrypted. Before release, list 
 
 ```bash
 # bash / zsh
-unzip -l build/app/outputs/flutter-apk/app-arm64-v8a-prod-release.apk "assets/*"
+unzip -l build/app/outputs/flutter-apk/SreerajP_Authenticator-arm64-v<x.y.z>_<n>-prod-release.apk "assets/*"
 ```
 
 ```powershell
 # PowerShell (Windows)
-tar -tf build\app\outputs\flutter-apk\app-arm64-v8a-prod-release.apk | Select-String "assets/"
+tar -tf build\app\outputs\flutter-apk\SreerajP_Authenticator-arm64-v<x.y.z>_<n>-prod-release.apk | Select-String "assets/"
 ```
 
 - [ ] No `.env` or credentials files in `assets/`.
@@ -242,7 +250,8 @@ Complete these items before every release.
 - [ ] No debug menus, test accounts, or backdoors in the production build
 - [ ] `--obfuscate` and `--split-debug-info` applied to every release build
 - [ ] No `--analyze-size` build was shipped or archived (§6.3)
-- [ ] Debug symbols archived securely for this version
+- [ ] Debug symbols archived securely for this version (both the AAB and the APK folders, §6.1)
+- [ ] Every published APK and AAB has a `.sha256` file next to it, and no `.sha1` file is left (§9)
 - [ ] ProGuard / R8 rules verified (§6.2)
 - [ ] `android:debuggable=false` confirmed in the merged release manifest (§6.4)
 - [ ] Backup settings and `dataExtractionRules` match [`security.md`](security.md) §10 (§6.4)
@@ -275,6 +284,8 @@ Complete these items before every release.
       Signing, Data safety form, privacy policy URL live, listings in `en-US` and `ml-IN`,
       screenshots, internal testing and pre-launch report clean, staged rollout planned
 - [ ] Direct APK: §2.5A — signed with the release keystore; Android developer verification checked
+- [ ] Split APK `versionCode` equals the `pubspec.yaml` build number (no 1000/2000/4000 added),
+      same as the `.aab` (§9, §12)
 
 ### Product And Documentation
 
@@ -301,12 +312,12 @@ Complete these items before every release.
 3. Fetch dependencies with `flutter pub get`.
 4. Run formatting, analysis, and tests.
 5. Optional: run the size-analysis build first (§6.3).
-6. Build the prod artifacts with the hardening flags (commands below) and record their sizes.
+6. Build the prod artifacts with `tool\build_release.ps1` (below) and record their sizes.
 7. Run the manifest checks (§6.4, §6.5, §6.7) and the asset audit (§6.6).
 8. Install a split APK on a clean device or emulator and run the smoke checklist.
-9. Archive the symbol directory (§6.1).
+9. Archive both symbol folders, AAB and APK (§6.1).
 10. Google Play: complete the §2 gate, upload the `.aab`, and use a staged rollout.
-    Direct APK: publish the signed split APKs with checksums.
+    Direct APK: publish the signed split APKs, each with its `.sha256` file.
 11. Tag the release commit: `git tag vX.Y.Z` and push.
 12. Run `android\gradlew --stop` and end any leftover `GradleDaemon` / `KotlinCompileDaemon`.
 
@@ -318,29 +329,121 @@ dart format --output=none --set-exit-if-changed .
 flutter analyze
 flutter test
 
-# Split APKs for direct distribution
-flutter build apk `
-  --flavor prod `
-  --release `
-  --obfuscate `
-  --split-debug-info=build/symbols/android-prod-<version>/ `
-  --split-per-abi
-
 # App Bundle for Google Play
-flutter build appbundle `
-  --flavor prod `
-  --release `
-  --obfuscate `
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target aab
+
+# Split APKs for direct distribution
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target apk
+```
+
+### Release Build Script (`tool/build_release.ps1`)
+
+Use this script for every Android build you keep or publish. It runs `flutter build`, gives the
+files proper names, deletes the weak SHA-1 file (`.sha1`) Flutter writes next to each APK, and
+writes a SHA-256 checksum file (`.sha256`) for each APK and AAB. It works in Windows PowerShell
+5.1 and PowerShell 7, writes only inside `build/`, and never reads `android/key.properties` or
+the keystore (Gradle does the signing). At the end it runs `android\gradlew.bat --stop`.
+
+Flutter writes `.sha1` after Gradle ends, and it has no SHA-256 option, so this cannot be done
+in Gradle; it has to happen in a script that runs after `flutter build`.
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `-Name` | Base file name, letters, digits, `.`, `_`, `-` | Required (no default) |
+| `-Target` | `apk`, `aab` | Required |
+| `-Flavor` | `prod`, `dev` | `prod` |
+| `-Mode` | `release`, `profile`, `debug` | `release` |
+| `-NoSplit` | Switch: one universal APK, without `--split-per-abi` | Off |
+| `-NoObfuscate` | Switch: leave out `--obfuscate` and `--split-debug-info` | Off |
+| `-SymbolsDir` | Folder for `--split-debug-info`, inside `build/` | AAB: `build/symbols/android-<flavor>-<version>/`; APK: `build/symbols/android-<flavor>-<version>-apk/` |
+
+`<version>` is the full `pubspec.yaml` version (`x.y.z+n`). The script stops if the `+n` build
+number is missing.
+
+Rules (checked before Flutter runs; a refused build exits with code 1):
+
+- `-NoObfuscate` is refused for `-Flavor prod -Mode release`. A prod release is always obfuscated.
+- `-SymbolsDir` is refused when the build is not obfuscated (`-NoObfuscate` or `-Mode debug`),
+  and when it points outside `build/`.
+- `-Mode debug` leaves out `--obfuscate` and `--split-debug-info` by itself, with a message.
+- `-NoSplit` with `-Target aab` is ignored, with a message.
+- If `flutter build` fails, nothing is renamed or hashed.
+- Old Flutter-named outputs are deleted before the build, so a stale file is never renamed as
+  this build. A file with the final name is replaced, with a message.
+
+Examples:
+
+```powershell
+# Prod App Bundle for Google Play
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target aab
+
+# Prod split APKs for direct download
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target apk
+
+# One universal prod APK
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target apk -NoSplit
+
+# Dev debug APKs for testing
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target apk -Flavor dev -Mode debug
+```
+
+File names: `<Name>-[<abi>-]v<x.y.z>_<n>-<flavor>-<mode>.<apk|aab>`, with short ABI names
+`armeabi` (`armeabi-v7a`), `arm64` (`arm64-v8a`) and `x86_64`. For version `2.10.6+34`:
+
+| Build | Folder | Files |
+|-------|--------|-------|
+| AAB | `build/app/outputs/bundle/prodRelease/` | `SreerajP_Authenticator-v2.10.6_34-prod-release.aab` |
+| Split APKs | `build/app/outputs/flutter-apk/` | `SreerajP_Authenticator-armeabi-v2.10.6_34-prod-release.apk`, `SreerajP_Authenticator-arm64-v2.10.6_34-prod-release.apk`, `SreerajP_Authenticator-x86_64-v2.10.6_34-prod-release.apk` |
+| Universal APK | `build/app/outputs/flutter-apk/` | `SreerajP_Authenticator-v2.10.6_34-prod-release.apk` |
+
+Each file has a `<file>.sha256` next to it, in the standard `sha256sum` format:
+`<lower-case hash>  <file name>` (two spaces, UTF-8 without BOM, one line). Publish it with the
+file. To check a file:
+
+```powershell
+Get-FileHash <file> -Algorithm SHA256
+```
+
+```bash
+sha256sum -c <file>.sha256
+```
+
+`Get-FileHash` prints the hash in upper case; compare it with the `.sha256` file ignoring case.
+
+What the script runs with the defaults (for reference; prefer the script):
+
+```powershell
+# -Target apk
+flutter build apk --flavor prod --release --obfuscate `
+  --split-debug-info=build/symbols/android-prod-<version>-apk/ --split-per-abi
+
+# -Target aab
+flutter build appbundle --flavor prod --release --obfuscate `
   --split-debug-info=build/symbols/android-prod-<version>/
 ```
 
 ```bash
 # bash / zsh
 flutter build apk --flavor prod --release --obfuscate \
-  --split-debug-info=build/symbols/android-prod-<version>/ --split-per-abi
+  --split-debug-info=build/symbols/android-prod-<version>-apk/ --split-per-abi
 flutter build appbundle --flavor prod --release --obfuscate \
   --split-debug-info=build/symbols/android-prod-<version>/
 ```
+
+Run by hand, these leave Flutter's names and `.sha1` files; rename and hash the files yourself.
+
+**Split APK version code.** `android/gradle.properties` sets
+`force-version-code-ignoring-abi=true`. So every split APK (`armeabi-v7a`, `arm64-v8a`,
+`x86_64`) gets the same `versionCode` as the App Bundle: the `+BUILD` number from `pubspec.yaml`,
+with no 1000/2000/4000 added. Check each APK after the build (Android SDK build-tools):
+
+```powershell
+aapt2 dump badging build\app\outputs\flutter-apk\SreerajP_Authenticator-arm64-v<x.y.z>_<n>-prod-release.apk
+```
+
+The first line shows `versionCode` and `versionName`. All split APKs and the `.aab` must show the
+same values. (The `.aab` manifest is protobuf; read it with `bundletool` or a small script, not
+`aapt2`.)
 
 ---
 
@@ -380,6 +483,14 @@ Not a declared platform. Not used.
 |---------|----------|----------|-------|
 | Google Play | `.aab` | Public | Staged rollout; gate §2. Not yet released |
 | Direct APK | split `.apk` | Public / testers | Signed with the release keystore; gate §2.5A |
+
+**Why split APKs share the bundle's `versionCode`.** By default Flutter adds 1000, 2000 or 4000
+to the build number of each split APK, but not to the App Bundle. A phone with a direct APK
+(for example `+34` → `1034`) would then see every Play build (`+37` → `37`) as older, and Play
+would never update it. The only way out would be to uninstall, which deletes the vault
+(`android:allowBackup="false"`). `force-version-code-ignoring-abi=true` in
+`android/gradle.properties` removes the offset, so a direct APK user can move to Play builds.
+Play can update a direct APK only when Play's app signing key matches the release keystore.
 
 ---
 

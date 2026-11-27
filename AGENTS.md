@@ -18,9 +18,9 @@ Follow the guidelines listed in `docs/GUIDELINES_MANIFEST.md`, starting with
 | Stores / channels | Android: Google Play, direct APK |
 | Languages | `en` (template), `ml` (Malayalam), `sa` (Sanskrit) |
 | Package / org id | `in.sreerajp.sreerajp_authenticator` |
-| Flutter SDK | 3.47.6 (stable) |
-| Dart SDK | `^3.13.5` |
-| Android toolchain | AGP 9.4.1, Kotlin Gradle Plugin 2.4.10, Gradle 9.8.0, Java 17 |
+| Flutter SDK | 3.50.1 (stable) |
+| Dart SDK | `^3.14.0` |
+| Android toolchain | AGP 9.4.1, Kotlin Gradle Plugin 2.4.20, Gradle 9.8.0, Java 17 |
 | State management | `Provider` + `ChangeNotifier` |
 | Navigation | Named routes / `MaterialPageRoute` |
 | Database | `sqflite` (encrypted fields) + `flutter_secure_storage` (AES key, PIN/recovery hashes) |
@@ -82,15 +82,18 @@ flutter run --flavor prod              # production build with debug tooling
 flutter analyze                        # static analysis (must return zero issues)
 flutter test                           # run all unit and widget tests
 dart format .                          # format all Dart code before committing
-
-# Production release APK (split per ABI)
-flutter build apk --flavor prod --release \
-  --obfuscate --split-debug-info=build/symbols/android-prod-<version>/ --split-per-abi
-
-# Production Play Store bundle
-flutter build appbundle --flavor prod --release \
-  --obfuscate --split-debug-info=build/symbols/android-prod-<version>/
 ```
+
+```powershell
+# Production release: renames the files, writes a .sha256 for each, removes Flutter's .sha1,
+# and stops Gradle. Options, rules and file names: docs/release_process.md §9.
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target aab   # Play Store bundle
+.\tool\build_release.ps1 -Name SreerajP_Authenticator -Target apk   # split APKs (per ABI)
+```
+
+> The raw `flutter build` commands the script runs are listed in `docs/release_process.md` §9.
+> The APK symbols folder ends in `-apk/` (`build/symbols/android-prod-<version>-apk/`), so it
+> never overwrites the App Bundle symbols (`build/symbols/android-prod-<version>/`).
 
 > Size analysis (`--analyze-size`) is a separate throw-away build: run it before the release
 > build, never ship it (`docs/release_process.md` §6.3).

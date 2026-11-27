@@ -4,3 +4,8 @@ template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 nullable-getter: false
+# The generated `localizationsDelegates` list still names the old SDK
+# Global*Localizations classes (deprecated since Flutter 3.47). The app does not
+# use that list; it uses LocaleConfig.localizationsDelegates. This header keeps
+# that one warning out of `flutter analyze` and survives every regeneration.
+header: "// ignore_for_file: deprecated_member_use"

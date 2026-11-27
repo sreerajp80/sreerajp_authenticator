@@ -1,14 +1,20 @@
 // File Path: sreerajp_authenticator/lib/widgets/qr_camera_view.dart
 // Author: Sreeraj P
 // Description: Camera preview that decodes QR codes with flutter_zxing. Decoding
-//   runs locally, in the package's isolate. The app never calls the package's
-//   readBarcodeImageUrl, which is its only network path.
+//   runs locally, in the package's isolate. Only the package's core library is
+//   imported; its old 3.x API (with readBarcodeImageUrl, its only network path)
+//   is not used.
 
 import 'dart:async';
 
 import 'package:camera/camera.dart';
-import 'package:flutter_zxing/flutter_zxing.dart'
-    show DecodeParams, Format, cameraImageFormat, zx;
+import 'package:flutter_zxing/core.dart'
+    show
+        BarcodeFormat,
+        BarcodeReader,
+        PixelBuffer,
+        ReaderOptions,
+        warmUpBarcodeEngine;
 import 'package:material_ui/material_ui.dart';
 import 'package:sreerajp_authenticator/l10n/app_localizations.dart';
 
@@ -64,6 +70,18 @@ class QrCameraView extends StatefulWidget {
 
 class _QrCameraViewState extends State<QrCameraView>
     with WidgetsBindingObserver {
+  /// QR codes only, with the same fast settings the 3.x code used for
+  /// live frames (no rotation, inversion, downscaling or extra effort).
+  static const _reader = BarcodeReader(
+    formats: {BarcodeFormat.qrCode},
+    options: ReaderOptions(
+      tryHarder: false,
+      tryRotate: false,
+      tryInvert: false,
+      tryDownscale: false,
+    ),
+  );
+
   late final QrCodeFilter _filter = QrCodeFilter(
     ignoreDuplicates: widget.ignoreDuplicates,
   );
@@ -87,8 +105,8 @@ class _QrCameraViewState extends State<QrCameraView>
   void dispose() {
     widget.controller?._state = null;
     WidgetsBinding.instance.removeObserver(this);
-    unawaited(_closeCamera());
-    zx.stopCameraProcessing();
+    // No rebuild: setState is not allowed while the widget is being removed.
+    unawaited(_closeCamera(rebuild: false));
     super.dispose();
   }
 
@@ -104,7 +122,10 @@ class _QrCameraViewState extends State<QrCameraView>
 
   Future<void> _start() async {
     try {
-      await zx.startCameraProcessing();
+      // Start the decoder early so the first frame is fast. It never fails
+      // (a decoder that cannot start reports it on the first frame), so it
+      // is not awaited.
+      unawaited(warmUpBarcodeEngine(scanner: false));
       _cameras = await widget.loadCameras();
       if (!mounted) return;
       if (_cameras.isEmpty) {
@@ -144,12 +165,13 @@ class _QrCameraViewState extends State<QrCameraView>
     }
   }
 
-  Future<void> _closeCamera() async {
+  /// Stops and releases the camera. [rebuild] is false only from [dispose].
+  Future<void> _closeCamera({bool rebuild = true}) async {
     final camera = _camera;
     if (camera == null) return;
     _camera = null;
     _torchOn = false;
-    if (mounted) setState(() {});
+    if (rebuild && mounted) setState(() {});
     try {
       if (camera.value.isStreamingImages) await camera.stopImageStream();
     } catch (e) {
@@ -172,20 +194,23 @@ class _QrCameraViewState extends State<QrCameraView>
     if (_decoding) return;
     _decoding = true;
     try {
-      final code = await zx.processCameraImage(
-        image,
-        DecodeParams(
-          imageFormat: cameraImageFormat(image),
-          format: Format.qrCode,
+      // The stream uses YUV420, so the first plane is the brightness (Y)
+      // plane, which is all the decoder needs.
+      final luma = image.planes.first;
+      final barcode = await _reader.readPixels(
+        PixelBuffer(
+          luma.bytes,
           width: image.width,
           height: image.height,
-          tryRotate: false,
-          maxNumberOfSymbols: 1,
+          rowStride: luma.bytesPerRow,
         ),
       );
-      if (mounted && identical(_camera, camera) && code.isValid) {
-        final text = code.text;
-        if (_filter.accept(text)) widget.onCode(text!);
+      if (mounted &&
+          identical(_camera, camera) &&
+          barcode != null &&
+          barcode.isValid) {
+        final text = barcode.text;
+        if (_filter.accept(text)) widget.onCode(text);
       }
     } catch (e) {
       // A bad frame is not an error the user can act on.

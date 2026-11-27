@@ -1,11 +1,12 @@
 // File Path: sreerajp_authenticator/lib/services/export_import_service.dart
 // Author: Sreeraj P
 // Created: 2025 September 30
-// Last Modified: 2026 August 01
+// Last Modified: 2026 November 26
 // Description: Service for exporting and importing account data with re-encryption
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -83,7 +84,7 @@ class ExportImportService {
       final jsonData = _dataToJson(decryptedAccounts);
 
       // Step 3: Encrypt with user password
-      final encryptedData = _encryptData(jsonData, password);
+      final encryptedData = await _encryptData(jsonData, password);
 
       final fileName =
           'authenticator_backup_encrypted_${DateTime.now().millisecondsSinceEpoch}.aes';
@@ -145,7 +146,7 @@ class ExportImportService {
     }
 
     // Step 1: Decrypt with user password
-    final jsonData = _decryptData(encryptedData, password);
+    final jsonData = await _decryptData(encryptedData, password);
     if (jsonData == null) {
       throw const BackupPasswordException();
     }
@@ -180,21 +181,40 @@ class ExportImportService {
     }
   }
 
-  // Derive a 32-byte AES-256 key from password + salt using PBKDF2-HMAC-SHA256.
-  Uint8List _deriveKey(
-    String password,
-    Uint8List salt, {
-    int iterations = AppConstants.pbkdf2Iterations,
-  }) {
-    final pbkdf2 = PBKDF2KeyDerivator(
-      HMac(SHA256Digest(), AppConstants.hmacBlockSize),
-    )..init(Pbkdf2Parameters(salt, iterations, AppConstants.pbkdf2HashSize));
-    return pbkdf2.process(Uint8List.fromList(utf8.encode(password)));
-  }
+  // PBKDF2 with many rounds is slow on low-end phones (about 15 seconds).
+  // On the main isolate it would freeze the screen and cause an ANR, so the
+  // key work runs in a short-lived background isolate. Only plain strings go
+  // in and out; nothing is logged or written to disk there.
 
   // v3 format: PBKDF2-derived key + AES-256-GCM
   // Output: "v3:<salt_b64>:<nonce_b64>:<ciphertext_b64>"
-  String _encryptData(String plainText, String password) {
+  Future<String> _encryptData(String plainText, String password) =>
+      Isolate.run(() => _encryptV3(plainText, password));
+
+  // Reads the v3 format. Any other format returns null.
+  Future<String?> _decryptData(String encryptedData, String password) async {
+    final result = await Isolate.run(() => _decryptV3(encryptedData, password));
+    if (result == null) {
+      AppLogger.error('Failed to decrypt backup payload');
+    }
+    return result;
+  }
+
+  // Derive a 32-byte AES-256 key from password + salt using PBKDF2-HMAC-SHA256.
+  static Uint8List _deriveKey(String password, Uint8List salt) {
+    final pbkdf2 =
+        PBKDF2KeyDerivator(HMac(SHA256Digest(), AppConstants.hmacBlockSize))
+          ..init(
+            Pbkdf2Parameters(
+              salt,
+              AppConstants.pbkdf2Iterations,
+              AppConstants.pbkdf2HashSize,
+            ),
+          );
+    return pbkdf2.process(Uint8List.fromList(utf8.encode(password)));
+  }
+
+  static String _encryptV3(String plainText, String password) {
     final salt = encrypt.SecureRandom(AppConstants.saltSize).bytes;
     final keyBytes = _deriveKey(password, salt);
     final key = encrypt.Key(keyBytes);
@@ -209,8 +229,7 @@ class ExportImportService {
     return 'v3:$saltB64:${iv.base64}:${encrypted.base64}';
   }
 
-  // Reads the v3 format. Any other format returns null.
-  String? _decryptData(String encryptedData, String password) {
+  static String? _decryptV3(String encryptedData, String password) {
     try {
       if (!encryptedData.startsWith('v3:')) return null;
 
@@ -228,18 +247,19 @@ class ExportImportService {
         encrypt.AES(key, mode: encrypt.AESMode.gcm),
       );
       return encrypter.decrypt(encrypted, iv: iv);
-    } catch (e) {
-      AppLogger.error('Failed to decrypt backup payload', e);
+    } catch (_) {
+      // No logging here: the logger is not set up inside this isolate.
+      // The caller logs the failure.
       return null;
     }
   }
 
   @visibleForTesting
-  String encryptDataForTest(String plainText, String password) =>
+  Future<String> encryptDataForTest(String plainText, String password) =>
       _encryptData(plainText, password);
 
   @visibleForTesting
-  String? decryptDataForTest(String encryptedData, String password) =>
+  Future<String?> decryptDataForTest(String encryptedData, String password) =>
       _decryptData(encryptedData, password);
 
   @visibleForTesting

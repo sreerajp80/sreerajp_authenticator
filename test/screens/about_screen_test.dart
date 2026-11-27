@@ -64,6 +64,11 @@ void main() {
         final l10n = lookupAppLocalizations(locale);
         expect(find.text(l10n.titleAbout), findsWidgets);
         expect(find.text(kBuildDate), findsOneWidget);
+        // Version line shows both the version name and the build number.
+        expect(
+          find.text(l10n.labelVersionNumber('2.9.3', '27')),
+          findsOneWidget,
+        );
         expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
         // Row labels come from ARB, not from the JSON keys.
         await tester.scrollUntilVisible(find.text(l10n.aboutDetailAuthor), 300);

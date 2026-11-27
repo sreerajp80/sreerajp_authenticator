@@ -1,6 +1,6 @@
 # Clean up, fix the last bugs and release
 
-**Status:** in_progress
+**Status:** partial_completion
 
 ## What the issue is
 
@@ -108,3 +108,14 @@ flutter test
 ### After the release
 
 Write the change log. New feature ideas wait for the next release.
+
+## Closing note (15 November 2026)
+
+The owner closed this plan before the production release. No final change log is written for it.
+
+- **Done:** Part 1 (see `change_log/20261031_190126_first-release-cleanup-part-1.md`). From Part 3: work
+  committed, builds 29 to 32 made (tags `Release_20261031` to `Release_20261108`), closed testing
+  started on Google Play, and `docs/security.md` §12 signed off for 2.10.4 (32).
+- **Not recorded here:** the Part 2 check results, the symbol archive, the review of the `ml` and
+  `sa` text, and the `vX.Y.Z` tag. The production release is followed in `docs/release_process.md`
+  §8 and §9, not in this plan.

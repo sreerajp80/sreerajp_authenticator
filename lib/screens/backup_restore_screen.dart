@@ -388,7 +388,16 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         return Scaffold(
           appBar: AppBar(title: Text(_l10n.titleBackupRestore)),
           body: _isProcessing
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(_l10n.labelPleaseWait),
+                    ],
+                  ),
+                )
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [

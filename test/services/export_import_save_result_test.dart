@@ -25,7 +25,7 @@ void main() {
     expect(savedName, endsWith('.aes'));
     final content = utf8.decode(savedBytes!);
     expect(content, startsWith('v3:'));
-    expect(service.decryptDataForTest(content, password), isNotNull);
+    expect(await service.decryptDataForTest(content, password), isNotNull);
   });
 
   test('returns false when the user cancels the save screen', () async {

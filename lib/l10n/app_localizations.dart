@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -466,11 +467,11 @@ abstract class AppLocalizations {
   /// **'Language: {value}'**
   String descLanguageRowA11y(String value);
 
-  /// Version line under the app name on the About screen. {version} is like 2.9.3.
+  /// Version line under the app name on the About screen. {version} is like 2.9.3; {build} is the build number (Android versionCode), like 27.
   ///
   /// In en, this message translates to:
-  /// **'Version {version}'**
-  String labelVersionNumber(String version);
+  /// **'Version {version} ({build})'**
+  String labelVersionNumber(String version, String build);
 
   /// About-screen chip: this is the production build. Keep short.
   ///
@@ -1227,6 +1228,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password'**
   String get labelPassword;
+
+  /// Short text under a spinner while a backup is created or restored. Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait…'**
+  String get labelPleaseWait;
 
   /// Text field label. Keep short.
   ///

@@ -274,11 +274,14 @@
       }
     }
   },
-  "labelVersionNumber": "Version {version}",
+  "labelVersionNumber": "Version {version} ({build})",
   "@labelVersionNumber": {
-    "description": "Version line under the app name on the About screen. {version} is like 2.9.3.",
+    "description": "Version line under the app name on the About screen. {version} is like 2.9.3; {build} is the build number (Android versionCode), like 27.",
     "placeholders": {
       "version": {
+        "type": "String"
+      },
+      "build": {
         "type": "String"
       }
     }
@@ -846,6 +849,10 @@
   "labelPassword": "Password",
   "@labelPassword": {
     "description": "Text field label. Keep short."
+  },
+  "labelPleaseWait": "Please wait…",
+  "@labelPleaseWait": {
+    "description": "Short text under a spinner while a backup is created or restored. Keep short."
   },
   "labelConfirmPassword": "Confirm password",
   "@labelConfirmPassword": {

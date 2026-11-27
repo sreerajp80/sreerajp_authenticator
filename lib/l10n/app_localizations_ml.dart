@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 
@@ -215,8 +217,8 @@ class AppLocalizationsMl extends AppLocalizations {
   }
 
   @override
-  String labelVersionNumber(String version) {
-    return 'പതിപ്പ് $version';
+  String labelVersionNumber(String version, String build) {
+    return 'പതിപ്പ് $version ($build)';
   }
 
   @override
@@ -648,6 +650,9 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get labelPassword => 'രഹസ്യവാക്ക്';
+
+  @override
+  String get labelPleaseWait => 'കാത്തിരിക്കുക…';
 
   @override
   String get labelConfirmPassword => 'രഹസ്യവാക്ക് സ്ഥിരീകരണം';

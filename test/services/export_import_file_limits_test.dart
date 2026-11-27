@@ -28,9 +28,13 @@ void main() {
     return file;
   }
 
-  Future<File> writeBackup(List<Map<String, dynamic>> accounts) => writeFile(
-    service.encryptDataForTest(jsonEncode({'accounts': accounts}), password),
-  );
+  Future<File> writeBackup(List<Map<String, dynamic>> accounts) async =>
+      writeFile(
+        await service.encryptDataForTest(
+          jsonEncode({'accounts': accounts}),
+          password,
+        ),
+      );
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('backup_limits');
@@ -112,7 +116,9 @@ void main() {
   });
 
   test('rejects decrypted content that is not valid JSON', () async {
-    final file = await writeFile(service.encryptDataForTest('nope', password));
+    final file = await writeFile(
+      await service.encryptDataForTest('nope', password),
+    );
 
     expect(
       service.readBackupFile(file, password),

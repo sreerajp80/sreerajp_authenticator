@@ -7,7 +7,7 @@
 A privacy-first, offline two-factor authentication (2FA) app for Android. It makes the one-time codes that protect your online accounts, and keeps your accounts encrypted on your phone.
 
 ![Android 10+](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
-![Flutter 3.47](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white)
+![Flutter 3.50](https://img.shields.io/badge/Flutter-3.50-02569B?logo=flutter&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Why This App
@@ -147,7 +147,7 @@ More detail: [docs/security.md](docs/security.md) and [PRIVACY.md](PRIVACY.md).
 
 ## Building From Source
 
-You need the Flutter SDK (3.47 stable), the Android SDK, and an Android device or emulator.
+You need the Flutter SDK (3.50 stable), the Android SDK, and an Android device or emulator.
 
 ```bash
 flutter pub get

@@ -1100,12 +1100,18 @@ class _HomeScreenState extends State<HomeScreen>
 
                 final settingsProvider = context.read<SettingsProvider>();
                 settingsProvider.setBackupInProgress(true);
-                final service = ExportImportService();
-                final success = await service.exportAccountsEncrypted(
-                  selectedAccounts,
-                  password,
-                );
-                settingsProvider.setBackupInProgress(false);
+                final closeProgress = await _showBackupProgressDialog(l10n);
+                final bool success;
+                try {
+                  final service = ExportImportService();
+                  success = await service.exportAccountsEncrypted(
+                    selectedAccounts,
+                    password,
+                  );
+                } finally {
+                  closeProgress();
+                  settingsProvider.setBackupInProgress(false);
+                }
 
                 if (mounted) {
                   if (success) {
@@ -1134,6 +1140,39 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+  }
+
+  /// Shows a "please wait" dialog that the user cannot close while the backup
+  /// is being encrypted. Returns a function that closes it.
+  Future<VoidCallback> _showBackupProgressDialog(AppLocalizations l10n) async {
+    BuildContext? progressContext;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        progressContext = dialogContext;
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 24),
+                Expanded(child: Text(l10n.labelPleaseWait)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    // Let the dialog build once, so it can be closed later.
+    await WidgetsBinding.instance.endOfFrame;
+    return () {
+      final dialogContext = progressContext;
+      if (dialogContext != null && dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
+    };
   }
 
   void _showBatchDeleteDialog() {

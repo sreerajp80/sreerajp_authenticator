@@ -222,6 +222,7 @@ class _AboutScreenState extends State<AboutScreen> {
                           Text(
                             l10n.labelVersionNumber(
                               _packageInfo?.version ?? _config.version,
+                              _packageInfo?.buildNumber ?? _config.build,
                             ),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,

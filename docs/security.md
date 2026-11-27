@@ -112,8 +112,9 @@ No analytics, ads, crash-reporting or other SDK that sends data off the device i
 |-----|------------------|-------------------|------------------|
 | none | — | — | — |
 
-QR decoding uses `flutter_zxing` (MIT, with zxing-cpp), which runs on the device. Its one network path,
-`readBarcodeImageUrl`, is never called by the app.
+QR decoding uses `flutter_zxing` 4 (MIT, with zxing-cpp under Apache 2.0), which runs on the device. The
+app imports only `package:flutter_zxing/core.dart` (`BarcodeReader`). The package's one network path,
+`readBarcodeImageUrl` in its old 3.x API, is not imported or called by the app.
 
 History: until this change, `mobile_scanner` brought in closed-source Google ML Kit, and a debug build sent
 `FIREBASE_ML_SDK` events to `firebaselogging.googleapis.com`. The current release APK has no ML Kit, Firebase,
@@ -437,7 +438,7 @@ Status after the "Delete all data" change is below. `failed` and `to verify` lin
 | M3 | Insecure Authentication/Authorization | App lock, PIN hashing, quick unlock policy, lockouts, background lock; no server | `verified` by code and existing tests; real phone check on the release checklist |
 | M4 | Insufficient Input/Output Validation | All outside input validated (§3.1); parameterized queries; no path traversal | `verified` |
 | M5 | Insecure Communication | No internet traffic; Wi-Fi sync seals payloads with AES-256-GCM keyed by an out-of-band pairing code (transport stays plaintext by design — see §5.1) | `verified` |
-| M6 | Inadequate Privacy Controls | Screenshot blocking, no secrets in logs, backups encrypted, Android backup off, "Delete all data" (§13) | `verified` by APK contents and a real phone test; "Delete all data" verified by automated tests, its phone test is on the owner's sign-off |
+| M6 | Inadequate Privacy Controls | Screenshot blocking, no secrets in logs, backups encrypted, Android backup off, "Delete all data" (§13) | `verified` by APK contents and a real phone test; "Delete all data" verified by automated tests and by the owner on a real phone in all three check states (2.10.4 (32)) |
 | M7 | Insufficient Binary Protections | `--obfuscate` applied; `android:debuggable=false` verified; R8 rules verified | `verified` for build settings — `--obfuscate`, not debuggable, R8 on. Scanning works in a release build with R8 on, on a real phone |
 | M8 | Security Misconfiguration | Minimal permissions; backup disabled on Android; no accidental exported components; no debug features in prod | `verified` on the merged prod manifest. `USE_FINGERPRINT` and `ACCESS_NETWORK_STATE` are added by libraries (§11) |
 | M9 | Insecure Data Storage | Secrets encrypted in SQLite; key material only in secure storage; no secrets in `SharedPreferences` | `verified` |
@@ -445,8 +446,9 @@ Status after the "Delete all data" change is below. `failed` and `to verify` lin
 
 For each `risk-accepted` item, document the justification and owner below the table.
 
-Sign-off: ready for owner sign-off. Before signing, the release owner runs "Delete all data" on a
-real phone in all three check states (§13). Not yet signed off.
+Sign-off: **signed off by Sreeraj P (release owner) on 15 November 2026, for version 2.10.4 (32).**
+"Delete all data" was run on a real phone in all three check states (§13). Repeat this sign-off for
+every later release.
 
 ---
 
